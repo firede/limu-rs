@@ -301,16 +301,10 @@ impl Placed {
     /// The box the label is drawn in: the box the turned label lies in. It is empty for an
     /// empty label.
     pub fn bounds(&self) -> Rect {
-        let l = &self.label;
-        if l.is_empty() {
+        if self.label.is_empty() {
             return Rect::default();
         }
-        let x = match self.align {
-            Align::Middle => self.at.x - l.width / 2.0,
-            Align::Start => self.at.x,
-            Align::End => self.at.x - l.width,
-        };
-        let r = Rect::new(x, self.at.y - l.height / 2.0, l.width, l.height);
+        let r = self.upright();
         if self.rotate == 0.0 {
             return r;
         }
@@ -331,6 +325,19 @@ impl Placed {
             (x0, y0, x1, y1) = (x0.min(tx), y0.min(ty), x1.max(tx), y1.max(ty));
         }
         Rect::new(x0, y0, x1 - x0, y1 - y0)
+    }
+}
+
+impl Placed {
+    /// The box the label is drawn in before it is turned.
+    pub(crate) fn upright(&self) -> Rect {
+        let l = &self.label;
+        let x = match self.align {
+            Align::Middle => self.at.x - l.width / 2.0,
+            Align::Start => self.at.x,
+            Align::End => self.at.x - l.width,
+        };
+        Rect::new(x, self.at.y - l.height / 2.0, l.width, l.height)
     }
 }
 

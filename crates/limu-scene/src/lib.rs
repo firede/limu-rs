@@ -6,15 +6,19 @@
 //! nothing more, so that a backend depends on it alone. The `limu` crate parses diagrams
 //! and lays them out as scenes.
 
+mod draw;
 mod flatten;
 mod geom;
+mod hit;
 mod marker;
 mod path;
 mod pathdata;
 mod scene;
 pub mod style;
+pub mod svg;
 pub mod text;
 
+pub use draw::{Canvas, MITER_LIMIT, Painter, Pen, Run, TextPaint, draw, draw_with};
 pub use flatten::{Polyline, dash};
 pub use geom::{Point, Rect};
 pub use marker::{MARKER_SIZE, Marker, MarkerType};

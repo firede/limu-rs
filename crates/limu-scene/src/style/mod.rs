@@ -399,7 +399,12 @@ impl Look {
         };
         let stroke = s.stroke.unwrap_or(Paint::NONE);
         let hollow = s.ground.filter(Paint::visible).unwrap_or(Paint::BG);
-        let (shade, _) = self.shade(author);
+        // Over a fill the author sets, the shade is laid at 60%, as Pele draws an entity's
+        // stripes at an opacity of 0.6 when its style sets a fill.
+        let (mut shade, _) = self.shade(author);
+        if author.fill.is_some() {
+            shade = shade.alpha(0.6);
+        }
         Resolved {
             fill: ink(s.fill, s.fill_opacity),
             stroke: ink(s.stroke, s.stroke_opacity),
@@ -484,6 +489,20 @@ pub struct Ink {
 }
 
 impl Ink {
+    /// The ink that draws nothing.
+    pub const NONE: Ink = Ink {
+        paint: Paint::NONE,
+        opacity: 1.0,
+        color: Color::new(0, 0, 0, 0),
+    };
+
+    /// The ink at an opacity, which is from 0 to 1, laid on its color, as a backend lays an
+    /// item's opacity where it has no layers.
+    fn fade(&mut self, opacity: f64) {
+        self.opacity *= opacity;
+        self.color.a = (f64::from(self.color.a) * opacity).round() as u8;
+    }
+
     /// Whether the ink draws anything.
     pub fn visible(&self) -> bool {
         self.color.a > 0
@@ -506,7 +525,8 @@ pub struct Resolved {
     pub line: Ink,
     /// The theme's background.
     pub bg: Ink,
-    /// What parts painted shade are filled with, as [`Look::shade`] picks it.
+    /// What parts painted shade are filled with, as [`Look::shade`] picks it, at 60% where
+    /// the author sets a fill.
     pub shade: Ink,
     /// The theme's background, or the ground, for parts painted hollow.
     pub hollow: Ink,
@@ -526,6 +546,28 @@ pub struct Resolved {
     pub opacity: f64,
     /// The width of the halo.
     pub halo_width: f64,
+}
+
+impl Resolved {
+    /// Lays the style's opacity on each of its colors, and leaves it opaque, for a backend
+    /// that has no layers to draw at an opacity.
+    pub(crate) fn fade(&mut self) {
+        let k = self.opacity.clamp(0.0, 1.0);
+        for ink in [
+            &mut self.fill,
+            &mut self.stroke,
+            &mut self.text,
+            &mut self.marker,
+            &mut self.line,
+            &mut self.bg,
+            &mut self.shade,
+            &mut self.hollow,
+            &mut self.halo,
+        ] {
+            ink.fade(k);
+        }
+        self.opacity = 1.0;
+    }
 }
 
 #[cfg(test)]

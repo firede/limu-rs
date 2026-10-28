@@ -186,24 +186,32 @@ own copy of how parts, markers, labels and pictures are drawn. limu-rs writes th
 `limu-scene` has a `Canvas` trait of the few things a backend does itself, and a default
 drawing that draws an item with them.
 
-- Fill a path, and stroke a path with a width, a dash, a cap, a join and a miter limit.
-- Draw a line of text, its spans one after another from where it is anchored, in their
-  faces and at their size, with a halo where the style gives one.
+- Fill a path and then stroke it, in one call, so the SVG writer writes one element for
+  both. A pen has a width, a dash, a cap and a join, and corners are mitred to SVG's
+  initial limit. A box and a marker's part are paths unless the canvas draws them its own
+  way, as the SVG writer writes a `<rect>` and gives markers a class.
+- Draw a run of text, its spans one after another from where it is anchored, in their
+  faces and at their size, filled or stroked as a halo. The default drawing draws a
+  label's halo under all of its lines before it draws the text.
 - Begin and end a layer drawn at an opacity. A canvas that has no layers says so, and the
   default drawing then lays the opacity on each color, as limumygo does.
-- Begin and end an item, so the SVG writer can write its group, classes, link and tooltip.
-  Native canvases ignore them.
+- Begin and end a turn about a point, for a label that is rotated.
+- Begin and end the scene and each item, so the SVG writer can write the document, and an
+  item's group, classes, link and tooltip. Native canvases ignore them.
 - Draw an icon by name and an image by address. A canvas that can't draws nothing, and
   labels left room only for the icons the measurer was told of.
 
 The default drawing places a label's lines from its point, alignment and rotation, turns
-arcs and boxes into paths where a canvas has no box of its own, and draws markers from
-their outlines in the color of the edge's line. Every backend draws the same scene the same
-way, as far as its canvas lets it, and the differences that remain belong to the canvas.
+boxes into paths where a canvas has no box of its own, and draws markers from their
+outlines in the color of the edge's line. Every backend draws the same scene the same way,
+as far as its canvas lets it, and the differences that remain belong to the canvas.
 
-A host that wants its own look for some items gives a draw hook. The hook receives the
-item, its resolved style and a `Painter`, whose `item`, `parts`, `ends`, `label` and
-`picture` draw the default's pieces, and it may call the default for the rest.
+A host that wants its own look for some items gives `draw_with` a hook. The hook receives
+the item, its resolved style and a `Painter`, whose `item`, `parts`, `ends`, `label` and
+`picture` draw the default's pieces, and whose canvas it may draw on itself. The hook
+draws inside the item and inside the layer of its opacity, so the style it is given is
+always opaque. The SVG writer is a canvas like any other, and its hook writes markup of
+its own through the writer.
 
 `limu-ascii` is the other kind of backend. A grid of cells can't fill a curve, so it draws
 from roles, shapes, bounds and routes, in box-drawing characters, and lays the diagram out
@@ -212,7 +220,8 @@ the height of a line in cells, is settled when it is built.
 
 ## Hit testing
 
-`Scene::item_at` gives the item at a point, the one drawn last of those there. An item is
+`Scene::item_at` gives the index of the item at a point, the one drawn last of those
+there. An item is
 there when its bounds or its label's box hold the point, and an edge, or an item drawn only
 in lines, when one of its lines passes within a slop of the point or one of its markers
 holds it. It lives in `limu-scene`, so every host that shows a scene can point into it.
@@ -300,6 +309,10 @@ committed, so the repository doesn't grow each time they are written anew. A cha
 suites is tried before it is released by pointing `LIMU_FIXTURES` at a local checkout's
 output.
 
+The tests read the fixtures through `limu-fixtures`, a crate of the workspace that is never
+published. It and the crates it reads JSON and gzip with are dev-dependencies, which a host
+never builds.
+
 A fixture of drawings holds the lines of its first cases in full and a digest of the lines
 of each case after them, and a test compares the digest of the lines it writes from its
 scene. Numbers are compared exactly. A difference in the last bit is a difference in the
@@ -335,6 +348,10 @@ change is listed here with its reason.
 - Unset fields of a style are `None`.
 - Backends share one default drawing over a `Canvas`, where limu's svg package and
   limumygo each have their own. Hit testing moves from limumygo to the scene.
+- A draw hook draws inside the item's group, where limu's svg hook writes the group
+  itself, so every item keeps its classes and its link whatever a host draws.
+- The SVG writer writes each run of a label as a `<text>` of its own, where limu writes
+  one `<text>` for the whole label. A browser places them alike.
 - A grid to snap to may differ across and down.
 - The padding is a number that is 8 by default, where limu needs a pointer to tell 0 from
   unset.
