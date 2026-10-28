@@ -6,8 +6,9 @@ use serde::Deserialize;
 
 use super::*;
 use crate::js::math;
+use crate::scene::{Marker, MarkerType};
 use crate::scene::{Outline, Painting, Part, Point, Rect, Step};
-use crate::testing::Failures;
+use crate::testing::{Failures, pele_d, pele_num};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -18,7 +19,14 @@ struct Draw {
     span: Vec<SpanCase>,
     has_label: Vec<HasLabelCase>,
     ends: Vec<EndCase>,
+    routes: Vec<RouteCase>,
+    loops: Vec<LoopCase>,
+    reach: Vec<ReachCase>,
+    titles: Vec<TitleCase>,
     outlines: Vec<OutlineCase>,
+    markers: Vec<MarkerCase>,
+    patches: Vec<PatchCase>,
+    struck: Vec<StruckCase>,
 }
 
 #[derive(Deserialize)]
@@ -76,6 +84,109 @@ struct EndCase {
     h: f64,
     side: i32,
     out: Vec<Num>,
+}
+
+/// Pele's EdgePath, with its path as it writes it.
+#[derive(Deserialize, Debug)]
+struct PeleTips {
+    d: String,
+    sx: Num,
+    sy: Num,
+    sdx: Num,
+    sdy: Num,
+    ex: Num,
+    ey: Num,
+    edx: Num,
+    edy: Num,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RouteCase {
+    #[serde(flatten)]
+    tips: PeleTips,
+    route: Vec<f64>,
+    curve: Option<String>,
+    start_trim: f64,
+    end_trim: f64,
+    start_reach: Option<f64>,
+    end_reach: Option<f64>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LoopCase {
+    #[serde(flatten)]
+    tips: PeleTips,
+    x: f64,
+    y: f64,
+    w: f64,
+    h: f64,
+    k: usize,
+    sideways: bool,
+    base: f64,
+    trim: f64,
+    label_w: f64,
+    label_h: f64,
+    label_x: Num,
+    label_y: Num,
+}
+
+#[derive(Deserialize)]
+struct ReachCase {
+    adds: Vec<(usize, i32, String)>,
+    of: Vec<(usize, i32, f64)>,
+}
+
+#[derive(Deserialize)]
+struct TitleCase {
+    node: PeleBox,
+    routes: Vec<Vec<f64>>,
+    marked: Vec<(f64, Vec<f64>)>,
+    tried: Vec<Tried>,
+}
+
+#[derive(Deserialize)]
+struct PeleBox {
+    x: f64,
+    y: f64,
+    w: f64,
+    h: f64,
+}
+
+#[derive(Deserialize)]
+struct Tried {
+    width: f64,
+    pad: f64,
+    x: Num,
+    probes: Vec<(f64, bool)>,
+}
+
+#[derive(Deserialize)]
+struct StruckCase {
+    parents: Vec<i32>,
+    index: usize,
+    tint: String,
+}
+
+#[derive(Deserialize)]
+struct MarkerCase {
+    #[serde(rename = "type")]
+    kind: String,
+    x: f64,
+    y: f64,
+    dx: f64,
+    dy: f64,
+    svg: String,
+}
+
+#[derive(Deserialize)]
+struct PatchCase {
+    width: f64,
+    height: f64,
+    x: f64,
+    y: f64,
+    svg: String,
 }
 
 #[derive(Deserialize)]
@@ -165,6 +276,262 @@ fn ends_match_pele() {
         });
     }
     f.done("draw ends", 500);
+}
+
+/// Whether an edge's path, written as Pele writes it, and its tips are Pele's, to the bit.
+fn same_tips(e: &EdgePath, want: &PeleTips) -> bool {
+    let tips = [
+        e.start.at.x,
+        e.start.at.y,
+        e.start.dx,
+        e.start.dy,
+        e.end.at.x,
+        e.end.at.y,
+        e.end.dx,
+        e.end.dy,
+    ];
+    let pele = [
+        want.sx, want.sy, want.sdx, want.sdy, want.ex, want.ey, want.edx, want.edy,
+    ];
+    // The fixture writes the -0 of a tip that points straight across or down as 0, as
+    // JSON.stringify does, so the tips are compared as numbers.
+    pele_d(&e.path) == want.d
+        && tips
+            .iter()
+            .zip(pele)
+            .all(|(&a, b)| a == b.0 || a.is_nan() && b.0.is_nan())
+}
+
+#[test]
+fn route_paths_match_pele() {
+    let mut f = Failures::new();
+    for c in draw().routes {
+        let curve = Curve::of(c.curve.as_deref().unwrap_or(""));
+        let start_reach = c.start_reach.unwrap_or_else(|| own_reach(c.start_trim));
+        let end_reach = c.end_reach.unwrap_or_else(|| own_reach(c.end_trim));
+        let e = route_path(
+            &c.route,
+            curve,
+            c.start_trim,
+            c.end_trim,
+            start_reach,
+            end_reach,
+        );
+        f.check(same_tips(&e, &c.tips), || {
+            format!(
+                "route_path({:?}, {:?}, {}, {}, {start_reach}, {end_reach})\n got {} {:?} {:?}\nPele {:?}",
+                c.route,
+                c.curve,
+                c.start_trim,
+                c.end_trim,
+                pele_d(&e.path),
+                e.start,
+                e.end,
+                c.tips
+            )
+        });
+    }
+    f.done("draw routes", 2000);
+}
+
+#[test]
+fn loop_paths_match_pele() {
+    let mut f = Failures::new();
+    for c in draw().loops {
+        let (e, label) = loop_path(
+            Point::new(c.x, c.y),
+            c.w,
+            c.h,
+            c.k,
+            c.sideways,
+            c.base,
+            c.trim,
+            c.label_w,
+            c.label_h,
+        );
+        let ok = same_tips(&e, &c.tips)
+            && Num::same(label.x, c.label_x.0)
+            && Num::same(label.y, c.label_y.0);
+        f.check(ok, || {
+            format!(
+                "loop_path({}, {}, {}, {}, {}, {}, {}, {}): {} {:?} {:?} label {label:?}, Pele {:?} {:?} {:?}",
+                c.x,
+                c.y,
+                c.w,
+                c.h,
+                c.k,
+                c.sideways,
+                c.base,
+                c.trim,
+                pele_d(&e.path),
+                e.start,
+                e.end,
+                c.tips,
+                c.label_x,
+                c.label_y
+            )
+        });
+    }
+    f.done("draw loops", 200);
+}
+
+#[test]
+fn side_reach_matches_pele() {
+    let mut f = Failures::new();
+    for c in draw().reach {
+        let mut r = SideReach::default();
+        for (node, side, kind) in &c.adds {
+            r.add(*node, *side, MarkerType::from_name(kind));
+        }
+        for &(node, side, want) in &c.of {
+            let got = r.of(node, side);
+            f.check(Num::same(got, want), || {
+                format!("of({node}, {side}) = {got}, Pele {want}")
+            });
+        }
+    }
+    f.done("draw reach", 500);
+}
+
+#[test]
+fn markers_match_pele() {
+    let mut f = Failures::new();
+    for c in draw().markers {
+        let tip = Tip {
+            at: Point::new(c.x, c.y),
+            dx: c.dx,
+            dy: c.dy,
+        };
+        let parts = tip
+            .marker(MarkerType::from_name(&c.kind))
+            .map_or_else(Vec::new, |m: Marker| m.outline());
+        let what = format!("{} at {}, {} along {}, {}", c.kind, c.x, c.y, c.dx, c.dy);
+        if c.svg.is_empty() {
+            f.check(parts.is_empty(), || {
+                format!("{what}: {parts:?}, Pele draws none")
+            });
+            continue;
+        }
+        let [part] = parts.as_slice() else {
+            f.check(false, || {
+                format!("{what}: {} parts, Pele {}", parts.len(), c.svg)
+            });
+            continue;
+        };
+        let Outline::Path(path) = &part.outline else {
+            f.check(false, || format!("{what}: {part:?}, Pele {}", c.svg));
+            continue;
+        };
+        let a = attrs(&c.svg);
+        let get = |k: &str| a.iter().find(|(n, _)| *n == k).map(|(_, v)| *v);
+        let filled = part.paint == Painting::FillOnly;
+        f.check(filled == (get("fill") == Some("C")), || {
+            format!("{what}: {:?}, Pele {}", part.paint, c.svg)
+        });
+        if c.svg.starts_with("<circle") {
+            let b = path.bounds();
+            let n = |k: &str| numbers(get(k).unwrap())[0];
+            let ok = (b.x + b.w / 2.0 - n("cx")).abs() <= 0.0051
+                && (b.y + b.h / 2.0 - n("cy")).abs() <= 0.0051
+                && (b.w / 2.0 - n("r")).abs() <= 1e-9;
+            f.check(ok, || format!("{what}: {b:?}, Pele {}", c.svg));
+            continue;
+        }
+        let got = pele_d(path);
+        f.check(Some(got.as_str()) == get("d"), || {
+            format!("{what}: {got}, Pele {}", c.svg)
+        });
+    }
+    f.done("draw markers", 200);
+}
+
+#[test]
+fn label_patches_match_pele() {
+    let mut f = Failures::new();
+    for c in draw().patches {
+        let b = label_patch_box(c.width, c.height, c.x, c.y);
+        let rect = &c.svg[c.svg.find("<rect ").unwrap() + "<rect ".len()..];
+        let a = attrs(&rect[..rect.find('>').unwrap()]);
+        let want: Vec<&str> = ["x", "y", "width", "height", "rx"]
+            .iter()
+            .map(|k| a.iter().find(|(n, _)| n == k).unwrap().1)
+            .collect();
+        let got = [
+            pele_num(b.x),
+            pele_num(b.y),
+            pele_num(b.w),
+            pele_num(b.h),
+            "3".to_string(),
+        ];
+        f.check(got.iter().zip(&want).all(|(g, w)| g == w), || {
+            format!(
+                "label_patch_box({}, {}, {}, {}) = {got:?}, Pele {want:?}",
+                c.width, c.height, c.x, c.y
+            )
+        });
+        let Outline::Path(p) = label_patch(c.width, c.height, c.x, c.y).outline else {
+            unreachable!()
+        };
+        let pb = p.bounds();
+        let ok =
+            (pb.x - b.x).abs() <= 1e-9 && (pb.w - b.w).abs() <= 1e-9 && (pb.h - b.h).abs() <= 1e-9;
+        f.check(ok, || format!("patch path {pb:?}, box {b:?}"));
+    }
+    f.done("draw patches", 50);
+}
+
+#[test]
+fn titles_match_pele() {
+    let p = draw();
+    let mut f = Failures::new();
+    for c in &p.titles {
+        let n = Node {
+            x: c.node.x,
+            y: c.node.y,
+            w: c.node.w,
+            h: c.node.h,
+            group: false,
+        };
+        let mut cr = Crossings::default();
+        for r in &c.routes {
+            mark_crossings(&mut cr, r);
+        }
+        f.check(cr.len() == c.marked.len(), || {
+            format!("{} crossings, Pele {}", cr.len(), c.marked.len())
+        });
+        for (key, xs) in &c.marked {
+            let got = cr.at(*key);
+            f.check(got == Some(xs.as_slice()), || {
+                format!("crossings at {key}: {got:?}, Pele {xs:?}")
+            });
+        }
+        for t in &c.tried {
+            let got = cluster_title_x(&n, t.width, &cr, t.pad);
+            f.check(Num::same(got, t.x.0), || {
+                format!(
+                    "cluster_title_x({n:?}, {}, {}) = {got}, Pele {:?}",
+                    t.width, t.pad, t.x
+                )
+            });
+            for &(x, want) in &t.probes {
+                let got = title_crossed(&n, t.width, x, &cr);
+                f.check(got == want, || {
+                    format!("title_crossed({n:?}, {}, {x}) = {got}", t.width)
+                });
+            }
+        }
+    }
+    for c in &p.struck {
+        let parent = |i: usize| usize::try_from(c.parents[i]).ok();
+        let got = pele_num(struck_tint(struck_depth(parent, c.index)));
+        f.check(got == c.tint, || {
+            format!(
+                "struck tint of {:?} at {} = {got}, Pele {}",
+                c.parents, c.index, c.tint
+            )
+        });
+    }
+    f.done("draw titles", 500);
 }
 
 // The outlines are compared number for number where Pele draws with lines and curves: a

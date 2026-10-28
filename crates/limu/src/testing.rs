@@ -94,3 +94,49 @@ impl Failures {
         assert!(self.1 >= at_least, "{name}: only {} cases", self.1);
     }
 }
+
+/// A number as Pele's num writes it into its SVG: to two decimals, or as String writes it
+/// where the hundredths are 1e11 or more either way, or are not a finite number.
+pub(crate) fn pele_num(v: f64) -> String {
+    let n = crate::js::math::round(v * 100.0);
+    if n == 0.0 {
+        return "0".to_string();
+    }
+    if !(n.abs() < 1e11) {
+        return crate::js::number::to_string(n / 100.0);
+    }
+    let (sign, m) = if n < 0.0 { ("-", -n) } else { ("", n) };
+    let q = (m / 100.0).floor();
+    let i = (m - q * 100.0) as u32;
+    let fraction = match i {
+        0 => String::new(),
+        _ if i.is_multiple_of(10) => format!(".{}", i / 10),
+        _ => format!(".{i:02}"),
+    };
+    format!("{sign}{q}{fraction}")
+}
+
+/// A path as Pele writes the d of one.
+pub(crate) fn pele_d(p: &crate::scene::Path) -> String {
+    use crate::scene::Op;
+    let mut out = String::new();
+    let mut at = 0;
+    for &op in &p.ops {
+        out.push(match op {
+            Op::MoveTo => 'M',
+            Op::LineTo => 'L',
+            Op::QuadTo => 'Q',
+            Op::CubeTo => 'C',
+            Op::Close => 'Z',
+        });
+        let a = &p.args[at..at + op.args()];
+        at += op.args();
+        for (k, xy) in a.chunks(2).enumerate() {
+            if k > 0 {
+                out.push(' ');
+            }
+            out.push_str(&format!("{},{}", pele_num(xy[0]), pele_num(xy[1])));
+        }
+    }
+    out
+}
