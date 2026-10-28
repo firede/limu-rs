@@ -183,7 +183,12 @@ pub(crate) fn flow_lines(sc: &Scene) -> Vec<String> {
             }
         };
         // A swimlane diagram's items have roles of its own, named as a flowchart's are.
-        match it.role.as_str().split_once('.').map_or("", |(_, role)| role) {
+        match it
+            .role
+            .as_str()
+            .split_once('.')
+            .map_or("", |(_, role)| role)
+        {
             "title" => {
                 if let Some(p) = label_of(it) {
                     lines.push(format!("title {}", text_at(&p.label, p.at.x, p.at.y)));
