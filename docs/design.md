@@ -382,3 +382,5 @@ change is listed here with its reason.
 - A class diagram's static member is underlined by the face of its label's span, which
   backends already underline in the text's color, where limu draws a line of its own under
   it.
+- A use case diagram follows the host's routing, as limu's does, where Pele's draws its
+  own curves.

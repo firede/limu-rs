@@ -34,6 +34,8 @@ enum Model {
     Requirement(diagrams::requirement::RequirementDb),
     #[cfg(feature = "agentflow")]
     AgentFlow(diagrams::agentflow::AgentflowDb),
+    #[cfg(feature = "usecase")]
+    UseCase(diagrams::usecase::UsecaseModel),
     #[cfg(feature = "swimlane")]
     Swimlane(diagrams::flowchart::FlowDb),
 }
@@ -58,6 +60,8 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Info,
     #[cfg(feature = "agentflow")]
     DiagramType::AgentFlow,
+    #[cfg(feature = "usecase")]
+    DiagramType::UseCase,
     #[cfg(feature = "swimlane")]
     DiagramType::Swimlane,
 ];
@@ -162,6 +166,10 @@ impl Model {
                     )
                 })
                 .map(Model::AgentFlow),
+            #[cfg(feature = "usecase")]
+            DiagramType::UseCase => p
+                .parse_with(false, |s| diagrams::usecase::parse(s, p.title.as_deref()))
+                .map(Model::UseCase),
             #[cfg(feature = "swimlane")]
             DiagramType::Swimlane => p
                 .parse_with(false, |s| {
@@ -199,6 +207,8 @@ impl Model {
             Model::Requirement(ref db) => diagrams::requirement::layout(db, config, o),
             #[cfg(feature = "agentflow")]
             Model::AgentFlow(ref m) => diagrams::agentflow::layout(m, config, o),
+            #[cfg(feature = "usecase")]
+            Model::UseCase(ref m) => diagrams::usecase::layout(m, config, o),
             #[cfg(feature = "swimlane")]
             Model::Swimlane(ref db) => diagrams::swimlane::layout(db, config, o),
         }

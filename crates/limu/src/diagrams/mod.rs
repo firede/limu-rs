@@ -23,3 +23,5 @@ pub(crate) mod requirement;
 pub(crate) mod state;
 #[cfg(feature = "swimlane")]
 pub(crate) mod swimlane;
+#[cfg(feature = "usecase")]
+pub(crate) mod usecase;
