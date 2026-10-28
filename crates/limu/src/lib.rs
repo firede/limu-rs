@@ -16,6 +16,7 @@
 pub use limu_scene as scene;
 
 mod detect;
+mod draw;
 mod errors;
 mod js;
 pub mod layout;
