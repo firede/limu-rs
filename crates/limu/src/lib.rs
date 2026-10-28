@@ -18,6 +18,7 @@ pub use limu_scene as scene;
 mod common;
 mod css;
 mod detect;
+mod diagram;
 mod diagrams;
 mod draw;
 mod errors;
@@ -35,6 +36,7 @@ mod yaml;
 mod testing;
 
 pub use detect::DiagramType;
+pub use diagram::{Diagram, layout, parse, supports, types};
 pub use errors::{Error, ErrorCode};
 pub use prepare::{DEFAULT_LIMIT, DEFAULT_MAX_EDGES, ParseOptions};
 pub use value::{Map, Value};
