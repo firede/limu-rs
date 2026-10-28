@@ -245,7 +245,8 @@ pub(crate) const ACC_DESCR: TokenType = TokenType {
     ..token("ACC_DESCR", Pattern::Match(acc_descr))
 };
 
-fn acc_descr(s: &str, at: usize) -> Option<usize> {
+/// The end of ACC_DESCR's match at byte at, for a grammar that reads it under its own rules.
+pub(crate) fn acc_descr(s: &str, at: usize) -> Option<usize> {
     let mut i = blanks(s, at);
     if !s[i..].starts_with("accDescr") {
         return None;

@@ -31,8 +31,12 @@ pub(crate) mod packet;
 pub(crate) mod pie;
 #[cfg(feature = "quadrant")]
 pub(crate) mod quadrant;
+#[cfg(feature = "radar")]
+pub(crate) mod radar;
 #[cfg(feature = "requirement")]
 pub(crate) mod requirement;
+#[cfg(feature = "sankey")]
+pub(crate) mod sankey;
 #[cfg(feature = "sequence")]
 pub(crate) mod sequence;
 #[cfg(feature = "state")]
@@ -41,6 +45,8 @@ pub(crate) mod state;
 pub(crate) mod swimlane;
 #[cfg(feature = "timeline")]
 pub(crate) mod timeline;
+#[cfg(feature = "treemap")]
+pub(crate) mod treemap;
 #[cfg(feature = "usecase")]
 pub(crate) mod usecase;
 #[cfg(feature = "xychart")]

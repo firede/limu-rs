@@ -42,8 +42,14 @@ enum Model {
     Gantt(diagrams::gantt::GanttDb),
     #[cfg(feature = "architecture")]
     Architecture(diagrams::architecture::ArchitectureDb),
+    #[cfg(feature = "sankey")]
+    Sankey(diagrams::sankey::SankeyDb),
     #[cfg(feature = "packet")]
     Packet(diagrams::packet::PacketModel),
+    #[cfg(feature = "radar")]
+    Radar(diagrams::radar::RadarModel),
+    #[cfg(feature = "treemap")]
+    Treemap(diagrams::treemap::TreemapModel),
     #[cfg(feature = "info")]
     Info(diagrams::info::InfoModel),
     #[cfg(feature = "requirement")]
@@ -90,8 +96,14 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Architecture,
     #[cfg(feature = "requirement")]
     DiagramType::Requirement,
+    #[cfg(feature = "sankey")]
+    DiagramType::Sankey,
     #[cfg(feature = "packet")]
     DiagramType::Packet,
+    #[cfg(feature = "radar")]
+    DiagramType::Radar,
+    #[cfg(feature = "treemap")]
+    DiagramType::Treemap,
     #[cfg(feature = "info")]
     DiagramType::Info,
     #[cfg(feature = "sequence")]
@@ -214,12 +226,24 @@ impl Model {
                     diagrams::architecture::parse(s, p.title.as_deref())
                 })
                 .map(Model::Architecture),
+            #[cfg(feature = "sankey")]
+            DiagramType::Sankey => p
+                .parse_with(false, |s| diagrams::sankey::parse(s, p.title.as_deref()))
+                .map(Model::Sankey),
             #[cfg(feature = "packet")]
             DiagramType::Packet => p
                 .parse_with(false, |s| {
                     diagrams::packet::parse(s, &p.config, p.title.as_deref())
                 })
                 .map(Model::Packet),
+            #[cfg(feature = "radar")]
+            DiagramType::Radar => p
+                .parse_with(false, |s| diagrams::radar::parse(s, p.title.as_deref()))
+                .map(Model::Radar),
+            #[cfg(feature = "treemap")]
+            DiagramType::Treemap => p
+                .parse_with(false, |s| diagrams::treemap::parse(s, p.title.as_deref()))
+                .map(Model::Treemap),
             #[cfg(feature = "info")]
             DiagramType::Info => p
                 .parse_with(false, |s| diagrams::info::parse(s, p.title.as_deref()))
@@ -302,8 +326,14 @@ impl Model {
             Model::Gantt(ref m) => diagrams::gantt::layout(m, config, o)?,
             #[cfg(feature = "architecture")]
             Model::Architecture(ref m) => diagrams::architecture::layout(m, config, o),
+            #[cfg(feature = "sankey")]
+            Model::Sankey(ref m) => diagrams::sankey::layout(m, config, o)?,
             #[cfg(feature = "packet")]
             Model::Packet(ref m) => diagrams::packet::layout(m, config, o),
+            #[cfg(feature = "radar")]
+            Model::Radar(ref m) => diagrams::radar::layout(m, config, o),
+            #[cfg(feature = "treemap")]
+            Model::Treemap(ref m) => diagrams::treemap::layout(m, config, o),
             #[cfg(feature = "info")]
             Model::Info(ref m) => diagrams::info::layout(m, config, o),
             #[cfg(feature = "requirement")]

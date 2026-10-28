@@ -467,3 +467,49 @@ pub(crate) fn parse_int(s: &str, radix: u32) -> f64 {
     };
     if neg { -f } else { f }
 }
+
+/// parseFloat: white space at the start is skipped, and the longest start of what follows
+/// that is a decimal number, or Infinity, with a sign or none, is read, and NaN where none
+/// is. An exponent counts only with a digit in it. More than an f64 holds is an infinity.
+pub(crate) fn parse_float(s: &str) -> f64 {
+    let s = trim_start(s);
+    let b = s.as_bytes();
+    let mut i = usize::from(s.starts_with(['+', '-']));
+    if s[i..].starts_with("Infinity") {
+        return if s.starts_with('-') {
+            f64::NEG_INFINITY
+        } else {
+            f64::INFINITY
+        };
+    }
+    let run = |from: usize| {
+        let mut end = from;
+        while end < b.len() && b[end].is_ascii_digit() {
+            end += 1;
+        }
+        end
+    };
+    let whole = run(i);
+    let mut digits = whole > i;
+    i = whole;
+    if b.get(i) == Some(&b'.') {
+        let fraction = run(i + 1);
+        if fraction > i + 1 || digits {
+            (i, digits) = (fraction, true);
+        }
+    }
+    if !digits {
+        return f64::NAN;
+    }
+    if matches!(b.get(i), Some(b'e' | b'E')) {
+        let mut j = i + 1;
+        if matches!(b.get(j), Some(b'+' | b'-')) {
+            j += 1;
+        }
+        let k = run(j);
+        if k > j {
+            i = k;
+        }
+    }
+    s[..i].parse().unwrap_or(f64::NAN)
+}

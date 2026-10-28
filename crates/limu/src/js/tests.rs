@@ -218,3 +218,31 @@ fn max_and_min() {
     assert!(math::min(-0.0, 0.0).is_sign_negative() && math::min(0.0, -0.0).is_sign_negative());
     assert_eq!((math::max(2.0, 3.0), math::min(2.0, 3.0)), (3.0, 2.0));
 }
+
+#[test]
+fn parse_float() {
+    let inf = f64::INFINITY;
+    for (s, want) in [
+        ("1", 1.0),
+        (" 2.5x", 2.5),
+        (".5", 0.5),
+        ("5.", 5.0),
+        ("-.5", -0.5),
+        ("+3", 3.0),
+        ("1e3", 1000.0),
+        ("1e", 1.0),
+        ("1e+", 1.0),
+        ("1E-2", 0.01),
+        ("0x10", 0.0),
+        ("1_000", 1.0),
+        ("Infinityx", inf),
+        ("-Infinity", -inf),
+        ("1e400", inf),
+        (" \n7", 7.0),
+    ] {
+        assert_eq!(number::parse_float(s), want, "parse_float({s:?})");
+    }
+    for s in ["", "x", ".", "-", "+.e1", "infinity", "e5"] {
+        assert!(number::parse_float(s).is_nan(), "parse_float({s:?})");
+    }
+}
