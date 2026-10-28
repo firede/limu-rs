@@ -11,3 +11,5 @@
 //! compare what limu does with what Pele does, number for number.
 
 pub use limu_scene as scene;
+
+mod js;

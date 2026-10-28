@@ -16,3 +16,7 @@ limu-scene.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+limu-fixtures = { path = "../limu-fixtures" }
+serde = { workspace = true }

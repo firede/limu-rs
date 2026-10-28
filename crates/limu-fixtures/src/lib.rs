@@ -60,3 +60,39 @@ pub fn load<T: DeserializeOwned>(name: &str) -> T {
         .unwrap_or_else(|e| panic!("{}: {e}", path.display()));
     serde_json::from_str(&json).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
 }
+
+/// A number as the oracle writes it: a JSON number, or `{"$n": …}` for -0, NaN and the
+/// infinities, which JSON has no words for.
+#[derive(Clone, Copy, Debug)]
+pub struct Num(pub f64);
+
+impl<'de> serde::Deserialize<'de> for Num {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Num, D::Error> {
+        #[derive(serde::Deserialize)]
+        #[serde(untagged)]
+        enum Raw {
+            Plain(f64),
+            Word {
+                #[serde(rename = "$n")]
+                n: String,
+            },
+        }
+        Ok(Num(match Raw::deserialize(d)? {
+            Raw::Plain(f) => f,
+            Raw::Word { n } => match n.as_str() {
+                "-0" => -0.0,
+                "NaN" => f64::NAN,
+                "Infinity" => f64::INFINITY,
+                "-Infinity" => f64::NEG_INFINITY,
+                _ => return Err(serde::de::Error::custom(format!("no number {n:?}"))),
+            },
+        }))
+    }
+}
+
+impl Num {
+    /// Whether two numbers are the same to the bit, as every NaN is the same.
+    pub fn same(a: f64, b: f64) -> bool {
+        a.to_bits() == b.to_bits() || a.is_nan() && b.is_nan()
+    }
+}
