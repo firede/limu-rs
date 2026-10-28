@@ -5,7 +5,7 @@ use crate::detect::{Detected, DiagramType, detect_diagram};
 use crate::diagrams;
 use crate::errors::{Error, ErrorCode};
 use crate::layout::Options;
-use crate::prepare::{ParseOptions, prepare};
+use crate::prepare::{ParseOptions, Prepared, prepare};
 use crate::preprocess::preprocess;
 use crate::scene::Scene;
 use crate::value::Map;
@@ -17,6 +17,8 @@ enum Model {
     Flowchart(diagrams::flowchart::FlowDb),
     #[cfg(feature = "info")]
     Info(diagrams::info::InfoModel),
+    #[cfg(feature = "requirement")]
+    Requirement(diagrams::requirement::RequirementDb),
     #[cfg(feature = "swimlane")]
     Swimlane(diagrams::flowchart::FlowDb),
 }
@@ -25,6 +27,8 @@ enum Model {
 const TYPES: &[DiagramType] = &[
     #[cfg(feature = "flowchart")]
     DiagramType::Flowchart,
+    #[cfg(feature = "requirement")]
+    DiagramType::Requirement,
     #[cfg(feature = "info")]
     DiagramType::Info,
     #[cfg(feature = "swimlane")]
@@ -65,38 +69,67 @@ pub struct Diagram {
 /// [`Diagram::layout`]. Its errors are text of no type limu reads, text it cannot parse, and
 /// text past a limit. An error found once the type is known holds it, as Pele's tagErrors
 /// gives it, and so do the errors of layout.
-// Built with no type of diagram, limu reads none, and what comes after the parsers and
-// layouts is never reached.
-#[cfg_attr(
-    not(any(feature = "flowchart", feature = "info", feature = "swimlane")),
-    allow(unreachable_code)
-)]
 pub fn parse(src: &str, options: &ParseOptions) -> Result<Diagram, Error> {
     let p = prepare(src, options)?;
-    let model = match p.found.diagram {
-        #[cfg(feature = "flowchart")]
-        DiagramType::Flowchart => Model::Flowchart(p.parse_with(false, |s| {
-            diagrams::flowchart::parse(s, &p.config, p.title.as_deref(), p.max_edges)
-        })?),
-        #[cfg(feature = "info")]
-        DiagramType::Info => {
-            Model::Info(p.parse_with(false, |s| diagrams::info::parse(s, p.title.as_deref()))?)
-        }
-        #[cfg(feature = "swimlane")]
-        DiagramType::Swimlane => Model::Swimlane(p.parse_with(false, |s| {
-            diagrams::swimlane::parse(s, &p.config, p.title.as_deref(), p.max_edges)
-        })?),
-        _ => {
-            let message = format!("Diagram type \"{}\" is not supported yet.", p.found.diagram);
-            return Err(Error::new(message, ErrorCode::UnsupportedDiagram).of(p.found));
-        }
-    };
+    let model = Model::read(&p)?;
     Ok(Diagram {
         found: p.found,
         config: p.config,
         title: p.title,
         model,
     })
+}
+
+impl Model {
+    /// Reads the body of a prepared text with the parser of its type. A type limu is built
+    /// without is not supported.
+    fn read(p: &Prepared) -> Result<Model, Error> {
+        match p.found.diagram {
+            #[cfg(feature = "flowchart")]
+            DiagramType::Flowchart => p
+                .parse_with(false, |s| {
+                    diagrams::flowchart::parse(s, &p.config, p.title.as_deref(), p.max_edges)
+                })
+                .map(Model::Flowchart),
+            #[cfg(feature = "info")]
+            DiagramType::Info => p
+                .parse_with(false, |s| diagrams::info::parse(s, p.title.as_deref()))
+                .map(Model::Info),
+            #[cfg(feature = "requirement")]
+            DiagramType::Requirement => p
+                .parse_with(false, |s| {
+                    diagrams::requirement::parse(s, p.title.as_deref())
+                })
+                .map(Model::Requirement),
+            #[cfg(feature = "swimlane")]
+            DiagramType::Swimlane => p
+                .parse_with(false, |s| {
+                    diagrams::swimlane::parse(s, &p.config, p.title.as_deref(), p.max_edges)
+                })
+                .map(Model::Swimlane),
+            _ => {
+                let message = format!("Diagram type \"{}\" is not supported yet.", p.found.diagram);
+                Err(Error::new(message, ErrorCode::UnsupportedDiagram).of(p.found))
+            }
+        }
+    }
+
+    /// Lays the model out with the layout of its type.
+    // Built with no type of diagram, limu has no model, and nothing reads the configuration
+    // or the options.
+    #[allow(unused_variables)]
+    fn layout(&self, config: &Map, o: &Options) -> Scene {
+        match *self {
+            #[cfg(feature = "flowchart")]
+            Model::Flowchart(ref db) => diagrams::flowchart::layout(db, config, o),
+            #[cfg(feature = "info")]
+            Model::Info(ref m) => diagrams::info::layout(m, config, o),
+            #[cfg(feature = "requirement")]
+            Model::Requirement(ref db) => diagrams::requirement::layout(db, config, o),
+            #[cfg(feature = "swimlane")]
+            Model::Swimlane(ref db) => diagrams::swimlane::layout(db, config, o),
+        }
+    }
 }
 
 impl Diagram {
@@ -125,19 +158,8 @@ impl Diagram {
     /// and snaps it to the options' grid. Its errors are those a layout gives, and one of a
     /// limit for a scene that would hold a number that is not finite, as numbers at the edge
     /// of what an f64 holds can give, where Pele draws NaN.
-    #[cfg_attr(
-        not(any(feature = "flowchart", feature = "info", feature = "swimlane")),
-        allow(unreachable_code, unused_variables)
-    )]
     pub fn layout(&self, o: &Options) -> Result<Scene, Error> {
-        let mut sc: Scene = match self.model {
-            #[cfg(feature = "flowchart")]
-            Model::Flowchart(ref db) => diagrams::flowchart::layout(db, &self.config, o),
-            #[cfg(feature = "info")]
-            Model::Info(ref m) => diagrams::info::layout(m, &self.config, o),
-            #[cfg(feature = "swimlane")]
-            Model::Swimlane(ref db) => diagrams::swimlane::layout(db, &self.config, o),
-        };
+        let mut sc = self.model.layout(&self.config, o);
         if let Some(grid) = o.snap {
             sc.snap(grid);
         }

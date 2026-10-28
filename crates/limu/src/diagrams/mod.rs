@@ -7,5 +7,7 @@
 pub(crate) mod flowchart;
 #[cfg(feature = "info")]
 pub(crate) mod info;
+#[cfg(feature = "requirement")]
+pub(crate) mod requirement;
 #[cfg(feature = "swimlane")]
 pub(crate) mod swimlane;

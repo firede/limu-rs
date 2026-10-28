@@ -9,10 +9,11 @@ repository.workspace = true
 authors.workspace = true
 
 [features]
-default = ["flowchart", "info", "swimlane"]
+default = ["flowchart", "info", "requirement", "swimlane"]
 serde = ["limu-scene/serde"]
 flowchart = []
 info = []
+requirement = []
 swimlane = []
 
 [dependencies]
