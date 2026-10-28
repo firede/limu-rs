@@ -15,6 +15,8 @@ pub(crate) mod er;
 // flowchart's code. An agent flow draws its nodes in the flowchart's shapes.
 #[cfg(any(feature = "agentflow", feature = "flowchart", feature = "swimlane"))]
 pub(crate) mod flowchart;
+#[cfg(feature = "gantt")]
+pub(crate) mod gantt;
 #[cfg(feature = "info")]
 pub(crate) mod info;
 #[cfg(feature = "journey")]

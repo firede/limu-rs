@@ -2,6 +2,7 @@
 //! cases that differ from it.
 
 pub(crate) mod pelesvg;
+pub(crate) mod tzif;
 
 use serde::Deserialize;
 

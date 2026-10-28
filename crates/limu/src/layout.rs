@@ -1,11 +1,14 @@
 //! What a layout takes besides the diagram: what changes where things are. A change of these
 //! lays a diagram out again, where a change of style does not.
 
+use std::time::SystemTime;
+
 use crate::scene::Grid;
 use crate::scene::text::Measurer;
 use crate::text::Arial;
 
 static ARIAL: Arial = Arial;
+static UTC: Utc = Utc;
 
 /// How edges run between the things they join, in the diagrams laid out in ranks:
 /// flowcharts, swimlane, agent flow, state, class, ER, requirement and use case diagrams. The
@@ -55,6 +58,35 @@ impl std::ops::BitOr for Monospace {
     }
 }
 
+/// A time zone, which a gantt chart's dates are read and written in, as JavaScript reads
+/// them in the machine's. The standard library knows no zones but UTC, so a host that wants
+/// another implements this, with a crate such as jiff.
+pub trait TimeZone {
+    /// The zone's offset from UTC, in seconds east of it, at the instant `at` seconds after
+    /// the Unix epoch.
+    fn offset(&self, at: i64) -> i32;
+}
+
+/// UTC, the time zone a layout is in by default.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Utc;
+
+impl TimeZone for Utc {
+    fn offset(&self, _: i64) -> i32 {
+        0
+    }
+}
+
+/// A time zone that is always the same number of seconds east of UTC.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct FixedOffset(pub i32);
+
+impl TimeZone for FixedOffset {
+    fn offset(&self, _: i64) -> i32 {
+        self.0
+    }
+}
+
 /// What a layout takes besides the diagram. `Options::default()` is what Pele does with no
 /// options of the host's, with text measured by [`Arial`].
 #[derive(Clone, Copy)]
@@ -95,6 +127,11 @@ pub struct Options<'a> {
     /// The parts of diagrams set in the monospace face. They are measured in it, so it
     /// changes where things are.
     pub monospace: Monospace,
+    /// The time a gantt chart is scheduled against, which its tasks with no start of their
+    /// own and its marker of today read. None, as by default, is the time of the layout.
+    pub now: Option<SystemTime>,
+    /// The time zone a gantt chart's dates are in, UTC by default.
+    pub time_zone: &'a dyn TimeZone,
 }
 
 impl Default for Options<'_> {
@@ -114,6 +151,8 @@ impl Default for Options<'_> {
             snap: None,
             routing: Routing::Auto,
             monospace: Monospace::NONE,
+            now: None,
+            time_zone: &UTC,
         }
     }
 }
@@ -126,6 +165,26 @@ impl Options<'_> {
             images: self.images,
             link_schemes: self.link_schemes,
             image_schemes: self.image_schemes,
+        }
+    }
+
+    /// The time a gantt chart is scheduled against, in whole milliseconds since the epoch, as
+    /// Pele's clock reads it: the options' time, or the time it is now.
+    pub(crate) fn clock(&self) -> f64 {
+        let at = self.now.unwrap_or_else(SystemTime::now);
+        match at.duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(d) => d.as_millis() as f64,
+            // Before the epoch a time with a part of a millisecond is in the millisecond
+            // before it, as JavaScript's whole milliseconds are counted.
+            Err(e) => {
+                let d = e.duration();
+                let ms = d.as_millis() as f64;
+                if d.subsec_nanos() % 1_000_000 == 0 {
+                    -ms
+                } else {
+                    -ms - 1.0
+                }
+            }
         }
     }
 
@@ -151,6 +210,7 @@ impl std::fmt::Debug for Options<'_> {
             .field("snap", &self.snap)
             .field("routing", &self.routing)
             .field("monospace", &self.monospace)
+            .field("now", &self.now)
             .finish_non_exhaustive()
     }
 }

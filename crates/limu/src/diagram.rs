@@ -38,6 +38,8 @@ enum Model {
     XyChart(diagrams::xychart::XyChartDb),
     #[cfg(feature = "state")]
     State(diagrams::state::StateDb),
+    #[cfg(feature = "gantt")]
+    Gantt(diagrams::gantt::GanttDb),
     #[cfg(feature = "architecture")]
     Architecture(diagrams::architecture::ArchitectureDb),
     #[cfg(feature = "packet")]
@@ -80,6 +82,8 @@ const TYPES: &[DiagramType] = &[
     DiagramType::XyChart,
     #[cfg(feature = "state")]
     DiagramType::State,
+    #[cfg(feature = "gantt")]
+    DiagramType::Gantt,
     #[cfg(feature = "architecture")]
     DiagramType::Architecture,
     #[cfg(feature = "requirement")]
@@ -194,6 +198,12 @@ impl Model {
             DiagramType::State => p
                 .parse_with(false, |s| diagrams::state::parse(s, p.title.as_deref()))
                 .map(Model::State),
+            #[cfg(feature = "gantt")]
+            DiagramType::Gantt => p
+                .parse_with(false, |s| {
+                    diagrams::gantt::parse(s, &p.config, p.title.as_deref())
+                })
+                .map(Model::Gantt),
             #[cfg(feature = "architecture")]
             DiagramType::Architecture => p
                 .parse_with(false, |s| {
@@ -278,6 +288,8 @@ impl Model {
             Model::XyChart(ref m) => diagrams::xychart::layout(m, config, o)?,
             #[cfg(feature = "state")]
             Model::State(ref m) => diagrams::state::layout(m, config, o),
+            #[cfg(feature = "gantt")]
+            Model::Gantt(ref m) => diagrams::gantt::layout(m, config, o)?,
             #[cfg(feature = "architecture")]
             Model::Architecture(ref m) => diagrams::architecture::layout(m, config, o),
             #[cfg(feature = "packet")]
