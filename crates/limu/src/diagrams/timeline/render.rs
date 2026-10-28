@@ -132,7 +132,7 @@ fn draw(db: &TimelineDb, config: &Map, o: &Options, vertical: bool) -> Scene {
     let size = o.font_size;
     let small = round(size * 0.875);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let multicolor = config
         .get("timeline")
         .and_then(Value::as_object)

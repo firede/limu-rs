@@ -117,8 +117,10 @@ pub struct Options<'a> {
     pub link_schemes: &'a [&'a str],
     /// The schemes an image may use besides a relative address: http and https by default.
     pub image_schemes: &'a [&'a str],
-    /// The room about a diagram, 8 by default, as Pele's padding option.
-    pub padding: f64,
+    /// The room about a diagram, as Pele's padding option. None, as by default, is 8 about
+    /// most diagrams, and a treemap's own diagramPadding where its configuration gives one,
+    /// as Pele takes it. It is optional because 0 is a padding.
+    pub padding: Option<f64>,
     /// A grid to snap where things are to, for a backend that draws on a grid of pixels or
     /// of cells, or none to leave them as they fall.
     pub snap: Option<Grid>,
@@ -147,7 +149,7 @@ impl Default for Options<'_> {
             images: true,
             link_schemes: &["http", "https", "mailto", "tel"],
             image_schemes: &["http", "https"],
-            padding: 8.0,
+            padding: None,
             snap: None,
             routing: Routing::Auto,
             monospace: Monospace::NONE,
@@ -158,6 +160,12 @@ impl Default for Options<'_> {
 }
 
 impl Options<'_> {
+    /// The room about a diagram: the options' padding, or 8, as Pele takes options.padding ??
+    /// 8, and limu's Pad gives it.
+    pub(crate) fn pad(&self) -> f64 {
+        self.padding.unwrap_or(8.0)
+    }
+
     /// The links and images the host lets a diagram have.
     pub(crate) fn schemes(&self) -> crate::url::Schemes<'_> {
         crate::url::Schemes {

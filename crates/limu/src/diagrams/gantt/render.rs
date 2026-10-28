@@ -213,7 +213,7 @@ fn text_item(role: &'static str, id: Option<&str>, label: Label, at: Point) -> I
 pub(crate) fn layout(db: &GanttDb, config: &Map, o: &Options) -> Result<Scene, Error> {
     let size = o.font_size;
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let now = o.clock();
 
     let label_size =

@@ -35,7 +35,7 @@ fn draw(model: &PacketModel, config: &Map, o: &Options, down: bool) -> Scene {
     let label_size = round(size * 0.875);
     let bit_size = round(size * 0.625);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
 
     let packet = config.get("packet").and_then(Value::as_object);
     let row_height = packet_option(config, "rowHeight", 32.0, 1.0, 400.0);

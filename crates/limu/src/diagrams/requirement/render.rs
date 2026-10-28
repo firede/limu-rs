@@ -195,7 +195,7 @@ fn draw(db: &RequirementDb, o: &Options, turned: bool) -> Scene {
     let size = o.font_size;
     let small = round(size * 0.875);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let label = |raw: &str, markdown: bool, size: f64, max_width: f64| {
         layout_label(raw, markdown, &set, size, max_width, Face::REGULAR)
     };

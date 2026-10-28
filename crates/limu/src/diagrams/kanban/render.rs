@@ -159,7 +159,7 @@ pub(crate) fn layout(m: &KanbanDb, config: &Map, o: &Options) -> Scene {
     let line = round(size * 1.5);
     let small_line = round(small * 1.5);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let conf = config.get("kanban").and_then(Value::as_object);
     let option = |key: &str| conf.and_then(|c| c.get(key));
     let glyph = small * 1.25;

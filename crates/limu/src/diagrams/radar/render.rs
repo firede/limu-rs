@@ -105,7 +105,7 @@ fn draw(
     let size = o.font_size;
     let small = round(size * 0.875);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let label = |raw: &str| layout_label(raw, false, &set, small, 4000.0, Face::default());
 
     let axis_scale = option(config, "axisScaleFactor", 1.0, 0.0, 10.0);

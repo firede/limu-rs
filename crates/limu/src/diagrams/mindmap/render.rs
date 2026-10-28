@@ -111,7 +111,7 @@ impl Bands<'_> {
 fn draw(m: &MindmapDb, config: &Map, o: &Options, down: bool) -> Scene {
     let size = o.font_size;
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let max_node_width = config
         .get("mindmap")
         .and_then(Value::as_object)

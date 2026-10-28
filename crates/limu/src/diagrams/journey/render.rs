@@ -190,7 +190,7 @@ fn draw(db: &JourneyDb, o: &Options) -> Scene {
     let small = round(size * 0.875);
     let tiny = round(size * 0.75);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let tasks = &db.tasks;
     let n = tasks.len();
 
@@ -507,7 +507,7 @@ fn vertical_journey(db: &JourneyDb, o: &Options) -> Scene {
     let size = o.font_size;
     let small = round(size * 0.875);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     // A host that gives no width is taken to give 320, as Pele's `?? 320` takes it.
     let max_width = if o.max_width.is_finite() {
         o.max_width

@@ -27,7 +27,7 @@ pub(crate) fn layout(model: &InfoModel, _config: &Map, o: &Options) -> Scene {
 pub(crate) fn lay(model: &InfoModel, o: &Options, name: &str) -> Scene {
     let size = o.font_size;
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
 
     let raw = model.title.as_deref().unwrap_or("");
     let title = layout_label(raw, false, &set, size, 4000.0, Face::BOLD);

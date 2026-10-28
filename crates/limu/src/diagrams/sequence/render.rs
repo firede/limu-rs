@@ -388,7 +388,7 @@ fn draw(db: &SeqDb, config: &Map, o: &Options, tight: bool, hold: f64, by_need: 
     } else {
         set
     };
-    let pad = o.padding;
+    let pad = o.pad();
     let mirror = flag("mirrorActors") != Some(&Value::Bool(false));
     let right_angles = flag("rightAngles") == Some(&Value::Bool(true));
     let pick = |tight_value: f64| if tight { tight_value } else { INF };

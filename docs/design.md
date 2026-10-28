@@ -250,9 +250,9 @@ use.
 
 `layout::Options` holds what changes where things are: the measurer and the font size, the
 icons the host can draw, the width the host has and whether a diagram may turn to fit it,
-the padding about a diagram (8 by default, as Pele's), a grid to snap to, how edges are
-routed, which parts are set in the monospace face, which links and images are let through,
-and the present and the time zone of a gantt chart.
+the padding about a diagram (8 unless the host or a treemap gives one, as Pele's), a grid
+to snap to, how edges are routed, which parts are set in the monospace face, which links
+and images are let through, and the present and the time zone of a gantt chart.
 
 The standard library knows no time zones, so the time zone is a trait the host implements,
 with UTC and fixed offsets built in. A host that wants the machine's zone, as JavaScript
@@ -369,8 +369,6 @@ change is listed here with its reason.
 - The SVG writer writes each run of a label as a `<text>` of its own, where limu writes
   one `<text>` for the whole label. A browser places them alike.
 - A grid to snap to may differ across and down.
-- The padding is a number that is 8 by default, where limu needs a pointer to tell 0 from
-  unset.
 - The diagrams' models are private.
 - The time zone is a trait with UTC by default, as the standard library knows no zones,
   where limu reads the machine's.

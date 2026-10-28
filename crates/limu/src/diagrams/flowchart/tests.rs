@@ -375,7 +375,7 @@ fn renders_match_pele() {
             .expect("a flowchart that parses");
         let o = Options {
             max_width: c.max_width.unwrap_or(f64::INFINITY),
-            padding: c.padding.unwrap_or(8.0),
+            padding: c.padding,
             ..Options::default()
         };
         let got = flow_lines(&layout(&db, &p.config, &o));

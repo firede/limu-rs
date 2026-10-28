@@ -147,7 +147,7 @@ pub(crate) fn layout(model: &XyChartDb, config: &Map, o: &Options) -> Result<Sce
     let small = round(size * 0.875);
     let tiny = round(size * 0.75);
     let set = text_setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let natural = dimension(chart.and_then(|c| c.get("width")), 700.0);
     let width = cap_width(o, natural, 240.0, 0.0);
     // A narrower chart is not as much shorter, so that the plot keeps room for its marks.

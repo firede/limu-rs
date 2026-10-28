@@ -423,7 +423,7 @@ fn draw(m: &UsecaseModel, config: &Map, o: &Options, turned: bool) -> Scene {
     let small = round(size * 0.875);
     let tiny = round(size * 0.8125);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let root_dir = if turned {
         Dir::TB
     } else {

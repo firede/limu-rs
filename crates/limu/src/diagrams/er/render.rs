@@ -160,7 +160,7 @@ fn draw(db: &ErDb, config: &Map, o: &Options, turned: bool) -> Scene {
     let size = o.font_size;
     let small_size = round(size * 0.875);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let schemes = o.schemes();
 
     let mut index: HashMap<&str, usize> = HashMap::new();

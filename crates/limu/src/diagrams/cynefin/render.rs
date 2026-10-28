@@ -120,7 +120,7 @@ pub(crate) fn layout(model: &CynefinModel, config: &Map, o: &Options) -> Scene {
     let small = round(size * 0.8125);
     let item_size = round(size * 0.875);
     let set = common::setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let section = config.get("cynefin").and_then(Value::as_object);
     let show_descriptions =
         section.and_then(|s| s.get("showDomainDescriptions")) != Some(&Value::Bool(false));

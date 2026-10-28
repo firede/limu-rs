@@ -73,7 +73,7 @@ pub(crate) fn layout(model: &QuadrantDb, config: &Map, o: &Options) -> Scene {
     let natural = round(max(100.0, length(config, "chartWidth", 500.0, 4000.0)));
     let width = round(cap_width(o, natural, 280.0, 0.0));
     let height = round(max(100.0, length(config, "chartHeight", 500.0, 4000.0)) * width / natural);
-    let outer = length(config, "quadrantPadding", o.padding, 200.0);
+    let outer = length(config, "quadrantPadding", o.pad(), 200.0);
     let x_pad = length(config, "xAxisLabelPadding", 5.0, 200.0);
     let y_pad = length(config, "yAxisLabelPadding", 5.0, 200.0);
     let has_points = !model.points.is_empty();

@@ -180,7 +180,7 @@ fn draw(
     turned: bool,
     tight: bool,
 ) -> Scene {
-    let pad = o.padding;
+    let pad = o.pad();
     let group_pad = if tight { 12.0 } else { GROUP_PAD };
     let roles = variant.map_or(&ROLES, |v| &v.roles);
     let flow = variant

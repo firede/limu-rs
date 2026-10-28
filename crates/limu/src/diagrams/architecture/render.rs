@@ -365,7 +365,7 @@ fn draw(model: &ArchitectureDb, config: &Map, o: &Options, tight: bool) -> Scene
     );
     let small = round(size * 0.875);
     let set = common::setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let half = icon_size / 2.0;
 
     let nodes: Vec<_> = model.nodes.values().collect();

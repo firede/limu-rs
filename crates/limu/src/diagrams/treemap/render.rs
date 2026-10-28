@@ -93,10 +93,10 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
         .get("treemap")
         .and_then(Value::as_object)
         .unwrap_or(&empty);
-    // Pele takes the host's padding where it gives one, and the treemap's diagramPadding
-    // where it does not. The host's padding is always given here, 8 by default, so the
-    // treemap's own takes its place where the configuration gives one.
-    let pad = option(config, "diagramPadding", o.padding, 0.0, 2000.0);
+    // The host's padding where it gives one, and the treemap's own where it does not.
+    let pad = o
+        .padding
+        .unwrap_or_else(|| option(config, "diagramPadding", 8.0, 0.0, 2000.0));
 
     // Mermaid sizes the diagram as ten times nodeWidth by ten times nodeHeight.
     let natural = option(config, "nodeWidth", 64.0, 1.0, 400.0) * 10.0;

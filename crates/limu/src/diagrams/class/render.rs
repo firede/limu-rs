@@ -236,7 +236,7 @@ fn draw(db: &ClassDb, config: &Map, o: &Options, turned: bool, tight: bool) -> S
     let tiny = round(size * 0.8);
     let tiny_height = round(tiny * 1.4);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
     let card_width = |raw: &str| {
         if raw.is_empty() {
             0.0

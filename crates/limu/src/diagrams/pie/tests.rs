@@ -462,7 +462,7 @@ fn renders_match_pele() {
             .expect("a pie chart that parses");
         let o = Options {
             max_width: c.max_width.unwrap_or(f64::INFINITY),
-            padding: c.padding.unwrap_or(8.0),
+            padding: c.padding,
             font_size: c.font_size.unwrap_or(16.0),
             ..Options::default()
         };

@@ -517,40 +517,23 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
     lines
 }
 
-/// Whether the treemap's configuration gives a diagramPadding the layout takes, a number of
-/// at least 0.
-fn own_padding(config: &Map) -> bool {
-    config
-        .get("treemap")
-        .and_then(Value::as_object)
-        .and_then(|s| s.get("diagramPadding"))
-        .is_some_and(|v| matches!(v, &Value::Number(v) if v >= 0.0))
-}
-
 /// What Pele's render draws of treemaps, read back out of its SVG as a line for each thing
 /// drawn, in the order drawn, with every number in full, and the tooltip of each box that has
-/// one, against the same lines written of the scene. The cases that give both the host's
-/// padding and the treemap's diagramPadding are left out: Pele takes the host's there, and
-/// limu takes the treemap's, as it cannot tell the host's padding given from its default.
+/// one, against the same lines written of the scene.
 #[test]
 fn renders_match_pele() {
     let (f, drawings): (Renders, _) = limu_fixtures::load_drawings("treemap-render");
     assert!(f.cases.len() >= 5000, "only {} cases", f.cases.len());
     let mut failures = Failures::new();
-    let mut skipped = 0;
     for (k, c) in f.cases.iter().enumerate() {
         let p = prepare(&c.src, &ParseOptions::default()).expect("a treemap");
-        if c.padding.is_some() && own_padding(&p.config) {
-            skipped += 1;
-            continue;
-        }
         let m = p
             .parse_with(false, |s| parse(s, p.title.as_deref()))
             .expect("a treemap that parses");
         let o = Options {
             max_width: c.max_width.unwrap_or(f64::INFINITY),
             font_size: c.font_size.unwrap_or(16.0),
-            padding: c.padding.unwrap_or(8.0),
+            padding: c.padding,
             ..Options::default()
         };
         let got = scene_lines(&layout(&m, &p.config, &o));
@@ -567,5 +550,4 @@ fn renders_match_pele() {
         });
     }
     failures.done("renders", 5000);
-    assert!(skipped <= 50, "{skipped} cases left out");
 }

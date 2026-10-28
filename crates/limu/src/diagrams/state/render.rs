@@ -223,7 +223,7 @@ fn draw(db: &StateDb, config: &Map, o: &Options, turned: bool) -> Scene {
     let small = round(size * 0.875);
     let set = setting(o);
     let wrap_width = number_option(config, "wrappingWidth", 200.0);
-    let pad = o.padding;
+    let pad = o.pad();
     let schemes = o.schemes();
     let root_dir = if turned {
         Dir::TB

@@ -135,7 +135,7 @@ fn draw(
     // scaled down.
     let mut small = max(least, round(size * 0.875 * min(1.0, chart_width / natural)));
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
 
     let chart_height = number_option(conf, "height", 400.0, 1.0, 10000.0);
     let node_width = min(

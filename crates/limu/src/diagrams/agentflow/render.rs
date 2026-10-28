@@ -189,7 +189,7 @@ fn draw(db: &AgentflowDb, config: &Map, o: &Options, turned: bool) -> Scene {
     let set = setting(o);
     let wrap_width = number_option(config, "wrappingWidth", 120.0);
     let min_width = number_option(config, "minNodeWidth", 120.0);
-    let pad = o.padding;
+    let pad = o.pad();
     let schemes = o.schemes();
     // The routing the host asks for, which Pele has no option for, overrides the curves.
     let curve = routing_curve(o.routing);

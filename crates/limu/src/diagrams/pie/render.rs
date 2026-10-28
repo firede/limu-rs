@@ -110,7 +110,7 @@ fn draw(model: &PieModel, config: &Map, o: &Options, radius: f64, tight: bool) -
     let size = o.font_size;
     let small = round(size * 0.875);
     let set = setting(o);
-    let pad = o.padding;
+    let pad = o.pad();
 
     let text_position = match option(config, "textPosition") {
         Some(&Value::Number(v)) if (0.0..=1.0).contains(&v) => v,

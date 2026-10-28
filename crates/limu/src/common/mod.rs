@@ -121,7 +121,7 @@ pub(crate) fn fit_width(
 /// The width a title may take before it wraps, as Pele's titleRoom gives it.
 pub(crate) fn title_room(o: &Options) -> f64 {
     if o.max_width > 0.0 {
-        max(80.0, o.max_width - 2.0 * o.padding)
+        max(80.0, o.max_width - 2.0 * o.pad())
     } else {
         4000.0
     }
