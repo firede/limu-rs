@@ -1,4 +1,5 @@
-//! JSON.parse, as Pele's directives call it on the body of an init directive.
+//! JSON.parse, as Pele's directives call it on the body of an init directive, and
+//! JSON.stringify, as Pele's agent flows write a value in an error.
 
 use crate::value::{Map, Value};
 
@@ -199,9 +200,78 @@ impl Parser<'_> {
     }
 }
 
+/// JSON.stringify of a value: strings with JSON's escapes, numbers that are not finite as
+/// null, and an object's keys in its order.
+pub(crate) fn stringify(v: &Value) -> String {
+    let mut out = String::new();
+    write(&mut out, v);
+    out
+}
+
+fn write(out: &mut String, v: &Value) {
+    match v {
+        Value::Null => out.push_str("null"),
+        Value::Bool(b) => out.push_str(if *b { "true" } else { "false" }),
+        Value::Number(n) if n.is_finite() => out.push_str(&crate::js::number::to_string(*n)),
+        Value::Number(_) => out.push_str("null"),
+        Value::String(s) => quote(out, s),
+        Value::Array(items) => {
+            out.push('[');
+            for (i, item) in items.iter().enumerate() {
+                if i > 0 {
+                    out.push(',');
+                }
+                write(out, item);
+            }
+            out.push(']');
+        }
+        Value::Object(m) => {
+            out.push('{');
+            for (i, (k, item)) in m.iter().enumerate() {
+                if i > 0 {
+                    out.push(',');
+                }
+                quote(out, k);
+                out.push(':');
+                write(out, item);
+            }
+            out.push('}');
+        }
+    }
+}
+
+/// A string as JSON.stringify writes it.
+fn quote(out: &mut String, s: &str) {
+    out.push('"');
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\u{8}' => out.push_str("\\b"),
+            '\u{c}' => out.push_str("\\f"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if c < ' ' => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn writes_json() {
+        let v = parse_json(r#"{"a": [1, -0.5, true, null], "b": "q\"\\\n\u0001é"}"#).unwrap();
+        assert_eq!(
+            stringify(&v),
+            r#"{"a":[1,-0.5,true,null],"b":"q\"\\\n\u0001é"}"#
+        );
+        assert_eq!(stringify(&Value::Number(f64::NAN)), "null");
+    }
 
     #[test]
     fn reads_json() {

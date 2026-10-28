@@ -15,6 +15,9 @@ mod tests;
 pub(crate) use db::FlowDb;
 pub(crate) use graph::{FlowGraph, GraphNode, build_flow_graph};
 pub(crate) use render::{Roles, Variant, layout, layout_variant};
+// An agent flow takes its shapes from a flowchart's.
+#[cfg(feature = "agentflow")]
+pub(crate) use shapes::{canonical_shape, is_valid_shape};
 
 use db::FlowDbOptions;
 use parser::parse_flowchart;

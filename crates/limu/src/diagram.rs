@@ -32,6 +32,8 @@ enum Model {
     Info(diagrams::info::InfoModel),
     #[cfg(feature = "requirement")]
     Requirement(diagrams::requirement::RequirementDb),
+    #[cfg(feature = "agentflow")]
+    AgentFlow(diagrams::agentflow::AgentflowDb),
     #[cfg(feature = "swimlane")]
     Swimlane(diagrams::flowchart::FlowDb),
 }
@@ -54,6 +56,8 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Packet,
     #[cfg(feature = "info")]
     DiagramType::Info,
+    #[cfg(feature = "agentflow")]
+    DiagramType::AgentFlow,
     #[cfg(feature = "swimlane")]
     DiagramType::Swimlane,
 ];
@@ -146,6 +150,18 @@ impl Model {
                     diagrams::requirement::parse(s, p.title.as_deref())
                 })
                 .map(Model::Requirement),
+            #[cfg(feature = "agentflow")]
+            DiagramType::AgentFlow => p
+                .parse_with(true, |s| {
+                    diagrams::agentflow::parse(
+                        s,
+                        &p.config,
+                        p.title.as_deref(),
+                        p.line_offset,
+                        p.max_edges,
+                    )
+                })
+                .map(Model::AgentFlow),
             #[cfg(feature = "swimlane")]
             DiagramType::Swimlane => p
                 .parse_with(false, |s| {
@@ -181,6 +197,8 @@ impl Model {
             Model::Info(ref m) => diagrams::info::layout(m, config, o),
             #[cfg(feature = "requirement")]
             Model::Requirement(ref db) => diagrams::requirement::layout(db, config, o),
+            #[cfg(feature = "agentflow")]
+            Model::AgentFlow(ref m) => diagrams::agentflow::layout(m, config, o),
             #[cfg(feature = "swimlane")]
             Model::Swimlane(ref db) => diagrams::swimlane::layout(db, config, o),
         }

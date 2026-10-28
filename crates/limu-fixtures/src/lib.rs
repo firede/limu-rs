@@ -67,7 +67,50 @@ fn try_load<T: DeserializeOwned>(name: &str) -> Result<T, String> {
     GzDecoder::new(file)
         .read_to_string(&mut json)
         .map_err(|e| format!("{}: {e}", path.display()))?;
-    serde_json::from_str(&json).map_err(|e| format!("{}: {e}", path.display()))
+    serde_json::from_str(&lone_surrogates_replaced(&json))
+        .map_err(|e| format!("{}: {e}", path.display()))
+}
+
+/// JSON with each `\u` escape of half a surrogate pair that has no other half beside it
+/// written as one of U+FFFD, which serde_json reads where it reads no lone surrogate. A Rust
+/// string cannot hold half a pair, so limu-rs takes U+FFFD for one, as JSON readers commonly
+/// do. JavaScript's strings can hold one, and JSON.stringify writes it as an escape.
+fn lone_surrogates_replaced(json: &str) -> std::borrow::Cow<'_, str> {
+    if !json.contains("\\ud") && !json.contains("\\uD") {
+        return json.into();
+    }
+    // The code unit of the \u escape at i, if there is one.
+    let unit = |i: usize| {
+        let b = json.as_bytes();
+        (b.get(i) == Some(&b'\\') && b.get(i + 1) == Some(&b'u'))
+            .then(|| json.get(i + 2..i + 6))
+            .flatten()
+            .and_then(|hex| u16::from_str_radix(hex, 16).ok())
+    };
+    let is_high = |u: u16| (0xd800..0xdc00).contains(&u);
+    let is_low = |u: u16| (0xdc00..0xe000).contains(&u);
+    let b = json.as_bytes();
+    let mut out = String::with_capacity(json.len());
+    let (mut last, mut i) = (0, 0);
+    while i < b.len() {
+        if b[i] != b'\\' {
+            i += 1;
+            continue;
+        }
+        match unit(i) {
+            Some(u) if is_high(u) && unit(i + 6).is_some_and(is_low) => i += 12,
+            Some(u) if is_high(u) || is_low(u) => {
+                out.push_str(&json[last..i]);
+                out.push_str("\\ufffd");
+                i += 6;
+                last = i;
+            }
+            Some(_) => i += 6,
+            None => i += 2,
+        }
+    }
+    out.push_str(&json[last..]);
+    out.into()
 }
 
 /// A number as the oracle writes it: a JSON number, or `{"$n": …}` for -0, NaN and the
@@ -103,5 +146,17 @@ impl Num {
     /// Whether two numbers are the same to the bit, as every NaN is the same.
     pub fn same(a: f64, b: f64) -> bool {
         a.to_bits() == b.to_bits() || a.is_nan() && b.is_nan()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lone_surrogates_read_as_replacement() {
+        let json = r#"["😀", "a\ud83dx", "\ude00", "\\ud83d", "é"]"#;
+        let v: Vec<String> = serde_json::from_str(&lone_surrogates_replaced(json)).unwrap();
+        assert_eq!(v, ["😀", "a\u{fffd}x", "\u{fffd}", "\\ud83d", "é"]);
     }
 }

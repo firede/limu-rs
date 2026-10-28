@@ -9,8 +9,9 @@ repository.workspace = true
 authors.workspace = true
 
 [features]
-default = ["class", "er", "flowchart", "info", "packet", "pie", "requirement", "state", "swimlane"]
+default = ["agentflow", "class", "er", "flowchart", "info", "packet", "pie", "requirement", "state", "swimlane"]
 serde = ["limu-scene/serde"]
+agentflow = []
 class = []
 er = []
 flowchart = []
