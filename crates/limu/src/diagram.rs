@@ -48,6 +48,8 @@ enum Model {
     Info(diagrams::info::InfoModel),
     #[cfg(feature = "requirement")]
     Requirement(diagrams::requirement::RequirementDb),
+    #[cfg(feature = "sequence")]
+    Sequence(diagrams::sequence::SeqDb),
     #[cfg(feature = "agentflow")]
     AgentFlow(diagrams::agentflow::AgentflowDb),
     #[cfg(feature = "cynefin")]
@@ -92,6 +94,8 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Packet,
     #[cfg(feature = "info")]
     DiagramType::Info,
+    #[cfg(feature = "sequence")]
+    DiagramType::Sequence,
     #[cfg(feature = "agentflow")]
     DiagramType::AgentFlow,
     #[cfg(feature = "cynefin")]
@@ -226,6 +230,12 @@ impl Model {
                     diagrams::requirement::parse(s, p.title.as_deref())
                 })
                 .map(Model::Requirement),
+            #[cfg(feature = "sequence")]
+            DiagramType::Sequence => p
+                .parse_with(false, |s| {
+                    diagrams::sequence::parse(s, &p.config, p.title.as_deref())
+                })
+                .map(Model::Sequence),
             #[cfg(feature = "agentflow")]
             DiagramType::AgentFlow => p
                 .parse_with(true, |s| {
@@ -298,6 +308,8 @@ impl Model {
             Model::Info(ref m) => diagrams::info::layout(m, config, o),
             #[cfg(feature = "requirement")]
             Model::Requirement(ref db) => diagrams::requirement::layout(db, config, o),
+            #[cfg(feature = "sequence")]
+            Model::Sequence(ref m) => diagrams::sequence::layout(m, config, o),
             #[cfg(feature = "agentflow")]
             Model::AgentFlow(ref m) => diagrams::agentflow::layout(m, config, o),
             #[cfg(feature = "cynefin")]

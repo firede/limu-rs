@@ -33,6 +33,8 @@ pub(crate) mod pie;
 pub(crate) mod quadrant;
 #[cfg(feature = "requirement")]
 pub(crate) mod requirement;
+#[cfg(feature = "sequence")]
+pub(crate) mod sequence;
 #[cfg(feature = "state")]
 pub(crate) mod state;
 #[cfg(feature = "swimlane")]

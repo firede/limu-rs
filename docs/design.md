@@ -289,7 +289,9 @@ on arm64 does on any machine, where limu matches it on arm64 alone.
 A `&str` is always UTF-8, so text that comes as bytes is decoded as a browser decodes it,
 each maximal subpart of an ill-formed sequence replaced with one U+FFFD, at the one entry
 that takes bytes. A `&str` cannot hold a lone surrogate, which JavaScript's strings
-can, so a `\u` escape of one in JSON or in a quoted YAML scalar reads as U+FFFD.
+can, so a `\u` escape of one in JSON or in a quoted YAML scalar reads as U+FFFD. Where
+Pele cuts a string in UTF-16 code units between the halves of a pair, as a sequence
+diagram's links are cut, the half kept reads as U+FFFD too.
 
 A link's host name that is not ASCII is written in Punycode as a browser's URL parser
 writes it, but only after the mappings std can make. Full widths and case are mapped, and
