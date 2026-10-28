@@ -1,10 +1,12 @@
 //! The errors of a diagram's text, and the edits that map a place in the text a parser reads
 //! back to where its author wrote it, as Pele's src/errors.ts has them.
 
+use std::cell::RefCell;
 use std::fmt;
+use std::rc::Rc;
 
 use crate::detect::{Detected, DiagramType};
-use crate::js::chars::{is_word, len16};
+use crate::js::chars::{is_word, len16, trim_end};
 
 /// What kind of error an [`Error`] is, as Pele's PeleErrorCode says.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -190,4 +192,123 @@ pub(crate) fn written_codes(text: &str) -> String {
     }
     out.push_str(&text[last..]);
     out
+}
+
+/// A text a diagram's parser is reading, and what finds a byte of it in the text its author
+/// wrote, as Pele's Origin has them.
+pub(crate) struct Origin {
+    pub(crate) parsed: Rc<str>,
+    pub(crate) find: Box<dyn Fn(usize) -> (String, usize)>,
+}
+
+thread_local! {
+    /// The origin of the text being parsed on this thread. Pele keeps one origin in a variable
+    /// while its parser runs, and a thread runs one parser at a time.
+    static ORIGIN: RefCell<Option<Rc<Origin>>> = const { RefCell::new(None) };
+}
+
+/// Runs run with the errors it locates in next's text reporting where they are in the text
+/// its author wrote, as Pele's locatingIn does.
+pub(crate) fn locating_in<T>(next: Origin, run: impl FnOnce() -> T) -> T {
+    /// Puts the outer origin back, however run ends.
+    struct Restore(Option<Rc<Origin>>);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            let outer = self.0.take();
+            ORIGIN.with(|o| *o.borrow_mut() = outer);
+        }
+    }
+    let outer = ORIGIN.with(|o| o.borrow_mut().replace(Rc::new(next)));
+    let _restore = Restore(outer);
+    run()
+}
+
+/// Finds byte offset of src in the text its author wrote, as Pele's written does: where src
+/// is the text being parsed, the text as written and the byte in it, and otherwise src and
+/// offset as they are.
+pub(crate) fn written(src: &str, offset: usize) -> (String, usize) {
+    match ORIGIN.with(|o| o.borrow().clone()) {
+        Some(origin) if *origin.parsed == *src => (origin.find)(offset),
+        _ => (src.to_string(), offset),
+    }
+}
+
+/// A place in a text: its line and column, counted from 1, the column in UTF-16 code units,
+/// and its line with a caret under the column.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Location {
+    pub(crate) line: usize,
+    pub(crate) column: usize,
+    pub(crate) snippet: String,
+}
+
+/// The place of byte offset in src, as Pele's locate finds that of a code unit. An offset at
+/// or past the end of what src holds but white space is put after its last character, and a
+/// place in the text being parsed is found in the text its author wrote.
+pub(crate) fn locate(src: &str, offset: usize) -> Location {
+    // Keep errors at the end on the last line that holds anything.
+    let end = trim_end(src).len();
+    let (src, mut offset) = if end > 0 && offset >= end {
+        // Pele steps back one code unit, to the last character or the low half of it, and on
+        // past it. limu steps back to the start of the character.
+        let last = src[..end].chars().next_back().map_or(1, char::len_utf8);
+        let (src, at) = written(src, end - last);
+        let size = src[at.min(src.len())..]
+            .chars()
+            .next()
+            .map_or(0, char::len_utf8);
+        (src, at + size)
+    } else {
+        written(src, offset)
+    };
+    offset = offset.min(src.len());
+    while !src.is_char_boundary(offset) {
+        offset -= 1;
+    }
+    let line_start = src[..offset].rfind('\n').map_or(0, |i| i + 1);
+    let line = 1 + src[..offset].matches('\n').count();
+    let line_end = src[offset..].find('\n').map_or(src.len(), |i| offset + i);
+    let column = len16(&src[line_start..offset]) + 1;
+    let snippet = format!(
+        "{}\n{}^",
+        &src[line_start..line_end],
+        "-".repeat(column - 1)
+    );
+    Location {
+        line,
+        column,
+        snippet,
+    }
+}
+
+/// The error of text that does not parse at byte offset, worded as Jison's parsers word it,
+/// as Pele's syntaxError makes it. A lexical error is of text no token starts with.
+pub(crate) fn syntax_error(
+    diagram: DiagramType,
+    src: &str,
+    offset: usize,
+    detail: &str,
+    lexical: bool,
+) -> Error {
+    let loc = locate(src, offset);
+    let message = if lexical {
+        format!(
+            "Lexical error on line {}. Unrecognized text.\n{}",
+            loc.line, loc.snippet
+        )
+    } else {
+        format!(
+            "Parse error on line {}:\n{}\n{detail}",
+            loc.line, loc.snippet
+        )
+    };
+    Error {
+        code: ErrorCode::Syntax,
+        message,
+        diagram: Some(diagram),
+        mermaid_type: None,
+        line: loc.line,
+        column: loc.column,
+        snippet: loc.snippet,
+    }
 }

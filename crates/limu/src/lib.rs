@@ -16,10 +16,12 @@
 pub use limu_scene as scene;
 
 mod detect;
+mod diagrams;
 mod draw;
 mod errors;
 mod js;
 pub mod layout;
+mod prepare;
 mod preprocess;
 pub mod text;
 mod url;
@@ -31,4 +33,5 @@ mod testing;
 
 pub use detect::DiagramType;
 pub use errors::{Error, ErrorCode};
+pub use prepare::{DEFAULT_LIMIT, DEFAULT_MAX_EDGES, ParseOptions};
 pub use value::{Map, Value};

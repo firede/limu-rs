@@ -12,29 +12,108 @@ pub(crate) struct Enc(pub(crate) Value);
 
 impl<'de> Deserialize<'de> for Enc {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Enc, D::Error> {
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum Raw {
-            Null(()),
-            Bool(bool),
-            Number(f64),
-            String(String),
-            Array(Vec<Enc>),
-            Object {
-                #[serde(rename = "$o")]
-                o: Vec<(String, Enc)>,
-            },
-            Word(limu_fixtures::Num),
+        d.deserialize_any(EncVisitor)
+    }
+}
+
+/// Reads an Enc. An object of one key "$o" or "$n" is an encoded object or number, and any
+/// other object is read as written, its keys in the order of the text, as JSON.stringify
+/// writes them.
+struct EncVisitor;
+
+impl<'de> serde::de::Visitor<'de> for EncVisitor {
+    type Value = Enc;
+
+    fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str("a value as the oracle writes it")
+    }
+
+    fn visit_unit<E>(self) -> Result<Enc, E> {
+        Ok(Enc(Value::Null))
+    }
+
+    fn visit_bool<E>(self, b: bool) -> Result<Enc, E> {
+        Ok(Enc(Value::Bool(b)))
+    }
+
+    fn visit_f64<E>(self, n: f64) -> Result<Enc, E> {
+        Ok(Enc(Value::Number(n)))
+    }
+
+    fn visit_i64<E>(self, n: i64) -> Result<Enc, E> {
+        Ok(Enc(Value::Number(n as f64)))
+    }
+
+    fn visit_u64<E>(self, n: u64) -> Result<Enc, E> {
+        Ok(Enc(Value::Number(n as f64)))
+    }
+
+    fn visit_str<E>(self, s: &str) -> Result<Enc, E> {
+        Ok(Enc(Value::String(s.to_string())))
+    }
+
+    fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut seq: A) -> Result<Enc, A::Error> {
+        let mut out = Vec::new();
+        while let Some(Enc(v)) = seq.next_element()? {
+            out.push(v);
         }
-        Ok(Enc(match Raw::deserialize(d)? {
-            Raw::Null(()) => Value::Null,
-            Raw::Bool(b) => Value::Bool(b),
-            Raw::Number(n) => Value::Number(n),
-            Raw::String(s) => Value::String(s),
-            Raw::Array(a) => Value::Array(a.into_iter().map(|e| e.0).collect()),
-            Raw::Object { o } => Value::Object(o.into_iter().map(|(k, v)| (k, v.0)).collect()),
-            Raw::Word(n) => Value::Number(n.0),
-        }))
+        Ok(Enc(Value::Array(out)))
+    }
+
+    fn visit_map<A: serde::de::MapAccess<'de>>(self, mut map: A) -> Result<Enc, A::Error> {
+        let mut out = Map::new();
+        while let Some(key) = map.next_key::<String>()? {
+            match key.as_str() {
+                "$o" if out.is_empty() => {
+                    let entries: Vec<(String, Enc)> = map.next_value()?;
+                    return Ok(Enc(Value::Object(
+                        entries.into_iter().map(|(k, v)| (k, v.0)).collect(),
+                    )));
+                }
+                "$n" if out.is_empty() => {
+                    let n: String = map.next_value()?;
+                    return Ok(Enc(Value::Number(match n.as_str() {
+                        "-0" => -0.0,
+                        "NaN" => f64::NAN,
+                        "Infinity" => f64::INFINITY,
+                        "-Infinity" => f64::NEG_INFINITY,
+                        _ => return Err(serde::de::Error::custom(format!("no number {n:?}"))),
+                    })));
+                }
+                _ => {
+                    let Enc(v) = map.next_value()?;
+                    out.insert(key, v);
+                }
+            }
+        }
+        Ok(Enc(Value::Object(out)))
+    }
+}
+
+/// An error as the oracle writes Pele's, field by field. An error of no place, as one of a
+/// limit, has no line, column or snippet.
+#[derive(Deserialize, Debug)]
+pub(crate) struct PeleError {
+    pub(crate) code: String,
+    pub(crate) message: String,
+    #[serde(rename = "type")]
+    pub(crate) diagram: Option<String>,
+    #[serde(default)]
+    pub(crate) line: usize,
+    #[serde(default)]
+    pub(crate) column: usize,
+    #[serde(default)]
+    pub(crate) snippet: String,
+}
+
+impl PeleError {
+    /// Whether e is this error.
+    pub(crate) fn is(&self, e: &crate::Error) -> bool {
+        e.code.as_str() == self.code
+            && e.message == self.message
+            && e.diagram.map(|d| d.name()) == self.diagram.as_deref()
+            && (e.line, e.column) == (self.line, self.column)
+            && e.snippet == self.snippet
     }
 }
 

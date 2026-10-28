@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use super::{encode_entities, preprocess};
 use crate::detect::detect_diagram;
-use crate::testing::{Enc, same, sorted};
+use crate::testing::{Enc, PeleError, same, sorted};
 
 #[derive(Deserialize)]
 struct Parse {
@@ -31,17 +31,6 @@ struct Case {
     error: Option<PeleError>,
 }
 
-#[derive(Deserialize, Debug)]
-struct PeleError {
-    code: String,
-    message: String,
-    #[serde(rename = "type")]
-    diagram: Option<String>,
-    line: usize,
-    column: usize,
-    snippet: String,
-}
-
 #[derive(Deserialize)]
 struct Encoded {
     text: String,
@@ -60,13 +49,7 @@ fn preprocess_matches_pele() {
     for c in &p.preprocessed {
         let got = preprocess(&c.source, None);
         let ok = match (&got, &c.error) {
-            (Err(e), Some(w)) => {
-                e.code.as_str() == w.code
-                    && e.message == w.message
-                    && e.diagram.map(|d| d.name()) == w.diagram.as_deref()
-                    && (e.line, e.column) == (w.line, w.column)
-                    && e.snippet == w.snippet
-            }
+            (Err(e), Some(w)) => w.is(e),
             (Ok(got), None) => {
                 let found = detect_diagram(&got.text);
                 let config = crate::Value::Object(got.config.clone());

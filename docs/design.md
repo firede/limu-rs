@@ -374,3 +374,8 @@ change is listed here with its reason.
 - The time zone is a trait with UTC by default, as the standard library knows no zones,
   where limu reads the machine's.
 - Fixtures are downloaded from pele-oracle's releases rather than committed.
+- The text a parser is given is tied to where it came from by a value that lasts as long
+  as the parse, on the parsing thread, as Pele keeps it in a variable of its module. An
+  error found in that text is then placed in the text its author wrote. limu keys the
+  texts by their addresses in a map that every thread shares, which Rust's strings, moved
+  and borrowed as they are, do not allow.
