@@ -5,5 +5,7 @@
 // flowchart's code.
 #[cfg(any(feature = "flowchart", feature = "swimlane"))]
 pub(crate) mod flowchart;
+#[cfg(feature = "info")]
+pub(crate) mod info;
 #[cfg(feature = "swimlane")]
 pub(crate) mod swimlane;
