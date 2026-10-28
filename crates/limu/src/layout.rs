@@ -119,6 +119,16 @@ impl Default for Options<'_> {
 }
 
 impl Options<'_> {
+    /// The links and images the host lets a diagram have.
+    pub(crate) fn schemes(&self) -> crate::url::Schemes<'_> {
+        crate::url::Schemes {
+            links: self.links,
+            images: self.images,
+            link_schemes: self.link_schemes,
+            image_schemes: self.image_schemes,
+        }
+    }
+
     /// Whether the host can draw an icon of a name.
     pub(crate) fn has_icon(&self, name: &str) -> bool {
         self.icons.is_some_and(|icons| icons(name))

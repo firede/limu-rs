@@ -8,10 +8,12 @@ use serde::Deserialize;
 use super::db::FlowDbOptions;
 use super::graph::FlowGraph;
 use super::parser::parse_flowchart;
-use super::{FlowDb, build_flow_graph, default_curve, parse};
+use super::{FlowDb, build_flow_graph, default_curve, layout, parse};
 use crate::detect::DiagramType;
 use crate::errors::{Error, ErrorCode};
+use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
+use crate::testing::pelesvg::{flow_lines, tags_last};
 use crate::testing::{Enc, Failures, PeleError, same};
 use crate::value::{Map, Value};
 
@@ -340,4 +342,53 @@ fn huge() {
     parse_flowchart(&format!("graph LR;{body}"), &mut db).unwrap();
     assert_eq!(db.edges[0].kind.as_deref(), Some("arrow_point"));
     assert_eq!((db.edges.len(), db.nodes.values().count()), (47917, 2));
+}
+
+#[derive(Deserialize)]
+struct Renders {
+    cases: Vec<Render>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Render {
+    src: String,
+    max_width: Option<f64>,
+    padding: Option<f64>,
+    #[serde(flatten)]
+    drawing: limu_fixtures::Drawing,
+}
+
+/// What Pele's render draws of flowcharts, read back out of its SVG as a line for each thing
+/// drawn, in the order drawn, against the same lines written of the scene.
+#[test]
+fn renders_match_pele() {
+    let (f, drawings): (Renders, _) = limu_fixtures::load_drawings("flowchart-render");
+    let read = tags_last(&["clickable"]);
+    let mut failures = Failures::new();
+    for (k, c) in f.cases.iter().enumerate() {
+        let p = prepare(&c.src, &ParseOptions::default()).expect("a flowchart");
+        let db = p
+            .parse_with(false, |s| {
+                parse(s, &p.config, p.title.as_deref(), p.max_edges)
+            })
+            .expect("a flowchart that parses");
+        let o = Options {
+            max_width: c.max_width.unwrap_or(f64::INFINITY),
+            padding: c.padding.unwrap_or(8.0),
+            ..Options::default()
+        };
+        let got = flow_lines(&layout(&db, &p.config, &o));
+        let diff = drawings.diff(k, &c.drawing, &got, Some(&read));
+        failures.check(diff.is_none(), || {
+            format!(
+                "{:?}, max {:?}, padding {:?}: {}",
+                c.src,
+                c.max_width,
+                c.padding,
+                diff.unwrap()
+            )
+        });
+    }
+    failures.done("renders", 1000);
 }

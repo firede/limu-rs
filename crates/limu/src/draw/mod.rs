@@ -4,10 +4,12 @@
 
 mod cluster;
 mod edges;
+mod fill;
 mod shapes;
 
 pub(crate) use cluster::*;
 pub(crate) use edges::*;
+pub(crate) use fill::*;
 pub(crate) use shapes::*;
 
 #[cfg(test)]
