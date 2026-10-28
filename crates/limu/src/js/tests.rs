@@ -5,30 +5,7 @@ use limu_fixtures::{Num, load};
 use serde::Deserialize;
 
 use super::{chars, math, number};
-
-/// Counts the cases where got is not want, and shows the first of them.
-struct Failures(usize, usize);
-
-impl Failures {
-    fn new() -> Failures {
-        Failures(0, 0)
-    }
-
-    fn check(&mut self, ok: bool, show: impl FnOnce() -> String) {
-        self.1 += 1;
-        if !ok {
-            self.0 += 1;
-            if self.0 <= 20 {
-                eprintln!("{}", show());
-            }
-        }
-    }
-
-    fn done(self, name: &str, at_least: usize) {
-        assert!(self.0 == 0, "{name}: {} of {} differ", self.0, self.1);
-        assert!(self.1 >= at_least, "{name}: only {} cases", self.1);
-    }
-}
+use crate::testing::Failures;
 
 fn same(got: f64, want: f64) -> bool {
     Num::same(got, want)
@@ -232,4 +209,12 @@ fn units() {
     assert_eq!(chars::to_lower("İA"), "i̇a");
     assert_eq!(chars::drop_indents("a\n  b\n\n c"), "a\nb\nc");
     assert_eq!(chars::trim("\u{feff} a\u{3000}"), "a");
+}
+
+#[test]
+fn max_and_min() {
+    assert!(math::max(1.0, f64::NAN).is_nan() && math::min(f64::NAN, 1.0).is_nan());
+    assert!(math::max(-0.0, 0.0).is_sign_positive() && math::max(0.0, -0.0).is_sign_positive());
+    assert!(math::min(-0.0, 0.0).is_sign_negative() && math::min(0.0, -0.0).is_sign_negative());
+    assert_eq!((math::max(2.0, 3.0), math::min(2.0, 3.0)), (3.0, 2.0));
 }

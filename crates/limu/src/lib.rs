@@ -18,6 +18,7 @@ pub use limu_scene as scene;
 mod detect;
 mod errors;
 mod js;
+pub mod layout;
 mod preprocess;
 pub mod text;
 mod value;

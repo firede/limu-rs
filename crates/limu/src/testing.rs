@@ -1,4 +1,5 @@
-//! What the tests of limu share: reading values as the oracle writes them.
+//! What the tests of limu share: reading values as the oracle writes them, and counting the
+//! cases that differ from it.
 
 use serde::Deserialize;
 
@@ -67,5 +68,29 @@ pub(crate) fn sorted(v: &Value) -> Value {
             Value::Object(Map::sorted(entries))
         }
         _ => v.clone(),
+    }
+}
+
+/// Counts the cases where got is not want, and shows the first of them.
+pub(crate) struct Failures(usize, usize);
+
+impl Failures {
+    pub(crate) fn new() -> Failures {
+        Failures(0, 0)
+    }
+
+    pub(crate) fn check(&mut self, ok: bool, show: impl FnOnce() -> String) {
+        self.1 += 1;
+        if !ok {
+            self.0 += 1;
+            if self.0 <= 20 {
+                eprintln!("{}", show());
+            }
+        }
+    }
+
+    pub(crate) fn done(self, name: &str, at_least: usize) {
+        assert!(self.0 == 0, "{name}: {} of {} differ", self.0, self.1);
+        assert!(self.1 >= at_least, "{name}: only {} cases", self.1);
     }
 }

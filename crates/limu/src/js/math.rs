@@ -22,6 +22,33 @@
     clippy::needless_late_init
 )]
 
+/// Math.max of two numbers: NaN if either is, and +0 over -0. Rust's `f64::max` takes the
+/// number over NaN, and may give either zero.
+pub(crate) fn max(a: f64, b: f64) -> f64 {
+    if a.is_nan() || b.is_nan() {
+        f64::NAN
+    } else if a == b {
+        if a.is_sign_negative() { b } else { a }
+    } else if a > b {
+        a
+    } else {
+        b
+    }
+}
+
+/// Math.min of two numbers: NaN if either is, and -0 under +0.
+pub(crate) fn min(a: f64, b: f64) -> f64 {
+    if a.is_nan() || b.is_nan() {
+        f64::NAN
+    } else if a == b {
+        if a.is_sign_negative() { a } else { b }
+    } else if a < b {
+        a
+    } else {
+        b
+    }
+}
+
 /// Math.round: the nearest integer, halves up, and zero with the sign of x where that is the
 /// nearest, as Math.round(-0.25) is -0. It is not (x + 0.5).floor(), which rounds
 /// 0.49999999999999994 up, as the sum is 1.
