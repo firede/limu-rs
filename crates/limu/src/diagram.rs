@@ -11,10 +11,15 @@ use crate::scene::Scene;
 use crate::value::Map;
 
 /// The model of a diagram of a type, as its parser reads it.
+// A diagram holds one model, made once each time a text is parsed, so the room the largest
+// takes in every diagram matters less than a box for each would.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug)]
 enum Model {
     #[cfg(feature = "flowchart")]
     Flowchart(diagrams::flowchart::FlowDb),
+    #[cfg(feature = "er")]
+    Er(diagrams::er::ErDb),
     #[cfg(feature = "info")]
     Info(diagrams::info::InfoModel),
     #[cfg(feature = "requirement")]
@@ -27,6 +32,8 @@ enum Model {
 const TYPES: &[DiagramType] = &[
     #[cfg(feature = "flowchart")]
     DiagramType::Flowchart,
+    #[cfg(feature = "er")]
+    DiagramType::Er,
     #[cfg(feature = "requirement")]
     DiagramType::Requirement,
     #[cfg(feature = "info")]
@@ -91,6 +98,10 @@ impl Model {
                     diagrams::flowchart::parse(s, &p.config, p.title.as_deref(), p.max_edges)
                 })
                 .map(Model::Flowchart),
+            #[cfg(feature = "er")]
+            DiagramType::Er => p
+                .parse_with(false, |s| diagrams::er::parse(s, p.title.as_deref()))
+                .map(Model::Er),
             #[cfg(feature = "info")]
             DiagramType::Info => p
                 .parse_with(false, |s| diagrams::info::parse(s, p.title.as_deref()))
@@ -122,6 +133,8 @@ impl Model {
         match *self {
             #[cfg(feature = "flowchart")]
             Model::Flowchart(ref db) => diagrams::flowchart::layout(db, config, o),
+            #[cfg(feature = "er")]
+            Model::Er(ref m) => diagrams::er::layout(m, config, o),
             #[cfg(feature = "info")]
             Model::Info(ref m) => diagrams::info::layout(m, config, o),
             #[cfg(feature = "requirement")]

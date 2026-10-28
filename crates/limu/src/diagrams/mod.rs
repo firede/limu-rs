@@ -3,6 +3,8 @@
 
 // A swimlane diagram is a flowchart laid out its own way, and is read and drawn by the
 // flowchart's code.
+#[cfg(feature = "er")]
+pub(crate) mod er;
 #[cfg(any(feature = "flowchart", feature = "swimlane"))]
 pub(crate) mod flowchart;
 #[cfg(feature = "info")]
