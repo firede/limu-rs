@@ -19,6 +19,7 @@ mod detect;
 mod diagrams;
 mod draw;
 mod errors;
+mod graphs;
 mod js;
 pub mod layout;
 mod prepare;

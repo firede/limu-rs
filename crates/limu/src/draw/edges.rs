@@ -3,6 +3,7 @@
 
 use std::collections::HashMap;
 
+use crate::graphs::layered::ease;
 use crate::js::math::{hypot, max, min, or1, sign, sign_or1};
 use crate::scene::{Marker, MarkerType, Painting, Part, Path, Point, Rect};
 
@@ -135,11 +136,6 @@ impl Curve {
             _ => Curve::Smooth,
         }
     }
-}
-
-/// How far along its run a curve's handles reach, as Pele's ease in layered.ts gives it.
-fn ease(across: f64, along: f64) -> f64 {
-    max(0.25, min(0.5, (4.0 * along.abs()) / or1(across.abs())))
 }
 
 /// The path of a route of x, y, axis triples, trimmed at each end to leave room for markers,

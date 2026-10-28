@@ -73,7 +73,25 @@ pub(crate) fn sign(x: f64) -> f64 {
 
 /// x || 1.
 pub(crate) fn or1(x: f64) -> f64 {
-    if x == 0.0 || x.is_nan() { 1.0 } else { x }
+    or(x, 1.0)
+}
+
+/// x || y on numbers: y when x is zero or NaN.
+pub(crate) fn or(x: f64, y: f64) -> f64 {
+    if x != 0.0 && !x.is_nan() { x } else { y }
+}
+
+/// How a JavaScript sort reads what its comparator returns: below zero, above zero, or else,
+/// for zero and for NaN alike, a tie. The sorts of Array.prototype and of typed arrays are
+/// stable, as Rust's sort_by is, so a comparator that is consistent orders the same in both.
+pub(crate) fn by(x: f64) -> std::cmp::Ordering {
+    if x < 0.0 {
+        std::cmp::Ordering::Less
+    } else if x > 0.0 {
+        std::cmp::Ordering::Greater
+    } else {
+        std::cmp::Ordering::Equal
+    }
 }
 
 /// Math.sign(x) || 1.
