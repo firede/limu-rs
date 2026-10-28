@@ -31,14 +31,27 @@ use crate::text::{decode_entities, layout_label};
 use crate::url::{image_url, internal_link, link_url, safe_url};
 use crate::value::{Map, Value};
 
+/// The roles of the items a flowchart's layout draws, by the diagram they are drawn for.
+pub(crate) struct Roles {
+    pub(crate) casing: &'static str,
+    pub(crate) cluster: &'static str,
+    pub(crate) cluster_title: &'static str,
+    pub(crate) edge: &'static str,
+    pub(crate) edge_label: &'static str,
+    pub(crate) node: &'static str,
+    pub(crate) title: &'static str,
+}
+
 /// The roles of the items of a flowchart.
-pub(crate) const ROLE_CASING: &str = "flowchart.casing";
-pub(crate) const ROLE_CLUSTER: &str = "flowchart.cluster";
-pub(crate) const ROLE_CLUSTER_TITLE: &str = "flowchart.cluster-title";
-pub(crate) const ROLE_EDGE: &str = "flowchart.edge";
-pub(crate) const ROLE_EDGE_LABEL: &str = "flowchart.edge-label";
-pub(crate) const ROLE_NODE: &str = "flowchart.node";
-pub(crate) const ROLE_TITLE: &str = "flowchart.title";
+pub(crate) const ROLES: Roles = Roles {
+    casing: "flowchart.casing",
+    cluster: "flowchart.cluster",
+    cluster_title: "flowchart.cluster-title",
+    edge: "flowchart.edge",
+    edge_label: "flowchart.edge-label",
+    node: "flowchart.node",
+    title: "flowchart.title",
+};
 
 // The spacing of a flowchart, as Pele's render.ts has it.
 const NODE_SEP: f64 = 40.0;
@@ -71,6 +84,9 @@ pub(crate) struct Variant {
     /// The diagram's type: the scene's, and the section of the configuration read in place
     /// of the flowchart's where it is an object.
     pub(crate) diagram: &'static str,
+    /// The roles of the items the flowchart's layout draws for it, so that a host can style
+    /// them apart from a flowchart's. Pele gives them the flowchart's classes.
+    pub(crate) roles: Roles,
     /// Changes the graph before it is laid out.
     pub(crate) prepare: fn(&mut FlowGraph),
     /// Lays the graph out in place of compound_layout. tight is set where the diagram is laid
@@ -166,6 +182,7 @@ fn draw(
 ) -> Scene {
     let pad = o.padding;
     let group_pad = if tight { 12.0 } else { GROUP_PAD };
+    let roles = variant.map_or(&ROLES, |v| &v.roles);
     let flow = variant
         .and_then(|v| config.get(v.diagram))
         .and_then(Value::as_object)
@@ -431,7 +448,7 @@ fn draw(
     // The groups whose authors set them a fill, which the edges are looked at against.
     let mut fills: Vec<Fill> = Vec::new();
     if !title.is_empty() {
-        let mut it = Item::new(Kind::Text, ROLE_TITLE);
+        let mut it = Item::new(Kind::Text, roles.title);
         let at = Point::new(sc.width / 2.0, pad + title.height / 2.0);
         it.label = Some(Placed::new(title, at));
         titles.push(it);
@@ -471,7 +488,7 @@ fn draw(
             let title_x = cluster_title_x(&node_of(c), view.label.width, &crossings, group_pad);
             let title_y = y - c.h / 2.0 + 8.0 + view.label.height / 2.0;
             let bounds = Rect::new(x - c.w / 2.0, y - c.h / 2.0, c.w, c.h);
-            let mut cluster = Item::new(Kind::Group, ROLE_CLUSTER);
+            let mut cluster = Item::new(Kind::Group, roles.cluster);
             cluster.id = Some(n.id.clone());
             (cluster.class, cluster.tags) = (class, tags);
             cluster.bounds = bounds;
@@ -495,7 +512,7 @@ fn draw(
                 if title_crossed(&node_of(c), view.label.width, title_x, &crossings) {
                     let parent = |k: usize| usize::try_from(cnodes[k].parent).ok();
                     let depth = struck_depth(parent, i);
-                    let mut it = Item::new(Kind::Text, ROLE_CLUSTER_TITLE);
+                    let mut it = Item::new(Kind::Text, roles.cluster_title);
                     it.id = Some(n.id.clone());
                     it.label = Some(Placed::new(view.label.clone(), at));
                     it.style = Style {
@@ -526,7 +543,7 @@ fn draw(
         }
 
         let (w, h) = (view.w, view.h);
-        let mut it = Item::new(Kind::Node, ROLE_NODE);
+        let mut it = Item::new(Kind::Node, roles.node);
         it.shape = Some(Shape::new(view.shape));
         it.id = Some(n.id.clone());
         (it.class, it.tags) = (class, tags);
@@ -731,7 +748,7 @@ fn draw(
                     route: points,
                     ends,
                 }),
-                ROLE_EDGE,
+                roles.edge,
             );
             it.id = Some(edge.id.clone());
             it.class = class_names(&classes);
@@ -750,7 +767,7 @@ fn draw(
             it.style.ground = ground;
             if cased
                 && let Some(c) = casing(
-                    ROLE_CASING,
+                    roles.casing,
                     &path.path,
                     &ends,
                     &decls,
@@ -765,7 +782,7 @@ fn draw(
         if label.width > 0.0 {
             let ce = &cedges[i];
             let (x, y) = (ce.label_x, ce.label_y);
-            let mut it = Item::new(Kind::Text, ROLE_EDGE_LABEL);
+            let mut it = Item::new(Kind::Text, roles.edge_label);
             it.id = Some(edge.id.clone());
             it.bounds = label_patch_box(label.width, label.height, x, y);
             it.parts = vec![label_patch(label.width, label.height, x, y)];

@@ -14,7 +14,7 @@ mod tests;
 
 pub(crate) use db::FlowDb;
 pub(crate) use graph::{FlowGraph, GraphNode, build_flow_graph};
-pub(crate) use render::{Variant, layout, layout_variant};
+pub(crate) use render::{Roles, Variant, layout, layout_variant};
 
 use db::FlowDbOptions;
 use parser::parse_flowchart;

@@ -182,13 +182,14 @@ pub(crate) fn flow_lines(sc: &Scene) -> Vec<String> {
                 }
             }
         };
-        match it.role.as_str() {
-            "flowchart.title" => {
+        // A swimlane diagram's items have roles of its own, named as a flowchart's are.
+        match it.role.as_str().split_once('.').map_or("", |(_, role)| role) {
+            "title" => {
                 if let Some(p) = label_of(it) {
                     lines.push(format!("title {}", text_at(&p.label, p.at.x, p.at.y)));
                 }
             }
-            "flowchart.cluster" => {
+            "cluster" => {
                 lines.push(format!(
                     "cluster {id} [{classes}] {}",
                     boxed(it.bounds, 0.0, 0.0)
@@ -199,7 +200,7 @@ pub(crate) fn flow_lines(sc: &Scene) -> Vec<String> {
                 label(&mut lines, 0.0, 0.0);
                 ink(&mut lines);
             }
-            "swimlane.lane" => {
+            "lane" => {
                 lines.push(format!(
                     "lane {id} [{classes}] {} band {}",
                     boxed(box_of(&it.parts[0]), 0.0, 0.0),
@@ -218,8 +219,8 @@ pub(crate) fn flow_lines(sc: &Scene) -> Vec<String> {
                 }
                 ink(&mut lines);
             }
-            "flowchart.casing" => lines.push(casing_line(it)),
-            "flowchart.edge" => {
+            "casing" => lines.push(casing_line(it)),
+            "edge" => {
                 let mut flags = String::new();
                 if it.style.stroke_width == Some(2.5) {
                     flags.push_str(" thick");
@@ -244,15 +245,15 @@ pub(crate) fn flow_lines(sc: &Scene) -> Vec<String> {
                     }
                 }
             }
-            "flowchart.cluster-title" => {
+            "cluster-title" => {
                 lines.push(format!("struck {id}"));
                 label(&mut lines, 0.0, 0.0);
             }
-            "flowchart.edge-label" => {
+            "edge-label" => {
                 lines.push(format!("label {id} {}", boxed(it.bounds, 0.0, 0.0)));
                 label(&mut lines, 0.0, 0.0);
             }
-            "flowchart.node" => {
+            "node" => {
                 let b = it.bounds;
                 let (cx, cy) = (b.x + b.w / 2.0, b.y + b.h / 2.0);
                 let shape = it.shape.as_ref().map_or("", |s| s.as_str());

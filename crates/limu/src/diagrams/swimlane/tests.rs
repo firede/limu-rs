@@ -63,6 +63,13 @@ fn renders_match_pele() {
         }
         let sc = layout(&db, &p.config, &o);
         assert_eq!(sc.diagram, "swimlane");
+        assert!(
+            sc.items
+                .iter()
+                .all(|it| it.role.as_str().starts_with("swimlane.")),
+            "{:?} has items of other roles",
+            c.src
+        );
         let got = flow_lines(&sc);
         let diff = drawings.diff(k, &c.drawing, &got, Some(&read));
         failures.check(diff.is_none(), || {

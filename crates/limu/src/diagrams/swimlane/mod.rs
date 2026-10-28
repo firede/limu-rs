@@ -3,11 +3,11 @@
 //! and model, and is laid out with lane_layout, each lane drawn as a band the length of the
 //! diagram with its title in a band at its start.
 //!
-//! A lane has the role swimlane.lane. Everything else is drawn by the flowchart's layout and
-//! keeps the flowchart's roles, so a host that styles flowcharts styles a swimlane diagram's
-//! nodes and edges the same way.
+//! A lane has the role swimlane.lane. Everything else is drawn by the flowchart's layout, with
+//! roles of the swimlane diagram's own in place of the flowchart's (swimlane.node,
+//! swimlane.edge…), so that a host can style one without the other.
 
-use super::flowchart::{FlowDb, FlowGraph, GraphNode, Variant, layout_variant};
+use super::flowchart::{FlowDb, FlowGraph, GraphNode, Roles, Variant, layout_variant};
 use crate::css::{Author, Resolved};
 use crate::graphs::compound::{CEdge, CNode, CompoundResult, Dir};
 use crate::graphs::lanes::{LANE_PAD, lane_layout};
@@ -40,6 +40,15 @@ pub(crate) fn layout(db: &FlowDb, config: &Map, o: &Options) -> Scene {
 
 const VARIANT: Variant = Variant {
     diagram: "swimlane",
+    roles: Roles {
+        casing: "swimlane.casing",
+        cluster: "swimlane.cluster",
+        cluster_title: "swimlane.cluster-title",
+        edge: "swimlane.edge",
+        edge_label: "swimlane.edge-label",
+        node: "swimlane.node",
+        title: "swimlane.title",
+    },
     prepare,
     layout: lay_lanes,
     draw_group: Some(draw_lane),
