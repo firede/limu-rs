@@ -22,6 +22,10 @@ enum Model {
     Pie(diagrams::pie::PieModel),
     #[cfg(feature = "er")]
     Er(diagrams::er::ErDb),
+    #[cfg(feature = "mindmap")]
+    Mindmap(diagrams::mindmap::MindmapDb),
+    #[cfg(feature = "kanban")]
+    Kanban(diagrams::kanban::KanbanDb),
     #[cfg(feature = "timeline")]
     Timeline(diagrams::timeline::TimelineDb),
     #[cfg(feature = "journey")]
@@ -52,6 +56,10 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Pie,
     #[cfg(feature = "er")]
     DiagramType::Er,
+    #[cfg(feature = "mindmap")]
+    DiagramType::Mindmap,
+    #[cfg(feature = "kanban")]
+    DiagramType::Kanban,
     #[cfg(feature = "timeline")]
     DiagramType::Timeline,
     #[cfg(feature = "journey")]
@@ -138,6 +146,14 @@ impl Model {
             DiagramType::Er => p
                 .parse_with(false, |s| diagrams::er::parse(s, p.title.as_deref()))
                 .map(Model::Er),
+            #[cfg(feature = "mindmap")]
+            DiagramType::Mindmap => p
+                .parse_with(false, |s| diagrams::mindmap::parse(s, p.title.as_deref()))
+                .map(Model::Mindmap),
+            #[cfg(feature = "kanban")]
+            DiagramType::Kanban => p
+                .parse_with(false, |s| diagrams::kanban::parse(s, p.title.as_deref()))
+                .map(Model::Kanban),
             #[cfg(feature = "timeline")]
             DiagramType::Timeline => p
                 .parse_with(false, |s| diagrams::timeline::parse(s, p.title.as_deref()))
@@ -211,6 +227,10 @@ impl Model {
             Model::Pie(ref m) => diagrams::pie::layout(m, config, o),
             #[cfg(feature = "er")]
             Model::Er(ref m) => diagrams::er::layout(m, config, o),
+            #[cfg(feature = "mindmap")]
+            Model::Mindmap(ref m) => diagrams::mindmap::layout(m, config, o),
+            #[cfg(feature = "kanban")]
+            Model::Kanban(ref m) => diagrams::kanban::layout(m, config, o),
             #[cfg(feature = "timeline")]
             Model::Timeline(ref m) => diagrams::timeline::layout(m, config, o),
             #[cfg(feature = "journey")]

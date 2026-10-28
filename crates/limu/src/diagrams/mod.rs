@@ -15,6 +15,10 @@ pub(crate) mod flowchart;
 pub(crate) mod info;
 #[cfg(feature = "journey")]
 pub(crate) mod journey;
+#[cfg(feature = "kanban")]
+pub(crate) mod kanban;
+#[cfg(feature = "mindmap")]
+pub(crate) mod mindmap;
 #[cfg(feature = "packet")]
 pub(crate) mod packet;
 #[cfg(feature = "pie")]
