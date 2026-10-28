@@ -1,6 +1,13 @@
 //! What the diagrams share beyond layout and drawing, as Pele's src/diagrams/common does:
 //! fitting a diagram to the width the host has, the curve the host's routing asks for, a
-//! diagram's title, and the names of classes.
+//! diagram's title, the names of classes, and generic types written with tildes.
+
+mod generics;
+
+#[cfg(test)]
+mod tests;
+
+pub(crate) use generics::parse_generic_types;
 
 use crate::js::chars::is_space_char;
 use crate::js::math::{max, min};
