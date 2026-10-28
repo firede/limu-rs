@@ -98,6 +98,18 @@ pub(crate) fn len16(s: &str) -> usize {
     s.chars().map(char::len_utf16).sum()
 }
 
+/// `s.substring(n)`, where the first n code units of s end where a character does.
+pub(crate) fn substring(s: &str, n: usize) -> &str {
+    let mut units = 0;
+    for (i, c) in s.char_indices() {
+        if units >= n {
+            return &s[i..];
+        }
+        units += c.len_utf16();
+    }
+    ""
+}
+
 /// String.prototype.trim.
 pub(crate) fn trim(s: &str) -> &str {
     s.trim_matches(is_space_char)

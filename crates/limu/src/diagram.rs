@@ -22,6 +22,10 @@ enum Model {
     Pie(diagrams::pie::PieModel),
     #[cfg(feature = "er")]
     Er(diagrams::er::ErDb),
+    #[cfg(feature = "timeline")]
+    Timeline(diagrams::timeline::TimelineDb),
+    #[cfg(feature = "journey")]
+    Journey(diagrams::journey::JourneyDb),
     #[cfg(feature = "class")]
     Class(diagrams::class::ClassDb),
     #[cfg(feature = "state")]
@@ -48,6 +52,10 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Pie,
     #[cfg(feature = "er")]
     DiagramType::Er,
+    #[cfg(feature = "timeline")]
+    DiagramType::Timeline,
+    #[cfg(feature = "journey")]
+    DiagramType::Journey,
     #[cfg(feature = "class")]
     DiagramType::Class,
     #[cfg(feature = "state")]
@@ -130,6 +138,14 @@ impl Model {
             DiagramType::Er => p
                 .parse_with(false, |s| diagrams::er::parse(s, p.title.as_deref()))
                 .map(Model::Er),
+            #[cfg(feature = "timeline")]
+            DiagramType::Timeline => p
+                .parse_with(false, |s| diagrams::timeline::parse(s, p.title.as_deref()))
+                .map(Model::Timeline),
+            #[cfg(feature = "journey")]
+            DiagramType::Journey => p
+                .parse_with(false, |s| diagrams::journey::parse(s, p.title.as_deref()))
+                .map(Model::Journey),
             #[cfg(feature = "class")]
             DiagramType::Class => p
                 .parse_with(false, |s| diagrams::class::parse(s, p.title.as_deref()))
@@ -195,6 +211,10 @@ impl Model {
             Model::Pie(ref m) => diagrams::pie::layout(m, config, o),
             #[cfg(feature = "er")]
             Model::Er(ref m) => diagrams::er::layout(m, config, o),
+            #[cfg(feature = "timeline")]
+            Model::Timeline(ref m) => diagrams::timeline::layout(m, config, o),
+            #[cfg(feature = "journey")]
+            Model::Journey(ref m) => diagrams::journey::layout(m, config, o),
             #[cfg(feature = "class")]
             Model::Class(ref m) => diagrams::class::layout(m, config, o),
             #[cfg(feature = "state")]

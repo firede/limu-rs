@@ -1,13 +1,14 @@
 //! What the diagrams share beyond layout and drawing, as Pele's src/diagrams/common does:
 //! fitting a diagram to the width the host has, the curve the host's routing asks for, a
 //! diagram's title, the names of classes, generic types written with tildes, and text laid
-//! out plainly or kept as written, and the tokenizer of the diagrams Mermaid defines with
-//! Langium grammars.
+//! out plainly or kept as written, the tokenizer of the diagrams Mermaid defines with Langium
+//! grammars, and the lexer rules of those it defines with Jison grammars.
 
 mod fit;
 mod fit_text;
 mod generics;
 mod literal_label;
+pub(crate) mod scan;
 pub(crate) mod tokens;
 
 #[cfg(test)]

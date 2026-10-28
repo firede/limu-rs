@@ -351,10 +351,9 @@ change is listed here with its reason.
   enum. A label is placed as one value with its point, alignment and rotation.
 - A text item's bounds are never empty. Where the diagram gives its label no box of its
   own, they are the box the label is drawn in, where limu leaves them empty.
-- A journey diagram's legend of actors is `journey.legend`, apart from the actors' marks on
-  tasks, which stay `journey.actor`. A section's label on its own is
-  `journey.section-label`, apart from the section's box, `journey.section`. limu gives each
-  pair one role, so an override could not tell them apart.
+- A journey diagram's section label on its own is `journey.section-label`, apart from the
+  section's box, `journey.section`. limu gives both one role, so an override could not
+  tell them apart.
 - A swimlane diagram's items have roles of their own (`swimlane.node`, `swimlane.edge`…),
   where limu gives them flowchart's, so that a host can style one without the other.
 - A C4 element outside the system has its kind and "external" as two tags (`system_db`

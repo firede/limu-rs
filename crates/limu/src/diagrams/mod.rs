@@ -13,6 +13,8 @@ pub(crate) mod er;
 pub(crate) mod flowchart;
 #[cfg(feature = "info")]
 pub(crate) mod info;
+#[cfg(feature = "journey")]
+pub(crate) mod journey;
 #[cfg(feature = "packet")]
 pub(crate) mod packet;
 #[cfg(feature = "pie")]
@@ -23,5 +25,7 @@ pub(crate) mod requirement;
 pub(crate) mod state;
 #[cfg(feature = "swimlane")]
 pub(crate) mod swimlane;
+#[cfg(feature = "timeline")]
+pub(crate) mod timeline;
 #[cfg(feature = "usecase")]
 pub(crate) mod usecase;
