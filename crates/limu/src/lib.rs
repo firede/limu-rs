@@ -1,0 +1,13 @@
+//! limu reads Mermaid diagrams and lays them out, for programs that draw them themselves: in
+//! a window, in a terminal, as SVG.
+//!
+//! A diagram goes through three stages. Parsing reads the diagram's text into a model of it.
+//! Layout places the model's parts, measuring text with a measurer the host gives, into a
+//! scene, which says what each part is and where it is, but not how it looks. A backend draws
+//! the scene, settling its colors from a style's look. Style is not layout, so a scene is
+//! drawn in any theme without being laid out again.
+//!
+//! Much of limu is ported from Pele, the Mermaid renderer of the Obsidian team, and its tests
+//! compare what limu does with what Pele does, number for number.
+
+pub use limu_scene as scene;

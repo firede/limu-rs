@@ -1,0 +1,48 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**"
+      - "!README*.md"
+      - "!LICENSE"
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux amd64
+            runner: ubuntu-24.04
+          - name: linux arm64
+            runner: ubuntu-24.04-arm
+          - name: macos arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup toolchain install stable --profile minimal --component rustfmt,clippy && rustup default stable
+      - uses: actions/cache@v4
+        with:
+          path: target/pele-fixtures
+          key: pele-fixtures-${{ hashFiles('fixtures.toml') }}
+      - run: ./scripts/verify.sh
+
+  # The crates build with the oldest Rust they say they take.
+  msrv:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup toolchain install 1.95 --profile minimal
+      - run: cargo +1.95 check --workspace --all-features

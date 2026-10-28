@@ -1,0 +1,18 @@
+[package]
+name = "limu"
+description = "A diagram layout engine. It reads Mermaid and leaves the drawing to your program."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+serde = ["limu-scene/serde"]
+
+[dependencies]
+limu-scene.workspace = true
+
+[lints]
+workspace = true

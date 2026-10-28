@@ -1,0 +1,4 @@
+# The release of pele-oracle whose fixtures the tests compare with, and the SHA-256 of its
+# archive. scripts/fixtures.sh downloads it into target/.
+tag = "pele-1.12.0-1"
+sha256 = "8a9718eba33475915016a3f48e3118a594e8b8beeb17e3879a7e3d895a8598e1"

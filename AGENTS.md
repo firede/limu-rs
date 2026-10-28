@@ -7,7 +7,8 @@ layout.
 ## Rules
 
 - `limu-scene` and `limu` use the standard library only, and `serde` behind their optional
-  feature. A backend that needs another crate is a crate of its own.
+  feature. `./scripts/verify.sh` checks it. Their tests may use dev-dependencies, which
+  hosts never build. A backend that needs another crate is a crate of its own.
 - Layout never decides a color, and style never moves anything. A setting that changes the
   size of anything belongs in `layout::Options`.
 - `limu-scene` holds what a backend needs and nothing more. Whatever only layout uses
