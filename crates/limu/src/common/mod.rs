@@ -20,7 +20,7 @@ use crate::js::chars::is_space_char;
 use crate::js::math::{max, min};
 use crate::layout::{Options, Routing};
 use crate::scene::style::{Paint, Style};
-use crate::scene::text::{Face, Label};
+use crate::scene::text::{Face, Label, Span};
 use crate::scene::{Item, Kind, Placed, Point, Scene};
 use crate::text::{Setting, layout_label};
 
@@ -175,6 +175,25 @@ pub(crate) fn with_title(
         ..Style::default()
     };
     sc.items.insert(0, it);
+}
+
+/// A label of one line of text the diagram measured itself, width wide, set at size in a
+/// face, a line height high. Pele writes such a text as it is, with no label laid out, where
+/// the scene holds a label for every text.
+pub(crate) fn line_of(text: &str, width: f64, size: f64, line_height: f64, face: Face) -> Label {
+    Label {
+        lines: vec![vec![Span {
+            text: text.to_string(),
+            face,
+            icon: None,
+            width,
+        }]],
+        widths: vec![width],
+        width,
+        height: line_height,
+        size,
+        line_height,
+    }
 }
 
 /// The names of a class attribute, as Pele's classNames in src/svg/theme.ts cleans them:

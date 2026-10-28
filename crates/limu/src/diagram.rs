@@ -20,6 +20,8 @@ enum Model {
     Flowchart(diagrams::flowchart::FlowDb),
     #[cfg(feature = "er")]
     Er(diagrams::er::ErDb),
+    #[cfg(feature = "class")]
+    Class(diagrams::class::ClassDb),
     #[cfg(feature = "info")]
     Info(diagrams::info::InfoModel),
     #[cfg(feature = "requirement")]
@@ -34,6 +36,8 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Flowchart,
     #[cfg(feature = "er")]
     DiagramType::Er,
+    #[cfg(feature = "class")]
+    DiagramType::Class,
     #[cfg(feature = "requirement")]
     DiagramType::Requirement,
     #[cfg(feature = "info")]
@@ -102,6 +106,10 @@ impl Model {
             DiagramType::Er => p
                 .parse_with(false, |s| diagrams::er::parse(s, p.title.as_deref()))
                 .map(Model::Er),
+            #[cfg(feature = "class")]
+            DiagramType::Class => p
+                .parse_with(false, |s| diagrams::class::parse(s, p.title.as_deref()))
+                .map(Model::Class),
             #[cfg(feature = "info")]
             DiagramType::Info => p
                 .parse_with(false, |s| diagrams::info::parse(s, p.title.as_deref()))
@@ -135,6 +143,8 @@ impl Model {
             Model::Flowchart(ref db) => diagrams::flowchart::layout(db, config, o),
             #[cfg(feature = "er")]
             Model::Er(ref m) => diagrams::er::layout(m, config, o),
+            #[cfg(feature = "class")]
+            Model::Class(ref m) => diagrams::class::layout(m, config, o),
             #[cfg(feature = "info")]
             Model::Info(ref m) => diagrams::info::layout(m, config, o),
             #[cfg(feature = "requirement")]

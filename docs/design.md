@@ -379,3 +379,6 @@ change is listed here with its reason.
   error found in that text is then placed in the text its author wrote. limu keys the
   texts by their addresses in a map that every thread shares, which Rust's strings, moved
   and borrowed as they are, do not allow.
+- A class diagram's static member is underlined by the face of its label's span, which
+  backends already underline in the text's color, where limu draws a line of its own under
+  it.
