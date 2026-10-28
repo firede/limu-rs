@@ -32,6 +32,10 @@ enum Model {
     Journey(diagrams::journey::JourneyDb),
     #[cfg(feature = "class")]
     Class(diagrams::class::ClassDb),
+    #[cfg(feature = "quadrant")]
+    QuadrantChart(diagrams::quadrant::QuadrantDb),
+    #[cfg(feature = "xychart")]
+    XyChart(diagrams::xychart::XyChartDb),
     #[cfg(feature = "state")]
     State(diagrams::state::StateDb),
     #[cfg(feature = "packet")]
@@ -66,6 +70,10 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Journey,
     #[cfg(feature = "class")]
     DiagramType::Class,
+    #[cfg(feature = "quadrant")]
+    DiagramType::QuadrantChart,
+    #[cfg(feature = "xychart")]
+    DiagramType::XyChart,
     #[cfg(feature = "state")]
     DiagramType::State,
     #[cfg(feature = "requirement")]
@@ -166,6 +174,14 @@ impl Model {
             DiagramType::Class => p
                 .parse_with(false, |s| diagrams::class::parse(s, p.title.as_deref()))
                 .map(Model::Class),
+            #[cfg(feature = "quadrant")]
+            DiagramType::QuadrantChart => p
+                .parse_with(false, |s| diagrams::quadrant::parse(s, p.title.as_deref()))
+                .map(Model::QuadrantChart),
+            #[cfg(feature = "xychart")]
+            DiagramType::XyChart => p
+                .parse_with(false, |s| diagrams::xychart::parse(s, p.title.as_deref()))
+                .map(Model::XyChart),
             #[cfg(feature = "state")]
             DiagramType::State => p
                 .parse_with(false, |s| diagrams::state::parse(s, p.title.as_deref()))
@@ -215,12 +231,13 @@ impl Model {
         }
     }
 
-    /// Lays the model out with the layout of its type.
-    // Built with no type of diagram, limu has no model, and nothing reads the configuration
-    // or the options.
-    #[allow(unused_variables)]
-    fn layout(&self, config: &Map, o: &Options) -> Scene {
-        match *self {
+    /// Lays the model out with the layout of its type. Most layouts cannot fail. Those that
+    /// can, as Pele's render throws for them, give their errors.
+    // Built with no type of diagram, limu has no model, nothing reads the configuration or
+    // the options, and nothing past the match is reached.
+    #[allow(unused_variables, unreachable_code)]
+    fn layout(&self, config: &Map, o: &Options) -> Result<Scene, Error> {
+        let sc = match *self {
             #[cfg(feature = "flowchart")]
             Model::Flowchart(ref db) => diagrams::flowchart::layout(db, config, o),
             #[cfg(feature = "pie")]
@@ -237,6 +254,10 @@ impl Model {
             Model::Journey(ref m) => diagrams::journey::layout(m, config, o),
             #[cfg(feature = "class")]
             Model::Class(ref m) => diagrams::class::layout(m, config, o),
+            #[cfg(feature = "quadrant")]
+            Model::QuadrantChart(ref m) => diagrams::quadrant::layout(m, config, o),
+            #[cfg(feature = "xychart")]
+            Model::XyChart(ref m) => diagrams::xychart::layout(m, config, o)?,
             #[cfg(feature = "state")]
             Model::State(ref m) => diagrams::state::layout(m, config, o),
             #[cfg(feature = "packet")]
@@ -251,7 +272,8 @@ impl Model {
             Model::UseCase(ref m) => diagrams::usecase::layout(m, config, o),
             #[cfg(feature = "swimlane")]
             Model::Swimlane(ref db) => diagrams::swimlane::layout(db, config, o),
-        }
+        };
+        Ok(sc)
     }
 }
 
@@ -282,7 +304,10 @@ impl Diagram {
     /// limit for a scene that would hold a number that is not finite, as numbers at the edge
     /// of what an f64 holds can give, where Pele draws NaN.
     pub fn layout(&self, o: &Options) -> Result<Scene, Error> {
-        let mut sc = self.model.layout(&self.config, o);
+        let mut sc = self
+            .model
+            .layout(&self.config, o)
+            .map_err(|e| e.tagged(self.found))?;
         // A text item the layout gives no box of its own takes the box its label is drawn
         // in, so that a host hit-tests and clips every text by its bounds.
         for it in &mut sc.items {

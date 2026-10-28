@@ -23,6 +23,8 @@ pub(crate) mod mindmap;
 pub(crate) mod packet;
 #[cfg(feature = "pie")]
 pub(crate) mod pie;
+#[cfg(feature = "quadrant")]
+pub(crate) mod quadrant;
 #[cfg(feature = "requirement")]
 pub(crate) mod requirement;
 #[cfg(feature = "state")]
@@ -33,3 +35,5 @@ pub(crate) mod swimlane;
 pub(crate) mod timeline;
 #[cfg(feature = "usecase")]
 pub(crate) mod usecase;
+#[cfg(feature = "xychart")]
+pub(crate) mod xychart;

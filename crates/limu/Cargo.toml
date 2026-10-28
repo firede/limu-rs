@@ -9,7 +9,7 @@ repository.workspace = true
 authors.workspace = true
 
 [features]
-default = ["agentflow", "class", "er", "flowchart", "info", "journey", "kanban", "mindmap", "packet", "pie", "requirement", "state", "swimlane", "timeline", "usecase"]
+default = ["agentflow", "class", "er", "flowchart", "info", "journey", "kanban", "mindmap", "packet", "pie", "quadrant", "requirement", "state", "swimlane", "timeline", "usecase", "xychart"]
 serde = ["limu-scene/serde"]
 agentflow = []
 class = []
@@ -21,11 +21,13 @@ kanban = []
 mindmap = []
 packet = []
 pie = []
+quadrant = []
 requirement = []
 state = []
 swimlane = []
 timeline = []
 usecase = []
+xychart = []
 
 [dependencies]
 limu-scene.workspace = true

@@ -1,10 +1,12 @@
 //! What the diagrams share beyond layout and drawing, as Pele's src/diagrams/common does:
 //! fitting a diagram to the width the host has, the curve the host's routing asks for, a
 //! diagram's title, the names of classes, generic types written with tildes, text laid out
-//! plainly or kept as written, icons, the tokenizer of the diagrams Mermaid defines with
-//! Langium grammars, the lexer rules of those it defines with Jison grammars, and the
-//! indented outline that mindmaps and kanban boards are written in.
+//! plainly or kept as written, words matched without regard to case, icons, the tokenizer of
+//! the diagrams Mermaid defines with Langium grammars, the lexer rules of those it defines
+//! with Jison grammars, and the indented outline that mindmaps and kanban boards are written
+//! in.
 
+mod caseless;
 mod fit;
 mod fit_text;
 mod generics;
@@ -17,6 +19,7 @@ pub(crate) mod tokens;
 #[cfg(test)]
 mod tests;
 
+pub(crate) use caseless::word_at;
 pub(crate) use fit::{fit_label, plain_label};
 pub(crate) use fit_text::{Fitted, fit_text};
 pub(crate) use generics::parse_generic_types;
