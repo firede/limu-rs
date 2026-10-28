@@ -1,0 +1,9 @@
+# Build output, and the fixtures scripts/fixtures.sh downloads into it.
+/target/
+
+# Worktrees and settings of local tools, and the folder settings macOS's Finder writes.
+.claude/
+.DS_Store
+
+# Notes and handoffs of local work, kept out of the repository.
+local/
