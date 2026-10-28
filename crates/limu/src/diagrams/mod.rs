@@ -5,6 +5,8 @@
 pub(crate) mod agentflow;
 #[cfg(feature = "architecture")]
 pub(crate) mod architecture;
+#[cfg(feature = "c4")]
+pub(crate) mod c4;
 #[cfg(feature = "class")]
 pub(crate) mod class;
 #[cfg(feature = "cynefin")]
@@ -17,6 +19,8 @@ pub(crate) mod er;
 pub(crate) mod flowchart;
 #[cfg(feature = "gantt")]
 pub(crate) mod gantt;
+#[cfg(feature = "gitgraph")]
+pub(crate) mod gitgraph;
 #[cfg(feature = "info")]
 pub(crate) mod info;
 #[cfg(feature = "ishikawa")]

@@ -56,6 +56,10 @@ enum Model {
     Requirement(diagrams::requirement::RequirementDb),
     #[cfg(feature = "sequence")]
     Sequence(diagrams::sequence::SeqDb),
+    #[cfg(feature = "gitgraph")]
+    GitGraph(diagrams::gitgraph::GitModel),
+    #[cfg(feature = "c4")]
+    C4(diagrams::c4::C4Db),
     #[cfg(feature = "agentflow")]
     AgentFlow(diagrams::agentflow::AgentflowDb),
     #[cfg(feature = "treeview")]
@@ -114,6 +118,10 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Info,
     #[cfg(feature = "sequence")]
     DiagramType::Sequence,
+    #[cfg(feature = "gitgraph")]
+    DiagramType::GitGraph,
+    #[cfg(feature = "c4")]
+    DiagramType::C4,
     #[cfg(feature = "agentflow")]
     DiagramType::AgentFlow,
     #[cfg(feature = "treeview")]
@@ -272,6 +280,16 @@ impl Model {
                     diagrams::sequence::parse(s, &p.config, p.title.as_deref())
                 })
                 .map(Model::Sequence),
+            #[cfg(feature = "gitgraph")]
+            DiagramType::GitGraph => p
+                .parse_with(false, |s| {
+                    diagrams::gitgraph::parse(s, &p.config, p.title.as_deref())
+                })
+                .map(Model::GitGraph),
+            #[cfg(feature = "c4")]
+            DiagramType::C4 => p
+                .parse_with(false, |s| diagrams::c4::parse(s, p.title.as_deref()))
+                .map(Model::C4),
             #[cfg(feature = "agentflow")]
             DiagramType::AgentFlow => p
                 .parse_with(true, |s| {
@@ -364,6 +382,10 @@ impl Model {
             Model::Requirement(ref db) => diagrams::requirement::layout(db, config, o),
             #[cfg(feature = "sequence")]
             Model::Sequence(ref m) => diagrams::sequence::layout(m, config, o),
+            #[cfg(feature = "gitgraph")]
+            Model::GitGraph(ref m) => diagrams::gitgraph::layout(m, config, o),
+            #[cfg(feature = "c4")]
+            Model::C4(ref m) => diagrams::c4::layout(m, config, o)?,
             #[cfg(feature = "agentflow")]
             Model::AgentFlow(ref m) => diagrams::agentflow::layout(m, config, o),
             #[cfg(feature = "treeview")]
