@@ -1,13 +1,13 @@
 //! A flowchart laid out as a scene, as Pele's renderFlowchart in render.ts draws it.
 
 use super::db::{FlowDb, LabelType};
-use super::graph::{GraphNode, build_flow_graph};
+use super::graph::{FlowGraph, GraphNode, build_flow_graph};
 use super::shapes::canonical_shape;
 use crate::common::{
     class_names, clickable, routing_curve, runs_across, setting, tighten, title_label, title_room,
     turn_to_fit,
 };
-use crate::css::{Resolved, declarations, resolve_style};
+use crate::css::{Author, Resolved, declarations, resolve_style};
 use crate::draw::{
     Crossings, Curve, Fill, Node, STRUCK_HALO, SideReach, casing, cluster_title_x, draw_shape,
     end_side, inset_route, label_patch, label_patch_box, loop_path, mark_crossings, marker_trim,
@@ -15,7 +15,8 @@ use crate::draw::{
     struck_tint, title_crossed,
 };
 use crate::graphs::compound::{
-    CEdge, CNode, Dir, cnode, compound_layout, direction, inherit_crossed_directions, shift_layout,
+    CEdge, CNode, CompoundResult, Dir, cnode, compound_layout, direction,
+    inherit_crossed_directions, shift_layout,
 };
 use crate::graphs::layered::LayeredOptions;
 use crate::js::math::{max, min, round};
@@ -64,6 +65,30 @@ fn asset_size(value: Option<f64>, fallback: f64) -> f64 {
     }
 }
 
+/// A type of diagram that is a flowchart laid out its own way, which may draw its top-level
+/// groups itself, as Pele's FlowVariant is.
+pub(crate) struct Variant {
+    /// The diagram's type: the scene's, and the section of the configuration read in place
+    /// of the flowchart's where it is an object.
+    pub(crate) diagram: &'static str,
+    /// Changes the graph before it is laid out.
+    pub(crate) prepare: fn(&mut FlowGraph),
+    /// Lays the graph out in place of compound_layout. tight is set where the diagram is laid
+    /// out tightly to fit the host's width.
+    pub(crate) layout: fn(&mut [CNode], &mut [CEdge], Dir, &LayeredOptions, bool) -> CompoundResult,
+    /// Draws a top-level group in place of a cluster, where it is set.
+    pub(crate) draw_group: Option<DrawGroup>,
+    /// The part of a group draw_group draws that takes the fill its author sets, as left,
+    /// top, right and bottom, as Pele's filledBox gives it. Without it, the fill of such a
+    /// group is not looked at.
+    pub(crate) filled_box: Option<fn(&CNode, Dir) -> [f64; 4]>,
+}
+
+/// What draws a top-level group of a variant, as Pele's drawGroup does: the group as it was
+/// laid out, its title, its style and what its author sets, its classes, its id, and the
+/// direction the diagram was laid out in.
+pub(crate) type DrawGroup = fn(&CNode, &Label, &Resolved, &Author, Vec<String>, &str, Dir) -> Item;
+
 /// A node as it is drawn, Pele's NodeView, with the declarations its style is read from.
 struct View<'g> {
     node: &'g GraphNode,
@@ -80,7 +105,18 @@ struct View<'g> {
 /// loosely, and, where that does not fit the host's width, tightly, or down instead of
 /// across, whichever is narrower.
 pub(crate) fn layout(db: &FlowDb, config: &Map, o: &Options) -> Scene {
-    let fitted = |down: bool| tighten(o, |tight| draw(db, config, o, down, tight));
+    layout_variant(db, config, o, None)
+}
+
+/// Lays out a parsed flowchart as a scene, as Pele's renderFlowchart draws it with a variant,
+/// or as layout does where there is none.
+pub(crate) fn layout_variant(
+    db: &FlowDb,
+    config: &Map,
+    o: &Options,
+    variant: Option<&Variant>,
+) -> Scene {
+    let fitted = |down: bool| tighten(o, |tight| draw(db, config, o, variant, down, tight));
     if runs_across(db.direction.as_deref()) {
         turn_to_fit(o, fitted)
     } else {
@@ -117,20 +153,39 @@ fn side(s: Option<usize>) -> i32 {
     s.map_or(-1, |s| s as i32)
 }
 
-/// Lays the flowchart out once, as Pele's draw does. turned lays out a flowchart that runs
-/// across as one that runs down, and tight sets nodes closer together.
-fn draw(db: &FlowDb, config: &Map, o: &Options, turned: bool, tight: bool) -> Scene {
+/// Lays the flowchart out once, as Pele's draw does, with the variant where there is one.
+/// turned lays out a flowchart that runs across as one that runs down, and tight sets nodes
+/// closer together.
+fn draw(
+    db: &FlowDb,
+    config: &Map,
+    o: &Options,
+    variant: Option<&Variant>,
+    turned: bool,
+    tight: bool,
+) -> Scene {
     let pad = o.padding;
     let group_pad = if tight { 12.0 } else { GROUP_PAD };
-    let flow = config.get("flowchart").and_then(Value::as_object);
+    let flow = variant
+        .and_then(|v| config.get(v.diagram))
+        .and_then(Value::as_object)
+        .or_else(|| config.get("flowchart").and_then(Value::as_object));
     // The host's routing takes the place of the curve the diagram asks for.
     let curve = routing_curve(o.routing)
         .or_else(|| flow.and_then(|f| f.get("curve")).and_then(Value::as_str));
-    let graph = build_flow_graph(db, curve);
+    let mut graph = build_flow_graph(db, curve);
+    if let Some(v) = variant {
+        (v.prepare)(&mut graph);
+    }
     let size = o.font_size;
     let edge_size = round(size * 0.875);
     let set = setting(o);
-    let wrap_width = number_option(flow, "wrappingWidth", 200.0);
+    let mut wrap_width = number_option(flow, "wrappingWidth", 200.0);
+    let mut group_max = 4000.0;
+    if variant.is_some() && tight {
+        wrap_width = min(wrap_width, 100.0);
+        group_max = max(80.0, title_room(o) / 2.0);
+    }
     let schemes = o.schemes();
 
     let mut index = std::collections::HashMap::new();
@@ -154,7 +209,7 @@ fn draw(db: &FlowDb, config: &Map, o: &Options, turned: bool, tight: bool) -> Sc
         let font_size = style.font_size.unwrap_or(size);
         let raw = node.label.as_deref().unwrap_or("");
         let (view, mut c) = if node.is_group {
-            let label = layout_label(raw, markdown, &set, font_size, 4000.0, face);
+            let label = layout_label(raw, markdown, &set, font_size, group_max, face);
             let mut c = cnode(0.0, 0.0, -1);
             c.is_group = true;
             c.dir = node.dir.as_deref().map(|d| direction(Some(d)));
@@ -337,7 +392,10 @@ fn draw(db: &FlowDb, config: &Map, o: &Options, turned: bool, tight: bool) -> Sc
         head_room: Some(marker_trim(Some(MarkerType::ArrowPoint))),
         ..LayeredOptions::default()
     };
-    let result = compound_layout(&mut cnodes, &mut cedges, root_dir, &opt);
+    let result = match variant {
+        Some(v) => (v.layout)(&mut cnodes, &mut cedges, root_dir, &opt, tight),
+        None => compound_layout(&mut cnodes, &mut cedges, root_dir, &opt),
+    };
 
     let title_max = if tight { title_room(o) } else { 4000.0 };
     let title = title_label(db.title.as_deref(), &set, size, title_max);
@@ -351,7 +409,7 @@ fn draw(db: &FlowDb, config: &Map, o: &Options, turned: bool, tight: bool) -> Sc
     let oy = pad + title_height;
     shift_layout(&mut cnodes, &mut cedges, ox, oy);
     let mut sc = Scene {
-        diagram: "flowchart".into(),
+        diagram: variant.map_or("flowchart", |v| v.diagram).into(),
         width: (inner + 2.0 * pad).ceil(),
         height: (result.height + title_height + 2.0 * pad).ceil(),
         font_size: size,
@@ -384,6 +442,25 @@ fn draw(db: &FlowDb, config: &Map, o: &Options, turned: bool, tight: bool) -> Sc
         let (x, y) = (c.x, c.y);
         let (class, tags) = clickable(class_names(crate::common::trim_default(&n.css_classes)));
         let author = declarations(&view.decls);
+        if let Some(v) = variant
+            && c.is_group
+            && c.parent < 0
+            && let Some(draw_group) = v.draw_group
+        {
+            if view.style.paints()
+                && let Some(filled_box) = v.filled_box
+            {
+                fills.push(Fill {
+                    bounds: filled_box(c, root_dir),
+                    decls: view.decls.clone(),
+                });
+            }
+            let mut group =
+                draw_group(c, &view.label, &view.style, &author, class, &n.id, root_dir);
+            group.tags = tags;
+            clusters.push(group);
+            continue;
+        }
         if c.is_group {
             if view.style.paints() {
                 fills.push(Fill {

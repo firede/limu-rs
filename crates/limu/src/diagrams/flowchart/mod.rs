@@ -13,8 +13,8 @@ mod tokens;
 mod tests;
 
 pub(crate) use db::FlowDb;
-pub(crate) use graph::{FlowGraph, build_flow_graph};
-pub(crate) use render::layout;
+pub(crate) use graph::{FlowGraph, GraphNode, build_flow_graph};
+pub(crate) use render::{Variant, layout, layout_variant};
 
 use db::FlowDbOptions;
 use parser::parse_flowchart;

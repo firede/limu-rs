@@ -15,12 +15,16 @@ use crate::value::Map;
 enum Model {
     #[cfg(feature = "flowchart")]
     Flowchart(diagrams::flowchart::FlowDb),
+    #[cfg(feature = "swimlane")]
+    Swimlane(diagrams::flowchart::FlowDb),
 }
 
 /// The types of diagram limu reads, in the order Pele's registry lists them.
 const TYPES: &[DiagramType] = &[
     #[cfg(feature = "flowchart")]
     DiagramType::Flowchart,
+    #[cfg(feature = "swimlane")]
+    DiagramType::Swimlane,
 ];
 
 /// The types of diagram limu reads, in the order Pele's registry lists them. Each is a
@@ -59,13 +63,20 @@ pub struct Diagram {
 /// gives it, and so do the errors of layout.
 // Built with no type of diagram, limu reads none, and what comes after the parsers and
 // layouts is never reached.
-#[cfg_attr(not(feature = "flowchart"), allow(unreachable_code))]
+#[cfg_attr(
+    not(any(feature = "flowchart", feature = "swimlane")),
+    allow(unreachable_code)
+)]
 pub fn parse(src: &str, options: &ParseOptions) -> Result<Diagram, Error> {
     let p = prepare(src, options)?;
     let model = match p.found.diagram {
         #[cfg(feature = "flowchart")]
         DiagramType::Flowchart => Model::Flowchart(p.parse_with(false, |s| {
             diagrams::flowchart::parse(s, &p.config, p.title.as_deref(), p.max_edges)
+        })?),
+        #[cfg(feature = "swimlane")]
+        DiagramType::Swimlane => Model::Swimlane(p.parse_with(false, |s| {
+            diagrams::swimlane::parse(s, &p.config, p.title.as_deref(), p.max_edges)
         })?),
         _ => {
             let message = format!("Diagram type \"{}\" is not supported yet.", p.found.diagram);
@@ -106,11 +117,16 @@ impl Diagram {
     /// and snaps it to the options' grid. Its errors are those a layout gives, and one of a
     /// limit for a scene that would hold a number that is not finite, as numbers at the edge
     /// of what an f64 holds can give, where Pele draws NaN.
-    #[cfg_attr(not(feature = "flowchart"), allow(unreachable_code, unused_variables))]
+    #[cfg_attr(
+        not(any(feature = "flowchart", feature = "swimlane")),
+        allow(unreachable_code, unused_variables)
+    )]
     pub fn layout(&self, o: &Options) -> Result<Scene, Error> {
         let mut sc: Scene = match self.model {
             #[cfg(feature = "flowchart")]
             Model::Flowchart(ref db) => diagrams::flowchart::layout(db, &self.config, o),
+            #[cfg(feature = "swimlane")]
+            Model::Swimlane(ref db) => diagrams::swimlane::layout(db, &self.config, o),
         };
         if let Some(grid) = o.snap {
             sc.snap(grid);
