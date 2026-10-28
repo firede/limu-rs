@@ -5,6 +5,7 @@
 //! Langium grammars.
 
 mod fit;
+mod fit_text;
 mod generics;
 mod literal_label;
 pub(crate) mod tokens;
@@ -13,11 +14,12 @@ pub(crate) mod tokens;
 mod tests;
 
 pub(crate) use fit::{fit_label, plain_label};
+pub(crate) use fit_text::{Fitted, fit_text};
 pub(crate) use generics::parse_generic_types;
 pub(crate) use literal_label::literal_label;
 
 use crate::js::chars::is_space_char;
-use crate::js::math::{max, min};
+use crate::js::math::{max, min, round};
 use crate::layout::{Options, Routing};
 use crate::scene::style::{Paint, Style};
 use crate::scene::text::{Face, Label, Span};
@@ -175,6 +177,13 @@ pub(crate) fn with_title(
         ..Style::default()
     };
     sc.items.insert(0, it);
+}
+
+/// A label of one line of plain text, as wide as it was measured, in a size and face of type,
+/// a line of Pele's height for the size. It holds text Pele writes as it is, with no markup
+/// read, as a percentage, a value or a name. Pele has no such label. It is limu's.
+pub(crate) fn line(s: &str, width: f64, size: f64, face: Face) -> Label {
+    line_of(s, width, size, round(size * crate::text::LINE_HEIGHT), face)
 }
 
 /// A label of one line of text the diagram measured itself, width wide, set at size in a

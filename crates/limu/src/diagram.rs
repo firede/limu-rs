@@ -18,10 +18,14 @@ use crate::value::Map;
 enum Model {
     #[cfg(feature = "flowchart")]
     Flowchart(diagrams::flowchart::FlowDb),
+    #[cfg(feature = "pie")]
+    Pie(diagrams::pie::PieModel),
     #[cfg(feature = "er")]
     Er(diagrams::er::ErDb),
     #[cfg(feature = "class")]
     Class(diagrams::class::ClassDb),
+    #[cfg(feature = "packet")]
+    Packet(diagrams::packet::PacketModel),
     #[cfg(feature = "info")]
     Info(diagrams::info::InfoModel),
     #[cfg(feature = "requirement")]
@@ -34,12 +38,16 @@ enum Model {
 const TYPES: &[DiagramType] = &[
     #[cfg(feature = "flowchart")]
     DiagramType::Flowchart,
+    #[cfg(feature = "pie")]
+    DiagramType::Pie,
     #[cfg(feature = "er")]
     DiagramType::Er,
     #[cfg(feature = "class")]
     DiagramType::Class,
     #[cfg(feature = "requirement")]
     DiagramType::Requirement,
+    #[cfg(feature = "packet")]
+    DiagramType::Packet,
     #[cfg(feature = "info")]
     DiagramType::Info,
     #[cfg(feature = "swimlane")]
@@ -102,6 +110,10 @@ impl Model {
                     diagrams::flowchart::parse(s, &p.config, p.title.as_deref(), p.max_edges)
                 })
                 .map(Model::Flowchart),
+            #[cfg(feature = "pie")]
+            DiagramType::Pie => p
+                .parse_with(false, |s| diagrams::pie::parse(s, p.title.as_deref()))
+                .map(Model::Pie),
             #[cfg(feature = "er")]
             DiagramType::Er => p
                 .parse_with(false, |s| diagrams::er::parse(s, p.title.as_deref()))
@@ -110,6 +122,12 @@ impl Model {
             DiagramType::Class => p
                 .parse_with(false, |s| diagrams::class::parse(s, p.title.as_deref()))
                 .map(Model::Class),
+            #[cfg(feature = "packet")]
+            DiagramType::Packet => p
+                .parse_with(false, |s| {
+                    diagrams::packet::parse(s, &p.config, p.title.as_deref())
+                })
+                .map(Model::Packet),
             #[cfg(feature = "info")]
             DiagramType::Info => p
                 .parse_with(false, |s| diagrams::info::parse(s, p.title.as_deref()))
@@ -141,10 +159,14 @@ impl Model {
         match *self {
             #[cfg(feature = "flowchart")]
             Model::Flowchart(ref db) => diagrams::flowchart::layout(db, config, o),
+            #[cfg(feature = "pie")]
+            Model::Pie(ref m) => diagrams::pie::layout(m, config, o),
             #[cfg(feature = "er")]
             Model::Er(ref m) => diagrams::er::layout(m, config, o),
             #[cfg(feature = "class")]
             Model::Class(ref m) => diagrams::class::layout(m, config, o),
+            #[cfg(feature = "packet")]
+            Model::Packet(ref m) => diagrams::packet::layout(m, config, o),
             #[cfg(feature = "info")]
             Model::Info(ref m) => diagrams::info::layout(m, config, o),
             #[cfg(feature = "requirement")]

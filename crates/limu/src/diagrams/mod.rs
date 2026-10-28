@@ -11,6 +11,10 @@ pub(crate) mod er;
 pub(crate) mod flowchart;
 #[cfg(feature = "info")]
 pub(crate) mod info;
+#[cfg(feature = "packet")]
+pub(crate) mod packet;
+#[cfg(feature = "pie")]
+pub(crate) mod pie;
 #[cfg(feature = "requirement")]
 pub(crate) mod requirement;
 #[cfg(feature = "swimlane")]
