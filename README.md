@@ -35,11 +35,11 @@ an optional feature.
 ./scripts/verify.sh
 ```
 
-This downloads the fixtures the tests compare with, once, and runs rustfmt, clippy, the docs
-and the tests. The fixtures are written from Pele by
-[pele-oracle](https://github.com/firede/pele-oracle). [docs/design.md](docs/design.md)
-explains how limu-rs is built and how it's checked against Pele, and
-[AGENTS.md](AGENTS.md) has the rules for changing it.
+This downloads the fixtures the tests compare with and the fonts the golden images are drawn
+in, once, and runs rustfmt, clippy, the docs and the tests. The fixtures are written from
+Pele by [pele-oracle](https://github.com/firede/pele-oracle).
+[docs/design.md](docs/design.md) explains how limu-rs is built and how it's checked against
+Pele, and [AGENTS.md](AGENTS.md) has the rules for changing it.
 
 ## License
 

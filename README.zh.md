@@ -33,7 +33,7 @@ Pele 的逐个数值比对。它是 [limu](https://github.com/firede/limu) 的 R
 ./scripts/verify.sh
 ```
 
-它会下载一次测试比对用的 fixture，然后运行 rustfmt、clippy、文档和全部测试。fixture 由
+它会下载一次测试比对用的 fixture 和 golden 图用的字体，然后运行 rustfmt、clippy、文档和全部测试。fixture 由
 [pele-oracle](https://github.com/firede/pele-oracle) 从 Pele 生成。limu-rs 的构建方式以及它
 如何与 Pele 比对，见 [docs/design.md](docs/design.md)，修改代码的规则见
 [AGENTS.md](AGENTS.md)。

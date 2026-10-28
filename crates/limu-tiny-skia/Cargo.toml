@@ -1,0 +1,20 @@
+[package]
+name = "limu-tiny-skia"
+description = "Draws limu's scenes into tiny-skia pixmaps, with text shaped by rustybuzz."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+limu-scene = { workspace = true }
+rustybuzz = "0.20"
+tiny-skia = "0.12"
+
+[dev-dependencies]
+limu-fixtures = { path = "../limu-fixtures" }
+
+[lints]
+workspace = true

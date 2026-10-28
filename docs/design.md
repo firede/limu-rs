@@ -34,7 +34,7 @@ never moves anything.
 |---|---|---|
 | `limu-scene` | What a backend needs and nothing more: the scene, style, the types of laid-out text and the `Measurer` trait, the default drawing over a `Canvas`, hit testing, and the SVG writer. | `std` |
 | `limu` | Parsing and layout of every diagram type, and what they share. It re-exports `limu-scene`. | `limu-scene` |
-| `limu-tiny-skia` | Draws a scene into a tiny-skia pixmap, for PNGs and for the golden images of the default drawing. | `limu-scene`, tiny-skia |
+| `limu-tiny-skia` | Draws a scene into a tiny-skia pixmap, for PNGs and for the golden images of the default drawing, and measures with the fonts it draws in. | `limu-scene`, tiny-skia, rustybuzz |
 | `limu-coregraphics` | Draws a scene into a `CGContext` the host gives, and measures with CoreText. | `limu-scene`, objc2's Core Graphics and Core Text |
 | `limu-gpui` | Draws a scene in a GPUI window, and measures with GPUI's text system. | `limu-scene`, gpui-fast |
 | `limu-ascii` | Draws a scene as text in a grid of cells, for terminals and TUIs, and measures in cells. | `limu-scene` |
@@ -308,6 +308,12 @@ downloads it once into `target/`, and the tests then run offline. The fixtures a
 committed, so the repository doesn't grow each time they are written anew. A change to the
 suites is tried before it is released by pointing `LIMU_FIXTURES` at a local checkout's
 output.
+
+`fixtures.toml` also pins the fonts limu-tiny-skia's golden images are drawn in, Liberation
+Sans and Mono, which are as wide as Arial and Courier New. `scripts/fixtures.sh` downloads
+them with the fixtures and checks their checksum, so the images come out the same wherever
+the tests run, and no font is committed. The images are compared with a little room, as
+tiny-skia's arithmetic differs slightly from one processor to another.
 
 The tests read the fixtures through `limu-fixtures`, a crate of the workspace that is never
 published. It and the crates it reads JSON and gzip with are dev-dependencies, which a host
