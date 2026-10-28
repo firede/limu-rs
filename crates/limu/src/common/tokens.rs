@@ -262,6 +262,44 @@ fn acc_descr(s: &str, at: usize) -> Option<usize> {
     s[i + 1..].find('}').map(|end| i + 1 + end + 1)
 }
 
+/// Pele's accDescr(name), in common/accDescr.ts: ACC_DESCR under the name given, for grammars
+/// where lexing goes on after an `accDescr {` that never closes, because accDescr is also a
+/// name there. It matches what ACC_DESCR does, but once the braced form finds no closing
+/// brace there is none further on, so later braced descriptions fail without scanning the
+/// rest of the text again.
+pub(crate) const fn acc_descr_named(name: &'static str) -> TokenType {
+    TokenType {
+        name,
+        pattern: Pattern::Scanner(acc_descr_scanner),
+        ..ACC_DESCR
+    }
+}
+
+/// The scanner of Pele's accDescr, which matches
+/// /[\t ]*accDescr(?:[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)|\s*({))/y and then, for the braced
+/// form, looks for the closing brace unless it has found none before.
+fn acc_descr_scanner() -> Scan {
+    let mut unclosed = false;
+    Box::new(move |s, at, _| {
+        let mut i = blanks(s, at);
+        if !s[i..].starts_with("accDescr") {
+            return None;
+        }
+        i += "accDescr".len();
+        let j = blanks(s, i);
+        if s.as_bytes().get(j) == Some(&b':') {
+            return Some(line_rest(s, j + 1));
+        }
+        i = space_run(s, i);
+        if s.as_bytes().get(i) != Some(&b'{') || unclosed {
+            return None;
+        }
+        let close = s[i + 1..].find('}');
+        unclosed = close.is_none();
+        close.map(|end| i + 1 + end + 1)
+    })
+}
+
 /// Pele's ACC_TITLE, /[\t ]*accTitle[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/y.
 pub(crate) const ACC_TITLE: TokenType = TokenType {
     first: Some("\t a"),

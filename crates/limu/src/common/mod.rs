@@ -16,7 +16,7 @@ mod tests;
 pub(crate) use fit::{fit_label, plain_label};
 pub(crate) use fit_text::{Fitted, fit_text};
 pub(crate) use generics::parse_generic_types;
-pub(crate) use literal_label::literal_label;
+pub(crate) use literal_label::{break_label, literal_label};
 
 use crate::js::chars::is_space_char;
 use crate::js::math::{max, min, round};

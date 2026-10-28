@@ -83,3 +83,83 @@ pub(crate) fn literal_label(s: &str, set: &Setting, size: f64, room: f64, face: 
         line_height,
     }
 }
+
+/// Breaks each line of a label that is wider than room between any two characters, so that
+/// no line but one holding a single character or an icon is wider, as Pele's breakLabel
+/// does. Lines that fit are kept as they are.
+pub(crate) fn break_label(label: Label, set: &Setting, room: f64) -> Label {
+    if label.width <= room {
+        return label;
+    }
+    let mut lines: Vec<Vec<Span>> = Vec::new();
+    let mut widths: Vec<f64> = Vec::new();
+    for (i, line) in label.lines.iter().enumerate() {
+        if label.widths[i] <= room {
+            lines.push(line.clone());
+            widths.push(label.widths[i]);
+            continue;
+        }
+        let mut current: Vec<Span> = Vec::new();
+        let mut width = 0.0;
+        let commit = |current: &mut Vec<Span>,
+                      width: &mut f64,
+                      lines: &mut Vec<Vec<Span>>,
+                      widths: &mut Vec<f64>| {
+            lines.push(std::mem::take(current));
+            widths.push(*width);
+            *width = 0.0;
+        };
+        for span in line {
+            if span.icon.is_some() {
+                if !current.is_empty() && width + span.width > room {
+                    commit(&mut current, &mut width, &mut lines, &mut widths);
+                }
+                current.push(span.clone());
+                width += span.width;
+                continue;
+            }
+            for c in span.text.chars() {
+                let ch = c.to_string();
+                let joined = current
+                    .last()
+                    .is_some_and(|last| last.icon.is_none() && last.face == span.face);
+                let mut added = match current.last() {
+                    Some(last) if joined => {
+                        set.width(&format!("{}{ch}", last.text), label.size, span.face) - last.width
+                    }
+                    _ => set.width(&ch, label.size, span.face),
+                };
+                let mut joins = joined;
+                if !current.is_empty() && width + added > room {
+                    commit(&mut current, &mut width, &mut lines, &mut widths);
+                    joins = false;
+                    added = set.width(&ch, label.size, span.face);
+                }
+                match current.last_mut() {
+                    Some(last) if joins => {
+                        last.text.push(c);
+                        last.width += added;
+                    }
+                    _ => current.push(Span {
+                        text: ch,
+                        face: span.face,
+                        icon: None,
+                        width: added,
+                    }),
+                }
+                width += added;
+            }
+        }
+        if !current.is_empty() || line.is_empty() {
+            commit(&mut current, &mut width, &mut lines, &mut widths);
+        }
+    }
+    let width = widths.iter().fold(0.0, |w, &x| max(w, x));
+    Label {
+        height: lines.len() as f64 * label.line_height,
+        lines,
+        widths,
+        width,
+        ..label
+    }
+}
