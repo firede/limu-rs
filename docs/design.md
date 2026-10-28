@@ -84,34 +84,37 @@ A `Scene` is a list of items in the order they are drawn, with the diagram's typ
 size, the font size of text with no size of its own, and its title and description for
 assistive technology.
 
-An `Item` holds what every item has, and its `body` holds what only its kind has.
+An `Item` holds what every item has, and its `kind` says what sort of thing it is. Only an
+edge has something no other kind has, its route and the markers at its ends, so only
+`Kind::Edge` carries anything.
 
 ```rust
 pub struct Item {
-    pub role: Role,          // "flowchart.node"
-    pub id: Option<String>,  // the id the diagram's text gave it
-    pub class: Vec<String>,  // the classes its author gave it
-    pub tags: Vec<String>,   // what the diagram says it is beyond its role
+    pub kind: Kind,
+    pub role: Role,              // "flowchart.node"
+    pub shape: Option<Shape>,    // "diam"
+    pub id: Option<String>,      // the id the diagram's text gave it
+    pub class: Vec<String>,      // the classes its author gave it
+    pub tags: Vec<String>,       // what the diagram says it is beyond its role
     pub bounds: Rect,
+    pub parts: Vec<Part>,
     pub label: Option<Placed>,
-    pub style: Style,        // the diagram's own
-    pub author: Style,       // what classDef and style lines set
-    pub link: Option<Link>,
-    pub body: Body,
+    pub picture: Option<Picture>,
+    pub style: Style,            // the diagram's own
+    pub author: Style,           // what classDef and style lines set
+    pub link: Option<String>,
+    pub tooltip: Option<String>,
 }
 
-pub enum Body {
-    Node { shape: Shape, parts: Vec<Part>, picture: Option<Picture> },
-    Group { shape: Shape, parts: Vec<Part> },
-    Edge { parts: Vec<Part>, route: Vec<Point>, ends: [Option<Marker>; 2] },
-    Text { patch: Option<Rect> },
-    Mark { shape: Option<Shape>, parts: Vec<Part> },
-}
+pub enum Kind { Node, Group, Edge(Edge), Text, Mark }
+
+pub struct Edge { pub route: Vec<Point>, pub ends: [Option<Marker>; 2] }
 ```
 
-Which fields belong to which kind is settled when the first diagrams are ported, from what
-limu's scenes hold. The rule is that a field one kind alone has lives in that kind's
-variant, so that a backend never reads a field that means nothing for the item it has.
+The split was settled from what limu's scenes hold across every render fixture. Shapes,
+parts, labels and pictures turn up on more than one kind, so they are fields of every item.
+A text item's bounds are the box the diagram sets its label in, as an edge label's patch,
+or else the box its label is drawn in, so that they always say where the item is.
 
 - A `Part` is an `Outline` and the `Painting` it takes from the item's style. An outline is
   a path, or a box whose corners may take the style's radius. A box with the theme's radius
@@ -314,9 +317,21 @@ change is listed here with its reason.
 
 - The scene is split from layout into a crate of its own, and the types of laid-out text
   and the `Measurer` trait live with it, so a backend that measures depends on it alone.
-- An item's kind holds what only that kind has (`Body`), a part is a path or a box and
-  never both, an edge's ends are optional markers rather than markers of an empty type, and
-  a label is placed as one value with its point, alignment and rotation.
+- Only an edge's route and ends belong to its kind, in `Kind::Edge`, so a backend never
+  reads a route that means nothing. A part is a path or a box and never both. An edge's
+  ends are optional markers rather than markers of an empty type, and `MarkerType` is an
+  enum. A label is placed as one value with its point, alignment and rotation.
+- A text item's bounds are never empty. Where the diagram gives its label no box of its
+  own, they are the box the label is drawn in, where limu leaves them empty.
+- A journey diagram's legend of actors is `journey.legend`, apart from the actors' marks on
+  tasks, which stay `journey.actor`. A section's label on its own is
+  `journey.section-label`, apart from the section's box, `journey.section`. limu gives each
+  pair one role, so an override could not tell them apart.
+- A swimlane diagram's items have roles of their own (`swimlane.node`, `swimlane.edge`…),
+  where limu gives them flowchart's, so that a host can style one without the other.
+- A C4 element outside the system has its kind and "external" as two tags (`system_db`
+  and `external`), where limu writes one (`external_system_db`). A host then matches every
+  database, or everything outside, with one selector.
 - Unset fields of a style are `None`.
 - Backends share one default drawing over a `Canvas`, where limu's svg package and
   limumygo each have their own. Hit testing moves from limumygo to the scene.

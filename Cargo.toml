@@ -20,3 +20,5 @@ missing_docs = "warn"
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
+# A test of !(x > 0) is how a port says that NaN fails it, as it does in JavaScript.
+neg_cmp_op_on_partial_ord = "allow"
