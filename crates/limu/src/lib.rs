@@ -17,3 +17,6 @@ pub use limu_scene as scene;
 
 mod js;
 pub mod text;
+mod value;
+
+pub use value::{Map, Value};
