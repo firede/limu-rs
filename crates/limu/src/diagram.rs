@@ -38,6 +38,8 @@ enum Model {
     XyChart(diagrams::xychart::XyChartDb),
     #[cfg(feature = "state")]
     State(diagrams::state::StateDb),
+    #[cfg(feature = "architecture")]
+    Architecture(diagrams::architecture::ArchitectureDb),
     #[cfg(feature = "packet")]
     Packet(diagrams::packet::PacketModel),
     #[cfg(feature = "info")]
@@ -46,6 +48,8 @@ enum Model {
     Requirement(diagrams::requirement::RequirementDb),
     #[cfg(feature = "agentflow")]
     AgentFlow(diagrams::agentflow::AgentflowDb),
+    #[cfg(feature = "cynefin")]
+    Cynefin(diagrams::cynefin::CynefinModel),
     #[cfg(feature = "usecase")]
     UseCase(diagrams::usecase::UsecaseModel),
     #[cfg(feature = "swimlane")]
@@ -76,6 +80,8 @@ const TYPES: &[DiagramType] = &[
     DiagramType::XyChart,
     #[cfg(feature = "state")]
     DiagramType::State,
+    #[cfg(feature = "architecture")]
+    DiagramType::Architecture,
     #[cfg(feature = "requirement")]
     DiagramType::Requirement,
     #[cfg(feature = "packet")]
@@ -84,6 +90,8 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Info,
     #[cfg(feature = "agentflow")]
     DiagramType::AgentFlow,
+    #[cfg(feature = "cynefin")]
+    DiagramType::Cynefin,
     #[cfg(feature = "usecase")]
     DiagramType::UseCase,
     #[cfg(feature = "swimlane")]
@@ -186,6 +194,12 @@ impl Model {
             DiagramType::State => p
                 .parse_with(false, |s| diagrams::state::parse(s, p.title.as_deref()))
                 .map(Model::State),
+            #[cfg(feature = "architecture")]
+            DiagramType::Architecture => p
+                .parse_with(false, |s| {
+                    diagrams::architecture::parse(s, p.title.as_deref())
+                })
+                .map(Model::Architecture),
             #[cfg(feature = "packet")]
             DiagramType::Packet => p
                 .parse_with(false, |s| {
@@ -214,6 +228,10 @@ impl Model {
                     )
                 })
                 .map(Model::AgentFlow),
+            #[cfg(feature = "cynefin")]
+            DiagramType::Cynefin => p
+                .parse_with(false, |s| diagrams::cynefin::parse(s, p.title.as_deref()))
+                .map(Model::Cynefin),
             #[cfg(feature = "usecase")]
             DiagramType::UseCase => p
                 .parse_with(false, |s| diagrams::usecase::parse(s, p.title.as_deref()))
@@ -260,6 +278,8 @@ impl Model {
             Model::XyChart(ref m) => diagrams::xychart::layout(m, config, o)?,
             #[cfg(feature = "state")]
             Model::State(ref m) => diagrams::state::layout(m, config, o),
+            #[cfg(feature = "architecture")]
+            Model::Architecture(ref m) => diagrams::architecture::layout(m, config, o),
             #[cfg(feature = "packet")]
             Model::Packet(ref m) => diagrams::packet::layout(m, config, o),
             #[cfg(feature = "info")]
@@ -268,6 +288,8 @@ impl Model {
             Model::Requirement(ref db) => diagrams::requirement::layout(db, config, o),
             #[cfg(feature = "agentflow")]
             Model::AgentFlow(ref m) => diagrams::agentflow::layout(m, config, o),
+            #[cfg(feature = "cynefin")]
+            Model::Cynefin(ref m) => diagrams::cynefin::layout(m, config, o),
             #[cfg(feature = "usecase")]
             Model::UseCase(ref m) => diagrams::usecase::layout(m, config, o),
             #[cfg(feature = "swimlane")]

@@ -3,8 +3,12 @@
 
 #[cfg(feature = "agentflow")]
 pub(crate) mod agentflow;
+#[cfg(feature = "architecture")]
+pub(crate) mod architecture;
 #[cfg(feature = "class")]
 pub(crate) mod class;
+#[cfg(feature = "cynefin")]
+pub(crate) mod cynefin;
 #[cfg(feature = "er")]
 pub(crate) mod er;
 // A swimlane diagram is a flowchart laid out its own way, and is read and drawn by the
