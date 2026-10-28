@@ -7,6 +7,7 @@ use serde::Deserialize;
 use super::{TYPES, parse};
 use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
+use crate::scene::Kind;
 use crate::testing::Failures;
 
 #[derive(Deserialize)]
@@ -82,4 +83,30 @@ fn diagrams_match_pele() {
 fn diagrams_are_send_and_sync() {
     fn shared<T: Send + Sync>() {}
     shared::<super::Diagram>();
+}
+
+/// Every text item a diagram lays out has bounds, whether or not its layout gave it a box.
+#[test]
+fn text_items_have_bounds() {
+    let sources = [
+        "flowchart LR\n  A --> B",
+        "pie title Pets\n  \"Dogs\" : 3\n  \"Cats\" : 2",
+        "info",
+        "journey\n  title My day\n  section Work\n    Code: 5: Me",
+        "timeline\n  title History\n  2020 : One",
+    ];
+    for src in sources {
+        // A type limu is built without is left out.
+        if !crate::supports(src) {
+            continue;
+        }
+        let sc = crate::layout(src, &Options::default()).expect("a diagram");
+        for it in sc.items.iter().filter(|it| matches!(it.kind, Kind::Text)) {
+            assert!(
+                !it.bounds.is_empty(),
+                "{src:?}: {} has no bounds",
+                it.role.as_str()
+            );
+        }
+    }
 }

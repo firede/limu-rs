@@ -7,7 +7,7 @@ use crate::errors::{Error, ErrorCode};
 use crate::layout::Options;
 use crate::prepare::{ParseOptions, Prepared, prepare};
 use crate::preprocess::preprocess;
-use crate::scene::Scene;
+use crate::scene::{Kind, Scene};
 use crate::value::Map;
 
 /// The model of a diagram of a type, as its parser reads it.
@@ -263,6 +263,13 @@ impl Diagram {
     /// of what an f64 holds can give, where Pele draws NaN.
     pub fn layout(&self, o: &Options) -> Result<Scene, Error> {
         let mut sc = self.model.layout(&self.config, o);
+        // A text item the layout gives no box of its own takes the box its label is drawn
+        // in, so that a host hit-tests and clips every text by its bounds.
+        for it in &mut sc.items {
+            if matches!(it.kind, Kind::Text) && it.bounds.is_empty() {
+                it.bounds = it.label_bounds();
+            }
+        }
         if let Some(grid) = o.snap {
             sc.snap(grid);
         }
