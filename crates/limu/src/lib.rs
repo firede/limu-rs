@@ -10,6 +10,10 @@
 //! Much of limu is ported from Pele, the Mermaid renderer of the Obsidian team, and its tests
 //! compare what limu does with what Pele does, number for number.
 
+// The parsers and layouts are ported after the parts they use.
+#![allow(dead_code, unused_imports)]
+
 pub use limu_scene as scene;
 
 mod js;
+pub mod text;

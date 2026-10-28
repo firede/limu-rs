@@ -73,6 +73,8 @@ browser.
   they solve has a native form: a host that lays a diagram out again when its width changes
   sets `max_width`, and one whose fonts change lays it out again with the new measurer.
   Lazy loading (`lazy.ts`, `src/entries`) is the diagram features. The website is Pele's.
+  Math in labels, which Pele typesets through a function the host gives, is not ported
+  yet, as limu has not ported it. A label with `$$` in it is laid out as text.
 
 Native hosts need some things Pele has no part in, and these are limu-rs's own: a measurer
 the host gives, a grid to snap to that may differ across and down, hit testing, a scene's
