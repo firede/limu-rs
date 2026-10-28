@@ -6,6 +6,7 @@ use std::collections::{HashMap, HashSet};
 use crate::detect::DiagramType;
 use crate::errors::{Error, ErrorCode};
 use crate::js::chars::{drop_indents, is_space_char, to_lower, trim, trim_start};
+use crate::js::map::Ordered;
 use crate::url::safe_url;
 use crate::value::{Map, Value};
 use crate::yaml::parse_yaml;
@@ -142,48 +143,6 @@ pub(crate) struct FlowDbOptions {
     /// The most edges, or none for no limit.
     pub(crate) max_edges: Option<usize>,
     pub(crate) inherit_dir: bool,
-}
-
-/// Items kept in the order they were added, and found by their ids, as a JavaScript Map
-/// keeps them.
-#[derive(Clone, Debug)]
-pub(crate) struct Ordered<T> {
-    items: Vec<T>,
-    at: HashMap<String, usize>,
-}
-
-impl<T> Default for Ordered<T> {
-    fn default() -> Self {
-        Ordered {
-            items: Vec::new(),
-            at: HashMap::new(),
-        }
-    }
-}
-
-impl<T> Ordered<T> {
-    pub(crate) fn get(&self, id: &str) -> Option<&T> {
-        self.at.get(id).map(|&i| &self.items[i])
-    }
-
-    fn get_mut(&mut self, id: &str) -> Option<&mut T> {
-        self.at.get(id).map(|&i| &mut self.items[i])
-    }
-
-    /// Sets the item of an id, in its place where it has one and last where it does not.
-    fn set(&mut self, id: &str, item: T) {
-        match self.at.get(id) {
-            Some(&i) => self.items[i] = item,
-            None => {
-                self.at.insert(id.to_string(), self.items.len());
-                self.items.push(item);
-            }
-        }
-    }
-
-    pub(crate) fn values(&self) -> impl Iterator<Item = &T> {
-        self.items.iter()
-    }
 }
 
 /// A flowchart as its parser fills it, Pele's FlowDb.

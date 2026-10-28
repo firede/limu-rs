@@ -24,8 +24,13 @@ impl Crossings {
     }
 
     /// The x of the points on y, rounded.
-    pub(super) fn at(&self, y: f64) -> Option<&[f64]> {
+    pub(crate) fn at(&self, y: f64) -> Option<&[f64]> {
         self.0.get(&Crossings::key(y)).map(Vec::as_slice)
+    }
+
+    /// Adds a point.
+    pub(crate) fn add(&mut self, x: f64, y: f64) {
+        self.0.entry(Crossings::key(y)).or_default().push(x);
     }
 
     /// How many rounded ys have points.
@@ -38,7 +43,7 @@ impl Crossings {
 /// Adds the points of a route of x, y, axis triples, as Pele's markCrossings does.
 pub(crate) fn mark_crossings(crossings: &mut Crossings, route: &[f64]) {
     for &[x, y, _] in route.as_chunks::<3>().0 {
-        crossings.0.entry(Crossings::key(y)).or_default().push(x);
+        crossings.add(x, y);
     }
 }
 

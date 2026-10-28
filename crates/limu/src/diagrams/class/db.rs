@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use super::members::{ClassMember, MemberType};
 use crate::js::chars::{drop_indents, is_digit, trim, trim_start, unit};
+use crate::js::map::Ordered;
 use crate::text::decode_entities;
 use crate::url::sanitize_url;
 
@@ -102,62 +103,6 @@ pub(crate) struct StyleClass {
     pub(crate) text_styles: Vec<String>,
 }
 
-/// Items kept in the order they were first set, and found by their keys, as a JavaScript
-/// Map keeps them.
-#[derive(Clone, Debug)]
-pub(crate) struct Keyed<T> {
-    items: Vec<T>,
-    at: HashMap<String, usize>,
-}
-
-impl<T> Default for Keyed<T> {
-    fn default() -> Self {
-        Keyed {
-            items: Vec::new(),
-            at: HashMap::new(),
-        }
-    }
-}
-
-impl<T> Keyed<T> {
-    pub(crate) fn get(&self, key: &str) -> Option<&T> {
-        self.at.get(key).map(|&i| &self.items[i])
-    }
-
-    fn get_mut(&mut self, key: &str) -> Option<&mut T> {
-        self.at.get(key).map(|&i| &mut self.items[i])
-    }
-
-    /// The place of a key, in the order the keys were set.
-    pub(crate) fn index(&self, key: &str) -> Option<usize> {
-        self.at.get(key).copied()
-    }
-
-    /// Adds an item of a key that has none.
-    fn add(&mut self, key: &str, item: T) -> usize {
-        let i = self.items.len();
-        self.at.insert(key.to_string(), i);
-        self.items.push(item);
-        i
-    }
-
-    pub(crate) fn len(&self) -> usize {
-        self.items.len()
-    }
-
-    pub(crate) fn values(&self) -> std::slice::Iter<'_, T> {
-        self.items.iter()
-    }
-}
-
-impl<T> std::ops::Index<usize> for Keyed<T> {
-    type Output = T;
-
-    fn index(&self, i: usize) -> &T {
-        &self.items[i]
-    }
-}
-
 /// Sets a key in a list of keys, where it has no place yet, as a Map's set of a key does.
 fn set_key(keys: &mut Vec<String>, key: &str) {
     if !keys.iter().any(|k| k == key) {
@@ -169,12 +114,12 @@ fn set_key(keys: &mut Vec<String>, key: &str) {
 #[derive(Clone, Debug)]
 pub(crate) struct ClassDb {
     pub(crate) direction: String,
-    pub(crate) classes: Keyed<ClassNode>,
+    pub(crate) classes: Ordered<ClassNode>,
     pub(crate) relations: Vec<ClassRelation>,
-    pub(crate) notes: Keyed<ClassNote>,
-    pub(crate) namespaces: Keyed<NamespaceNode>,
+    pub(crate) notes: Ordered<ClassNote>,
+    pub(crate) namespaces: Ordered<NamespaceNode>,
     pub(crate) interfaces: Vec<ClassInterface>,
-    pub(crate) style_classes: Keyed<StyleClass>,
+    pub(crate) style_classes: Ordered<StyleClass>,
     pub(crate) title: Option<String>,
     pub(crate) acc_title: Option<String>,
     pub(crate) acc_descr: Option<String>,
@@ -189,12 +134,12 @@ impl Default for ClassDb {
     fn default() -> Self {
         ClassDb {
             direction: "TB".to_string(),
-            classes: Keyed::default(),
+            classes: Ordered::default(),
             relations: Vec::new(),
-            notes: Keyed::default(),
-            namespaces: Keyed::default(),
+            notes: Ordered::default(),
+            namespaces: Ordered::default(),
             interfaces: Vec::new(),
-            style_classes: Keyed::default(),
+            style_classes: Ordered::default(),
             title: None,
             acc_title: None,
             acc_descr: None,
@@ -264,7 +209,7 @@ impl ClassDb {
             have_callback: false,
             tooltip: None,
         };
-        let at = self.classes.add(name, node);
+        let at = self.classes.set(name, node);
         self.tag(at, "default");
     }
 
@@ -373,17 +318,17 @@ impl ClassDb {
             index,
             parent: None,
         };
-        self.notes.add(&id, note);
+        self.notes.set(&id, note);
         id
     }
 
     /// Adds a class name to each class of a list of ids, as Pele's setCssClass does.
     pub(crate) fn set_css_class(&mut self, ids: &str, css_class: &str) {
         for id in ids.split(',') {
-            let Some(at) = self.classes.index(&lookup_id(id)) else {
+            let Some(at) = self.classes.index_of(&lookup_id(id)) else {
                 continue;
             };
-            let node = &mut self.classes.items[at];
+            let node = &mut self.classes[at];
             node.css_classes.push(' ');
             node.css_classes.push_str(css_class);
             for word in css_class.split(' ') {
@@ -398,9 +343,9 @@ impl ClassDb {
     /// through `default`. Pele compares whole names, and so does this.
     pub(crate) fn define_class(&mut self, ids: &[&str], style: &[String]) {
         for &id in ids {
-            let at = match self.style_classes.index(id) {
+            let at = match self.style_classes.index_of(id) {
                 Some(at) => at,
-                None => self.style_classes.add(
+                None => self.style_classes.set(
                     id,
                     StyleClass {
                         id: id.to_string(),
@@ -409,7 +354,7 @@ impl ClassDb {
                     },
                 ),
             };
-            let class = &mut self.style_classes.items[at];
+            let class = &mut self.style_classes[at];
             for s in style {
                 if s.contains("color") {
                     class.text_styles.push(s.replacen("fill", "bgFill", 1));
@@ -421,7 +366,7 @@ impl ClassDb {
             };
             let parts: Vec<&str> = style.iter().flat_map(|s| s.split(',')).collect();
             for &node in tagged {
-                let styles = &mut self.classes.items[node].styles;
+                let styles = &mut self.classes[node].styles;
                 styles.extend(parts.iter().map(|p| p.to_string()));
             }
         }
@@ -520,7 +465,7 @@ impl ClassDb {
                         parent: parent_id.clone(),
                         explicit: leaf,
                     };
-                    self.namespaces.add(current, node);
+                    self.namespaces.set(current, node);
                 }
                 Some(node) if leaf => node.explicit = true,
                 Some(_) => {}
@@ -557,7 +502,7 @@ impl ClassDb {
         class_names: &[String],
         note_names: &[String],
     ) {
-        let Some(at) = self.namespaces.index(id) else {
+        let Some(at) = self.namespaces.index_of(id) else {
             return;
         };
         for name in class_names {
@@ -566,14 +511,14 @@ impl ClassDb {
                 continue;
             };
             node.parent = Some(id.to_string());
-            set_key(&mut self.namespaces.items[at].classes, name);
+            set_key(&mut self.namespaces[at].classes, name);
         }
         for name in note_names {
             let Some(note) = self.notes.get_mut(name) else {
                 continue;
             };
             note.parent = Some(id.to_string());
-            set_key(&mut self.namespaces.items[at].notes, name);
+            set_key(&mut self.namespaces[at].notes, name);
         }
     }
 

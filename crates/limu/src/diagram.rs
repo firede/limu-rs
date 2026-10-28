@@ -24,6 +24,8 @@ enum Model {
     Er(diagrams::er::ErDb),
     #[cfg(feature = "class")]
     Class(diagrams::class::ClassDb),
+    #[cfg(feature = "state")]
+    State(diagrams::state::StateDb),
     #[cfg(feature = "packet")]
     Packet(diagrams::packet::PacketModel),
     #[cfg(feature = "info")]
@@ -44,6 +46,8 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Er,
     #[cfg(feature = "class")]
     DiagramType::Class,
+    #[cfg(feature = "state")]
+    DiagramType::State,
     #[cfg(feature = "requirement")]
     DiagramType::Requirement,
     #[cfg(feature = "packet")]
@@ -122,6 +126,10 @@ impl Model {
             DiagramType::Class => p
                 .parse_with(false, |s| diagrams::class::parse(s, p.title.as_deref()))
                 .map(Model::Class),
+            #[cfg(feature = "state")]
+            DiagramType::State => p
+                .parse_with(false, |s| diagrams::state::parse(s, p.title.as_deref()))
+                .map(Model::State),
             #[cfg(feature = "packet")]
             DiagramType::Packet => p
                 .parse_with(false, |s| {
@@ -165,6 +173,8 @@ impl Model {
             Model::Er(ref m) => diagrams::er::layout(m, config, o),
             #[cfg(feature = "class")]
             Model::Class(ref m) => diagrams::class::layout(m, config, o),
+            #[cfg(feature = "state")]
+            Model::State(ref m) => diagrams::state::layout(m, config, o),
             #[cfg(feature = "packet")]
             Model::Packet(ref m) => diagrams::packet::layout(m, config, o),
             #[cfg(feature = "info")]

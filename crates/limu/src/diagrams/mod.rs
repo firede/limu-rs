@@ -17,5 +17,7 @@ pub(crate) mod packet;
 pub(crate) mod pie;
 #[cfg(feature = "requirement")]
 pub(crate) mod requirement;
+#[cfg(feature = "state")]
+pub(crate) mod state;
 #[cfg(feature = "swimlane")]
 pub(crate) mod swimlane;

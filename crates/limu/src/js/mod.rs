@@ -3,6 +3,7 @@
 
 pub(crate) mod chars;
 pub(crate) mod json;
+pub(crate) mod map;
 pub(crate) mod math;
 pub(crate) mod number;
 

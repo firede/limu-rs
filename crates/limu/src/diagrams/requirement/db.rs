@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use crate::detect::DiagramType;
 use crate::errors::{Error, ErrorCode};
 use crate::js::chars::{drop_indents, trim_start};
+use crate::js::map::Ordered;
 
 /// What the keyword tokens of requirement types stand for, Pele's RequirementType.
 pub(crate) const REQUIREMENT_TYPES: [&str; 6] = [
@@ -74,51 +75,6 @@ pub(crate) struct RequirementClass {
     pub(crate) id: String,
     pub(crate) styles: Vec<String>,
     pub(crate) text_styles: Vec<String>,
-}
-
-/// Items kept in the order they were added, and found by their names, as a JavaScript Map
-/// keeps them.
-#[derive(Clone, Debug)]
-pub(crate) struct Ordered<T> {
-    items: Vec<T>,
-    at: HashMap<String, usize>,
-}
-
-impl<T> Default for Ordered<T> {
-    fn default() -> Self {
-        Ordered {
-            items: Vec::new(),
-            at: HashMap::new(),
-        }
-    }
-}
-
-impl<T> Ordered<T> {
-    pub(crate) fn get(&self, id: &str) -> Option<&T> {
-        self.at.get(id).map(|&i| &self.items[i])
-    }
-
-    fn get_mut(&mut self, id: &str) -> Option<&mut T> {
-        self.at.get(id).map(|&i| &mut self.items[i])
-    }
-
-    pub(crate) fn contains(&self, id: &str) -> bool {
-        self.at.contains_key(id)
-    }
-
-    /// Adds the item of a name that has none.
-    fn add(&mut self, id: &str, item: T) {
-        self.at.insert(id.to_string(), self.items.len());
-        self.items.push(item);
-    }
-
-    pub(crate) fn values(&self) -> impl Iterator<Item = &T> {
-        self.items.iter()
-    }
-
-    fn values_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        self.items.iter_mut()
-    }
 }
 
 /// Applying a class copies its declarations onto each node, so a short text can ask for
@@ -221,7 +177,7 @@ impl RequirementDb {
                 css_styles: Vec::new(),
                 classes: vec!["default".into()],
             };
-            self.requirements.add(name, requirement);
+            self.requirements.set(name, requirement);
         }
         self.new_id.clear();
         self.new_text.clear();
@@ -254,7 +210,7 @@ impl RequirementDb {
                 css_styles: Vec::new(),
                 classes: vec!["default".into()],
             };
-            self.elements.add(name, element);
+            self.elements.set(name, element);
         }
         self.new_element_type.clear();
         self.new_doc_ref.clear();
@@ -323,7 +279,7 @@ impl RequirementDb {
                     id: id.clone(),
                     ..RequirementClass::default()
                 };
-                self.classes.add(id, class);
+                self.classes.set(id, class);
             }
             if let Some(class) = self.classes.get_mut(id) {
                 for s in style {
