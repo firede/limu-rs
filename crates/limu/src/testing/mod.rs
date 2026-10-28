@@ -1,6 +1,8 @@
 //! What the tests of limu share: reading values as the oracle writes them, and counting the
 //! cases that differ from it.
 
+pub(crate) mod pelesvg;
+
 use serde::Deserialize;
 
 use crate::value::{Map, Value};

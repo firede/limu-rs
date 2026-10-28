@@ -14,6 +14,8 @@ flate2 = "1"
 serde = { workspace = true }
 # The oracle writes numbers to the last bit, and they must be read so.
 serde_json = { version = "1", features = ["float_roundtrip"] }
+# The oracle writes a digest of the lines of a drawing past its first cases.
+sha2 = "0.10"
 
 [lints]
 workspace = true

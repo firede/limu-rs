@@ -11,6 +11,10 @@ use std::path::PathBuf;
 use flate2::read::GzDecoder;
 use serde::de::DeserializeOwned;
 
+mod drawing;
+
+pub use drawing::{Drawing, Drawings, FULL_CASES, at, digest, first_diff, load_drawings};
+
 /// The root of the workspace.
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -51,14 +55,19 @@ pub fn font(name: &str) -> Vec<u8> {
 
 /// The fixture of a name, as "svg" or "flowchart-render", read as a T.
 pub fn load<T: DeserializeOwned>(name: &str) -> T {
+    try_load(name).unwrap_or_else(|e| panic!("{e}"))
+}
+
+/// The fixture of a name read as a T, or what keeps it from being read.
+fn try_load<T: DeserializeOwned>(name: &str) -> Result<T, String> {
     let path = dir().join(format!("{name}.json.gz"));
     let file = File::open(&path)
-        .unwrap_or_else(|e| panic!("{}: {e}; run ./scripts/fixtures.sh", path.display()));
+        .map_err(|e| format!("{}: {e}; run ./scripts/fixtures.sh", path.display()))?;
     let mut json = String::new();
     GzDecoder::new(file)
         .read_to_string(&mut json)
-        .unwrap_or_else(|e| panic!("{}: {e}", path.display()));
-    serde_json::from_str(&json).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
+        .map_err(|e| format!("{}: {e}", path.display()))?;
+    serde_json::from_str(&json).map_err(|e| format!("{}: {e}", path.display()))
 }
 
 /// A number as the oracle writes it: a JSON number, or `{"$n": …}` for -0, NaN and the
