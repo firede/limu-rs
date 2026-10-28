@@ -248,6 +248,20 @@ impl<'a> IntoIterator for &'a Map {
     }
 }
 
+#[cfg(test)]
+impl Map {
+    /// A map of entries in the order given, which may not be the order JavaScript would give
+    /// them, as for comparing keys sorted.
+    pub(crate) fn sorted(entries: Vec<(&str, Value)>) -> Map {
+        Map {
+            entries: entries
+                .into_iter()
+                .map(|(k, v)| (k.to_string(), v))
+                .collect(),
+        }
+    }
+}
+
 /// The number a key is as an array index, if it is one as JavaScript has them.
 fn index_of(k: &str) -> Option<u32> {
     if k.is_empty() || k.len() > 10 || k.len() > 1 && k.starts_with('0') {

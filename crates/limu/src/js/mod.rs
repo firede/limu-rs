@@ -2,6 +2,7 @@
 //! arithmetic, its conversions between numbers and strings, and how it reads text.
 
 pub(crate) mod chars;
+pub(crate) mod json;
 pub(crate) mod math;
 pub(crate) mod number;
 

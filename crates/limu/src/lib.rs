@@ -15,8 +15,17 @@
 
 pub use limu_scene as scene;
 
+mod detect;
+mod errors;
 mod js;
+mod preprocess;
 pub mod text;
 mod value;
+mod yaml;
 
+#[cfg(test)]
+mod testing;
+
+pub use detect::DiagramType;
+pub use errors::{Error, ErrorCode};
 pub use value::{Map, Value};
