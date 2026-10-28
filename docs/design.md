@@ -291,6 +291,12 @@ each maximal subpart of an ill-formed sequence replaced with one U+FFFD, at the 
 that takes bytes. A `&str` cannot hold a lone surrogate, which JavaScript's strings
 can, so a `\u` escape of one in JSON or in a quoted YAML scalar reads as U+FFFD.
 
+A link's host name that is not ASCII is written in Punycode as a browser's URL parser
+writes it, but only after the mappings std can make. Full widths and case are mapped, and
+spaces, controls, format characters and private use are refused. The other mappings of
+UTS #46, as ß and ligatures, need Unicode's tables, and a code point not yet assigned is
+not refused. No case of the fixture depends on them.
+
 Matching Pele to the last bit is how the port is checked, not what limu-rs is for. The
 port goes as far as the function JavaScript calls, as with V8's sine. It doesn't copy a
 platform's C library to match its last bit, as with `Math.pow`. Where such a difference
