@@ -19,6 +19,8 @@ pub(crate) mod flowchart;
 pub(crate) mod gantt;
 #[cfg(feature = "info")]
 pub(crate) mod info;
+#[cfg(feature = "ishikawa")]
+pub(crate) mod ishikawa;
 #[cfg(feature = "journey")]
 pub(crate) mod journey;
 #[cfg(feature = "kanban")]
@@ -47,7 +49,11 @@ pub(crate) mod swimlane;
 pub(crate) mod timeline;
 #[cfg(feature = "treemap")]
 pub(crate) mod treemap;
+#[cfg(feature = "treeview")]
+pub(crate) mod treeview;
 #[cfg(feature = "usecase")]
 pub(crate) mod usecase;
+#[cfg(feature = "venn")]
+pub(crate) mod venn;
 #[cfg(feature = "xychart")]
 pub(crate) mod xychart;

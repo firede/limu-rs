@@ -58,10 +58,16 @@ enum Model {
     Sequence(diagrams::sequence::SeqDb),
     #[cfg(feature = "agentflow")]
     AgentFlow(diagrams::agentflow::AgentflowDb),
+    #[cfg(feature = "treeview")]
+    TreeView(diagrams::treeview::TreeViewModel),
     #[cfg(feature = "cynefin")]
     Cynefin(diagrams::cynefin::CynefinModel),
     #[cfg(feature = "usecase")]
     UseCase(diagrams::usecase::UsecaseModel),
+    #[cfg(feature = "venn")]
+    Venn(diagrams::venn::VennDb),
+    #[cfg(feature = "ishikawa")]
+    Ishikawa(diagrams::ishikawa::IshikawaDb),
     #[cfg(feature = "swimlane")]
     Swimlane(diagrams::flowchart::FlowDb),
 }
@@ -110,10 +116,16 @@ const TYPES: &[DiagramType] = &[
     DiagramType::Sequence,
     #[cfg(feature = "agentflow")]
     DiagramType::AgentFlow,
+    #[cfg(feature = "treeview")]
+    DiagramType::TreeView,
     #[cfg(feature = "cynefin")]
     DiagramType::Cynefin,
     #[cfg(feature = "usecase")]
     DiagramType::UseCase,
+    #[cfg(feature = "venn")]
+    DiagramType::Venn,
+    #[cfg(feature = "ishikawa")]
+    DiagramType::Ishikawa,
     #[cfg(feature = "swimlane")]
     DiagramType::Swimlane,
 ];
@@ -272,6 +284,10 @@ impl Model {
                     )
                 })
                 .map(Model::AgentFlow),
+            #[cfg(feature = "treeview")]
+            DiagramType::TreeView => p
+                .parse_with(false, |s| diagrams::treeview::parse(s, p.title.as_deref()))
+                .map(Model::TreeView),
             #[cfg(feature = "cynefin")]
             DiagramType::Cynefin => p
                 .parse_with(false, |s| diagrams::cynefin::parse(s, p.title.as_deref()))
@@ -280,6 +296,14 @@ impl Model {
             DiagramType::UseCase => p
                 .parse_with(false, |s| diagrams::usecase::parse(s, p.title.as_deref()))
                 .map(Model::UseCase),
+            #[cfg(feature = "venn")]
+            DiagramType::Venn => p
+                .parse_with(false, |s| diagrams::venn::parse(s, p.title.as_deref()))
+                .map(Model::Venn),
+            #[cfg(feature = "ishikawa")]
+            DiagramType::Ishikawa => p
+                .parse_with(false, |s| diagrams::ishikawa::parse(s, p.title.as_deref()))
+                .map(Model::Ishikawa),
             #[cfg(feature = "swimlane")]
             DiagramType::Swimlane => p
                 .parse_with(false, |s| {
@@ -342,10 +366,16 @@ impl Model {
             Model::Sequence(ref m) => diagrams::sequence::layout(m, config, o),
             #[cfg(feature = "agentflow")]
             Model::AgentFlow(ref m) => diagrams::agentflow::layout(m, config, o),
+            #[cfg(feature = "treeview")]
+            Model::TreeView(ref m) => diagrams::treeview::layout(m, config, o),
             #[cfg(feature = "cynefin")]
             Model::Cynefin(ref m) => diagrams::cynefin::layout(m, config, o),
             #[cfg(feature = "usecase")]
             Model::UseCase(ref m) => diagrams::usecase::layout(m, config, o),
+            #[cfg(feature = "venn")]
+            Model::Venn(ref m) => diagrams::venn::layout(m, config, o),
+            #[cfg(feature = "ishikawa")]
+            Model::Ishikawa(ref m) => diagrams::ishikawa::layout(m, config, o),
             #[cfg(feature = "swimlane")]
             Model::Swimlane(ref db) => diagrams::swimlane::layout(db, config, o),
         };
