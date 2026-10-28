@@ -39,7 +39,12 @@ fetch() {
 	mkdir -p "$tmp/out"
 	tar -xf "$tmp/archive" -C "$tmp/out"
 	mkdir -p "$(dirname "$dest")"
-	mv "$tmp/out/$folder" "$dest"
+	# GNU mv will not move a folder named "folder/.", so the whole of it is moved by its name.
+	if [ "$folder" = . ]; then
+		mv "$tmp/out" "$dest"
+	else
+		mv "$tmp/out/$folder" "$dest"
+	fi
 	echo "fixtures.sh: unpacked into ${dest#"$root"/}" >&2
 }
 
