@@ -243,18 +243,26 @@ meet in a cell are written as one box-drawing character that joins them. Where c
 a diagram badly, it draws from the scene's kinds, labels and bounds instead of the parts.
 An edge is drawn in lines across and down, as trees are drawn in text, because steps that
 follow a curve cell by cell are hard to follow. Of the ways to draw each stretch of it,
-limu-ascii takes the one through the fewest cells of nodes and nearest the curve. A node
-with a label whose outline curves or slants, as a stadium or a diamond, is drawn as the
-box it lies in. A shape too small to outline is a dot, and a marker is a character such as
-an arrow, drawn after the lines so that none hides it. The ends of an entity relationship
-are written as numbers, as "0..*", because a crow's foot in a cell looks like an arrow.
+limu-ascii takes the one through the fewest cells of nodes, then along the fewest sides of
+shapes, then nearest the curve. Edges may share a line, as the branches of a tree do. A
+node with a label whose outline curves or slants, as a stadium or a diamond, is drawn as
+the box it lies in. A shape too small to outline is a dot, or an arrowhead where it is a
+triangle, as a railroad diagram's arrows are. A marker is a character such as an arrow,
+drawn after the lines so that none hides it. The ends of an entity relationship are
+written as numbers, as "0..*", because a crow's foot in a cell looks like an arrow.
+
+A grid of cells has no colors, so a fill only hides what it covers, and only where it
+can't be seen through. A Venn diagram's sets are filled so that their overlaps show, and
+their outlines show through each other. A picture in a node, as a service's icon, a
+task's face or a card's stripe of color, is more than cells can draw, and is left out. What
+it says is in the node's text, or in a color cells can't show.
 
 Labels are set last, a line to a row, and no text is lost. A line of text may break a line
 down but not a line across or other text, so it moves a row up or down where it must, and
-stays inside the box it is in. Where there is no such room, a row is put in for it, and
-lines down through that row are drawn on through it. Rows are put in where the layout, laid
-out in pixels, gives text less than a row, as a class's members are, at seven eighths of
-the size of the rest. Text can't be turned, so a label turned 30 degrees or more, as an
+stays inside the box it is in. Where there is no such room, a row is put in by the label,
+where it lets the label fit and splits no text set already, and lines down through that row
+are drawn on through it. Rows are put in where the layout, laid out in pixels, gives text
+less than a row, as a class's members are, at seven eighths of the size of the rest. Text can't be turned, so a label turned 30 degrees or more, as an
 axis's title, is set across, running out from the diagram.
 
 Some diagrams are left to other forms. A pie chart, an XY chart, a radar chart, a Sankey

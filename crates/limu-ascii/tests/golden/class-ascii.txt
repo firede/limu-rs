@@ -3,10 +3,10 @@
              +-----------------+
              |     Animal      |
              +-----------------+                               +------------------------+
-             |                 |                               |        can fly         |
-             | +int age        |      +----------------------+ |        can swim        |
-             | +String gender  |      | From Duck till Zebra | |        can dive        |
-             +-----------------+      +----------------------+ | can help in debugging  |
+             | +int age        |      +----------------------+ |        can fly         |
+             | +String gender  |      | From Duck till Zebra | |        can swim        |
+             +-----------------+      +----------------------+ |        can dive        |
+             |                 |                               | can help in debugging  |
              | +isMammal()     |                               +-----------+------------+
              | +mate()         |                                           :
              +---/_\-/_\-/_\---+                                           :

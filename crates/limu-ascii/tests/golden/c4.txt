@@ -22,8 +22,8 @@
            │││  ╎         «external system»         ╎     │
            │││  ╎                                   ╎     │
          Uses│  ╎     Mainframe Banking System      ╎     │
-           │││  ╎  Stores all of the core banking         │
-        [HTTPS] ╎   information about customers,    ◀─────┼─┐
+        [HTTPS] ╎  Stores all of the core banking   ◀─────┼─┐
+           │││  ╎   information about customers,    ╎     │ │
            │││  ╎   accounts, transactions, etc.    ╎     │ │
            │││  ╰╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╯     │ │
            │││                                            │ │

@@ -24,10 +24,11 @@
 //! in one, as "┬". An edge is drawn in lines across and down. A node with a label whose
 //! outline curves or slants, as a stadium or a diamond, is drawn as the box it lies in, its
 //! corners rounded where it curves, and its sides pointed where it comes to a point at
-//! either side. A shape too small to outline in cells is drawn as a dot, and a marker as an
-//! arrow or a mark like it. The ends of an entity relationship are written as how many,
-//! as "0..*". A grid of cells has no colors, fills or images, so a fill only hides what it
-//! covers.
+//! either side. A shape too small to outline in cells is drawn as a dot, or as an arrowhead
+//! where it is a triangle, and a marker as an arrow or a mark like it. The ends of an entity
+//! relationship are written as how many, as "0..*". A grid of cells has no colors, fills or
+//! images, so a fill only hides what it covers, where it can't be seen through, and a
+//! picture in a node, as an icon, is left out.
 //!
 //! Labels are set last, a line to a row, and every line of every label is set whole. Text
 //! breaks lines down where it must, but never lines across or other text. It moves a row
@@ -198,6 +199,11 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
         .collect();
     limu_scene::draw_with(scene, &look, &mut c, |p, it, s| {
         let c = p.canvas();
+        // A shape too small for its label, as a sequence number's circle.
+        let small = it.label.is_some()
+            && !matches!(it.kind, Kind::Edge(_))
+            && !it.parts.is_empty()
+            && c.tiny(it.bounds);
         // The middle of the box a node is drawn as, which its label is set in.
         let mut boxed = None;
         if let Some(sides) = c.boxed(it) {
@@ -213,7 +219,11 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
             // box too low for its sides has its row.
             let ((c0, _), (c1, _)) = c.node(b, sides);
             boxed = Some(Point::new((c0 + c1) as f64 * cw / 2.0, b.center().y));
-        } else if it.label.is_some() && !matches!(it.kind, Kind::Edge(_)) && c.tiny(it.bounds) {
+        } else if c.picture(it) {
+            // A picture in a node, as a service's icon or a task's face, is more than cells
+            // can draw, and what it says is in the node's text or nowhere a grid of cells
+            // can show, as a color.
+        } else if small {
             // A shape too small for its label, as a sequence number's circle, is left to
             // the label.
         } else if let Kind::Edge(_) = it.kind
@@ -313,6 +323,7 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
                 align: placed.align,
                 rotate: placed.rotate,
                 within: inside.then_some(b),
+                own: small,
             });
         }
     });
@@ -412,6 +423,34 @@ impl TextCanvas<'_> {
         fill.is_some_and(|f| f.color != self.bg)
     }
 
+    /// Whether an item is a picture in a node: a mark with a shape of its own inside a
+    /// node's box, which is not drawn as a dot.
+    fn picture(&self, it: &Item) -> bool {
+        if !matches!(it.kind, Kind::Mark) || it.shape.is_none() {
+            return false;
+        }
+        // A shape drawn as a dot, as a point on a chart, is drawn.
+        let tol = self.o.cells.width.min(self.o.cells.height) / 4.0;
+        let dot = it.parts.iter().all(|p| match &p.outline {
+            Outline::Path(path) => path
+                .flatten(tol)
+                .iter()
+                .all(|l| l.closed && bounds(&l.points).is_some_and(|b| self.tiny(b))),
+            Outline::Box { rect, .. } => self.tiny(*rect),
+        });
+        if dot {
+            return false;
+        }
+        let b = it.bounds;
+        let ((c0, r0), (c1, r1)) = (
+            self.cell(Point::new(b.x, b.y)),
+            self.cell(Point::new(b.x + b.w, b.y + b.h)),
+        );
+        self.nodes
+            .iter()
+            .any(|&((x0, y0), (x1, y1))| x0 <= c0 && c1 <= x1 && y0 <= r0 && r1 <= y1)
+    }
+
     /// Whether a box, in the scene's units, is too small to outline in cells.
     fn tiny(&self, r: Rect) -> bool {
         r.w <= 4.0 * self.o.cells.width && r.h <= 2.0 * self.o.cells.height
@@ -499,7 +538,11 @@ impl TextCanvas<'_> {
             join: Default::default(),
         };
         let radius = if sides.round { 1.0 } else { 0.0 };
-        self.rect(b, radius, Some(&Ink::NONE), Some(&pen));
+        let ground = Ink {
+            color: self.bg,
+            ..Ink::NONE
+        };
+        self.rect(b, radius, Some(&ground), Some(&pen));
         let (c0, r0) = self.cell(Point::new(b.x, b.y));
         let (c1, r1) = self.cell(Point::new(b.x + b.w, b.y + b.h));
         let r = middle((r0 + r1) as f64 / 2.0, 1.0);
@@ -519,8 +562,9 @@ impl TextCanvas<'_> {
     /// Each stretch of the path that runs one way across and one way down is drawn as a
     /// line the way it leaves, a line the other way, and a line the way it arrives, either
     /// of the first and last of which may be none. Of the ways to draw it, the one taken
-    /// goes through the fewest cells of nodes, then keeps nearest the path, then leaves
-    /// and arrives the ways the path does, then turns nearest halfway. Labels are set by
+    /// goes through the fewest cells of nodes, then runs along the fewest outlines of
+    /// shapes, as a group's sides, then keeps nearest the path, then leaves and arrives the ways the path does,
+    /// then turns nearest halfway. Labels are set by
     /// the path, and lines near it pass by them.
     fn route(&mut self, path: &limu_scene::Path, s: Stroke) {
         let tol = self.o.cells.width.min(self.o.cells.height) / 4.0;
@@ -633,8 +677,9 @@ impl TextCanvas<'_> {
     }
 
     /// How many cells of nodes lines across and down through corners pass through, between
-    /// the cells they start and end in.
-    fn through(&self, a: (i64, i64), corners: &[(i64, i64)], b: (i64, i64)) -> usize {
+    /// the cells they start and end in, and how many they run along the outlines of shapes
+    /// drawn already.
+    fn through(&self, a: (i64, i64), corners: &[(i64, i64)], b: (i64, i64)) -> (usize, usize) {
         let mut cells = Vec::new();
         let mut from = a;
         for &to in corners.iter().chain([&b]) {
@@ -642,19 +687,24 @@ impl TextCanvas<'_> {
             let mut at = from;
             while at != to {
                 at = (at.0 + dc, at.1 + dr);
-                cells.push(at);
+                cells.push((at, dc != 0));
             }
             from = to;
         }
         cells.pop();
-        cells
+        let nodes = cells
             .iter()
-            .filter(|&&(c, r)| {
+            .filter(|&&((c, r), _)| {
                 self.nodes
                     .iter()
                     .any(|&((c0, r0), (c1, r1))| (c0..=c1).contains(&c) && (r0..=r1).contains(&r))
             })
-            .count()
+            .count();
+        let along = cells
+            .iter()
+            .filter(|&&(at, across)| self.grid.along(self.grid.at(at), across))
+            .count();
+        (nodes, along)
     }
 
     /// Draws polylines in cells.
@@ -699,15 +749,18 @@ impl TextCanvas<'_> {
             align,
             rotate: 0.0,
             within: None,
+            own: false,
         });
     }
 
     /// Sets a label's lines in cells about its point: a line to a row, centered on it, or
     /// starting or ending there as the label is aligned.
     ///
-    /// Text is set where it breaks no more than lines down, and no other text, a
-    /// row up or down from there if it must, and inside the box it is in. Where there is no
-    /// such room, a row is put in for each line that has none.
+    /// Text is set where it breaks no more than lines down, and no other text, a row up or
+    /// down from there if it must, and inside the box it is in. Where there is no such room,
+    /// a row is put in, inside the box, where it splits no other text if it can, and the
+    /// label is set again. The label of a shape too small to draw, as a sequence number's
+    /// circle, stands for the shape, and breaks any line but no text.
     fn label(&mut self, text: &Text) {
         let lines = &text.lines;
         if lines.is_empty() {
@@ -715,18 +768,16 @@ impl TextCanvas<'_> {
         }
         let (cw, ch) = (self.o.cells.width, self.o.cells.height);
         let at = text.at;
-        let m = lines.len() as f64;
-        let row = |i: usize| at.y + (i as f64 - (m - 1.0) / 2.0) * ch;
+        let m = lines.len() as i64;
         // Text can't be turned in cells. A label turned far enough that it would run into
         // what is beside it, as an axis's title, is set across about the point it is turned
         // about, running out from the diagram there: leftward in its left half, and
         // rightward in its right half.
         let turn = text.rotate.abs() % 180.0;
         let turned = (30.0..=150.0).contains(&turn);
-        let starts: Vec<(i64, i64)> = lines
+        let cols: Vec<(i64, i64)> = lines
             .iter()
-            .enumerate()
-            .map(|(i, line)| {
+            .map(|line| {
                 let n = line.width() as f64;
                 let w = n * cw;
                 let x = match text.align {
@@ -736,45 +787,69 @@ impl TextCanvas<'_> {
                     Align::Start => at.x + w / 2.0,
                     Align::End => at.x - w / 2.0,
                 };
-                (middle(x / cw, n), middle(row(i) / ch, 1.0))
+                (middle(x / cw, n), n as i64)
             })
             .collect();
-        let widths: Vec<i64> = lines.iter().map(|l| l.width() as i64).collect();
-        // The rows of the box's sides above and below, which text stays between.
-        let sides = text.within.map(|b| {
+        // The row of the first line in the scene, each line a row below the one before.
+        let first = middle(at.y / ch - (m - 1) as f64 / 2.0, 1.0);
+        // The rows of the box's sides above and below, which text stays between. A box too
+        // low to have sides, drawn in brackets on a row, has the text on that row.
+        let sides = text.within.and_then(|b| {
             let (_, r0) = self.cell(Point::new(b.x, b.y));
             let (_, r1) = self.cell(Point::new(b.x, b.y + b.h));
-            (r0, r1)
+            (r1 - r0 > 1).then_some((r0, r1))
         });
-        let fits = |shift: i64| {
-            starts.iter().zip(&widths).all(|(&(c, r), &n)| {
-                let r = r + shift;
-                sides.is_none_or(|(r0, r1)| r0 < r && r < r1)
-                    && self.grid.free(self.grid.at((c, r)), n)
+        // Sets the label a number of rows down from where its first line is, which may grow
+        // the grid.
+        let set = |g: &mut Grid, shift: i64| {
+            for (i, (&(c, n), line)) in cols.iter().zip(lines).enumerate() {
+                let r = g.at((0, first)).1 + shift + i as i64;
+                let at = g.fit((g.at((c, 0)).0, r), n);
+                g.text(at, line);
+            }
+            let top = g.at((0, first)).1 + shift;
+            g.block(top, top + m - 1);
+        };
+        // How far down from where its first line is the label fits in a grid, if it does.
+        let fits = |g: &Grid| {
+            let top = g.at((0, first)).1;
+            let inside = sides.map(|(r0, r1)| (g.at((0, r0)).1, g.at((0, r1)).1));
+            let shifts: &[i64] = if text.own { &[0] } else { &[0, -1, 1] };
+            shifts.iter().copied().find(|&shift| {
+                cols.iter().enumerate().all(|(i, &(c, n))| {
+                    let r = top + shift + i as i64;
+                    inside.is_none_or(|(r0, r1)| r0 < r && r < r1)
+                        && g.free((g.at((c, 0)).0, r), n, text.own)
+                })
             })
         };
-        if let Some(shift) = [0, -1, 1].into_iter().find(|&s| fits(s)) {
-            for ((&(c, r), &n), line) in starts.iter().zip(&widths).zip(lines) {
-                let at = self.grid.at((c, r + shift));
-                let at = self.grid.fit(at, n);
-                self.grid.text(at, line);
+        for _ in 0..=m {
+            if let Some(shift) = fits(&self.grid) {
+                set(&mut self.grid, shift);
+                return;
             }
-            return;
+            // A row is put in before a row of the label's or the one after it, inside its
+            // box if it is in one: where the label then fits, if it does anywhere, where it
+            // splits the fewest texts, and then the lowest.
+            let mut rows: Vec<i64> = (first..=first + m)
+                .filter(|&r| sides.is_none_or(|(r0, r1)| r0 < r && r <= r1))
+                .collect();
+            rows.sort_by_key(|&r| (self.grid.splits(r), std::cmp::Reverse(r)));
+            let room = |&r: &i64| {
+                let mut g = self.grid.clone();
+                g.put_row_in(r);
+                fits(&g).is_some()
+            };
+            let before = rows
+                .iter()
+                .find(|r| room(r))
+                .or(rows.first())
+                .copied()
+                .unwrap_or(first + m);
+            self.grid.put_row_in(before);
         }
-        for ((&(c, r), &n), line) in starts.iter().zip(&widths).zip(lines) {
-            let mut at = self.grid.at((c, r));
-            if !self.grid.free(at, n) {
-                // The row is put in below, inside the box, unless the line is on its side
-                // below.
-                let before = match sides {
-                    Some((_, r1)) if r >= r1 => r,
-                    _ => r + 1,
-                };
-                at.1 = self.grid.put_row_in(before);
-            }
-            let at = self.grid.fit(at, n);
-            self.grid.text(at, line);
-        }
+        // There is no room to be made, as where text is set over text above and below.
+        set(&mut self.grid, 0);
     }
 }
 
@@ -795,18 +870,33 @@ impl Canvas for TextCanvas<'_> {
                 *p = self.turned(*p);
             }
         }
-        let pts: Vec<Point> = lines
-            .iter()
-            .flat_map(|l| l.points.iter().copied())
-            .collect();
-        let Some(b) = bounds(&pts) else { return };
-        if lines.iter().all(|l| l.closed) && self.tiny(b) {
+        // Each closed shape too small to outline is drawn as a character: a triangle as an
+        // arrowhead pointing the way it does, and anything else as a dot.
+        if lines.iter().all(|l| l.closed) {
             let filled = self.solid(fill);
-            let at = self.cell(Point::new(b.x + b.w / 2.0, b.y + b.h / 2.0));
-            self.dot(at, filled);
-            return;
+            lines.retain(|l| {
+                let Some(b) = bounds(&l.points) else {
+                    return false;
+                };
+                if !self.tiny(b) {
+                    return true;
+                }
+                let at = self.cell(Point::new(b.x + b.w / 2.0, b.y + b.h / 2.0));
+                match arrowhead(&l.points) {
+                    Some(way) => {
+                        if let Mark::Tip(ch) = marker(MarkerType::ArrowPoint, way, self.o.charset) {
+                            self.grid.put(at, ch);
+                        }
+                    }
+                    None => self.dot(at, filled),
+                }
+                false
+            });
+            if lines.is_empty() {
+                return;
+            }
         }
-        if fill.is_some() {
+        if hides(fill) {
             self.cover(&lines);
         }
         if let Some(pen) = pen {
@@ -844,6 +934,7 @@ impl Canvas for TextCanvas<'_> {
             if pen.is_some() {
                 let heavy = Stroke {
                     heavy: true,
+                    outline: true,
                     ..Stroke::default()
                 };
                 self.grid.line((mid.0, r0), (mid.0, r1), heavy);
@@ -852,7 +943,7 @@ impl Canvas for TextCanvas<'_> {
         }
         if r1 - r0 <= 1 {
             let r = mid.1;
-            if fill.is_some() {
+            if hides(fill) {
                 for c in c0 + 1..c1 {
                     self.grid.clear((c, r));
                 }
@@ -863,7 +954,7 @@ impl Canvas for TextCanvas<'_> {
             }
             return;
         }
-        if fill.is_some() {
+        if hides(fill) {
             // What is inside is hidden, and with it the lines from the sides into it.
             for r in r0 + 1..r1 {
                 for c in c0 + 1..c1 {
@@ -919,6 +1010,8 @@ struct Text {
     rotate: f64,
     // The box with an outline the text is in, which it stays in.
     within: Option<Rect>,
+    // Whether the text stands for a shape too small to draw.
+    own: bool,
 }
 
 /// A marker at an end of an edge, in cells.
@@ -962,6 +1055,33 @@ struct Sides {
     right: bool,
 }
 
+/// The way a triangle points, from the middle of its shortest side to the corner across
+/// from it, where its points are a triangle's.
+fn arrowhead(pts: &[Point]) -> Option<(f64, f64)> {
+    let mut corners: Vec<Point> = Vec::new();
+    for &p in pts {
+        let far = |q: &Point| (p.x - q.x).abs() > 1e-6 || (p.y - q.y).abs() > 1e-6;
+        if corners.last().is_none_or(far) && corners.first().is_none_or(far) {
+            corners.push(p);
+        }
+    }
+    let [a, b, c] = corners[..] else {
+        return None;
+    };
+    let len = |p: Point, q: Point| (p.x - q.x).hypot(p.y - q.y);
+    // Each corner, with the side across from it.
+    let (tip, p, q) = [(a, b, c), (b, c, a), (c, a, b)]
+        .into_iter()
+        .min_by(|x, y| len(x.1, x.2).total_cmp(&len(y.1, y.2)))?;
+    Some((tip.x - (p.x + q.x) / 2.0, tip.y - (p.y + q.y) / 2.0))
+}
+
+/// Whether a fill hides what is under it, as one does that can't be seen through. One that
+/// can, as a Venn diagram's sets are filled, hides nothing.
+fn hides(fill: Option<&Ink>) -> bool {
+    fill.is_some_and(|f| f.color.a == 255)
+}
+
 /// The first of n cells centered on a place, in cells, the one before the middle where
 /// there is no cell in the middle.
 fn middle(at: f64, n: f64) -> i64 {
@@ -973,6 +1093,7 @@ fn line_stroke(s: &Resolved) -> Stroke {
     Stroke {
         dashed: s.dash.iter().any(|&d| d > 0.0),
         heavy: s.stroke_width >= 3.0,
+        outline: false,
     }
 }
 
@@ -982,6 +1103,7 @@ fn stroke(pen: &Pen<'_>) -> Stroke {
     Stroke {
         dashed: pen.dash.iter().any(|&d| d > 0.0),
         heavy: pen.width >= 3.0,
+        outline: true,
     }
 }
 

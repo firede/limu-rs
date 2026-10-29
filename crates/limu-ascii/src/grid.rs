@@ -20,6 +20,8 @@ pub(crate) struct Stroke {
     pub(crate) dashed: bool,
     /// Thicker than most.
     pub(crate) heavy: bool,
+    /// A shape's outline, not an edge's line.
+    pub(crate) outline: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -30,6 +32,8 @@ struct Cell {
     heavy: bool,
     // Whether the corner the lines turn is rounded.
     round: bool,
+    // The sides the lines of shapes' outlines leave the cell by.
+    outline: u8,
     // A character drawn in the cell, which is written in place of its lines.
     glyph: Option<char>,
     // Whether the cell is the second of a character two cells wide.
@@ -41,6 +45,7 @@ struct Cell {
 /// The grid starts as the cells a scene is laid out in, each where the scene puts it, and
 /// may then grow to make room for text: by columns at either side, and by rows put in
 /// between those of the scene. A cell of the scene is found by [`Grid::at`].
+#[derive(Clone)]
 pub(crate) struct Grid {
     cols: usize,
     rows: usize,
@@ -51,6 +56,9 @@ pub(crate) struct Grid {
     top: i64,
     // The rows of the scene a row was put in before, once for each.
     put_in: Vec<i64>,
+    // The first and last rows of each text of more than a line set in the grid, which a row
+    // put in between would split.
+    blocks: Vec<(i64, i64)>,
 }
 
 impl Grid {
@@ -62,6 +70,7 @@ impl Grid {
             left: 0,
             top: 0,
             put_in: Vec::new(),
+            blocks: Vec::new(),
         }
     }
 
@@ -71,22 +80,42 @@ impl Grid {
         (c - self.left, r - self.top + before)
     }
 
-    /// Puts a row in before a row of the scene, and after any put in there already, and
-    /// says where it is. Lines down that pass from the row above it to the row below pass
-    /// through it.
-    pub(crate) fn put_row_in(&mut self, before: i64) -> i64 {
+    /// Keeps the rows a text of more than a line is set in, from the first to the last.
+    pub(crate) fn block(&mut self, first: i64, last: i64) {
+        if last > first {
+            self.blocks.push((first, last));
+        }
+    }
+
+    /// How many texts of more than a line a row put in before a row of the scene would
+    /// split.
+    pub(crate) fn splits(&self, before: i64) -> usize {
+        let r = self.at((0, before)).1;
+        self.blocks
+            .iter()
+            .filter(|&&(a, b)| a < r && r <= b)
+            .count()
+    }
+
+    /// Puts a row in before a row of the scene, and after any put in there already. Lines
+    /// down that pass from the row above it into the row below pass through it, as do those
+    /// that end in a character set over them there, as an arrow at a box's side.
+    pub(crate) fn put_row_in(&mut self, before: i64) {
         let r = self.at((0, before)).1.clamp(0, self.rows as i64) as usize;
         let row: Vec<Cell> = (0..self.cols)
             .map(|c| {
                 let above = (r > 0).then(|| self.cells[(r - 1) * self.cols + c]);
                 let below = (r < self.rows).then(|| self.cells[r * self.cols + c]);
+                let down = |a: Cell| Cell {
+                    lines: UP | DOWN,
+                    dashed: a.dashed,
+                    heavy: a.heavy,
+                    ..Cell::default()
+                };
                 match (above, below) {
-                    (Some(a), Some(b)) if a.lines & DOWN != 0 && b.lines & UP != 0 => Cell {
-                        lines: UP | DOWN,
-                        dashed: a.dashed,
-                        heavy: a.heavy,
-                        ..Cell::default()
-                    },
+                    (Some(a), Some(b)) if a.lines & DOWN != 0 && b.lines & UP != 0 => down(a),
+                    (Some(a), Some(b)) if a.lines & DOWN != 0 && b.glyph.is_some() => down(a),
+                    (Some(a), Some(b)) if a.glyph.is_some() && b.lines & UP != 0 => down(b),
                     _ => Cell::default(),
                 }
             })
@@ -94,7 +123,11 @@ impl Grid {
         self.cells.splice(r * self.cols..r * self.cols, row);
         self.rows += 1;
         self.put_in.push(before);
-        r as i64
+        let r = r as i64;
+        for (a, b) in &mut self.blocks {
+            *a += (*a >= r) as i64;
+            *b += (*b >= r) as i64;
+        }
     }
 
     /// Grows the grid by columns or rows at its sides, so that the cells from one to n
@@ -120,19 +153,21 @@ impl Grid {
             left: self.left - l,
             top: self.top - t,
             put_in: std::mem::take(&mut self.put_in),
+            blocks: self.blocks.iter().map(|&(a, b)| (a + t, b + t)).collect(),
         };
         (c + l, r + t)
     }
 
     /// Whether text may be set in the cells from one to n across from it: whether each is
-    /// empty, or has only lines down in it, which text may break or end.
-    pub(crate) fn free(&self, (c, r): (i64, i64), n: i64) -> bool {
+    /// empty, or has only lines down in it, which text may break or end. Where it may break
+    /// any line, whether each has no text.
+    pub(crate) fn free(&self, (c, r): (i64, i64), n: i64, over_lines: bool) -> bool {
         (c..c + n).all(|c| {
             if c < 0 || r < 0 || c as usize >= self.cols || r as usize >= self.rows {
                 return true;
             }
             let cell = &self.cells[r as usize * self.cols + c as usize];
-            cell.glyph.is_none() && !cell.tail && cell.lines & (LEFT | RIGHT) == 0
+            cell.glyph.is_none() && !cell.tail && (over_lines || cell.lines & (LEFT | RIGHT) == 0)
         })
     }
 
@@ -160,6 +195,9 @@ impl Grid {
                 cell.lines |= side;
                 cell.dashed |= s.dashed;
                 cell.heavy |= s.heavy;
+                if s.outline {
+                    cell.outline |= side;
+                }
             }
         }
     }
@@ -200,7 +238,18 @@ impl Grid {
         };
         if let Some(cell) = self.cell(at) {
             cell.lines &= !side;
+            cell.outline &= !side;
         }
+    }
+
+    /// Whether a shape's outline runs through a cell the same way as a line from it to the
+    /// next cell, across or down.
+    pub(crate) fn along(&self, (c, r): (i64, i64), across: bool) -> bool {
+        if c < 0 || r < 0 || c as usize >= self.cols || r as usize >= self.rows {
+            return false;
+        }
+        let cell = &self.cells[r as usize * self.cols + c as usize];
+        cell.outline & if across { LEFT | RIGHT } else { UP | DOWN } != 0
     }
 
     /// Rounds the corner the lines in a cell turn.

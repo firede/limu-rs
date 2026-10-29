@@ -4,11 +4,11 @@ Bold                            │
                               Middle
 Italic                          │
                               End
-Bold italic                     │
-Mono 0O1lI                 Three lines
+Bold italic                Three lines
+Mono 0O1lI                 centered on
+                            one point
                                 ●
-                           centered on
-Underlined                  one point
+Underlined
 H2O and x2
 
 Mixed bold and mono    Turned -90       Upside down
