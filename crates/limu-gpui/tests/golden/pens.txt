@@ -1,0 +1,17 @@
+stroke #6e6e6eff 2 Butt Miter [] M48 24 L48 168
+stroke #6e6e6eff 2 Butt Miter [] M272 24 L272 168
+stroke #1f1f1fff 20 Butt Miter [] M48 48 L272 48
+stroke #1f1f1fff 20 Round Miter [] M48 96 L272 96
+stroke #1f1f1fff 20 Square Miter [] M48 144 L272 144
+stroke #1f1f1fff 16 Butt Miter [] M48 300 L98 200 L148 300 L148 200
+stroke #1f1f1fff 16 Butt Round [] M240 300 L290 200 L340 300 L340 200
+stroke #1f1f1fff 16 Butt Bevel [] M432 300 L482 200 L532 300 L532 200
+stroke #1f1f1fff 4 Butt Miter [6] M48 352 L592 352
+stroke #1f1f1fff 4 Butt Miter [16 8] M48 384 L592 384
+stroke #1f1f1fff 4 Butt Miter [16 8 4 8] M48 416 L592 416
+stroke #1f1f1fff 8 Round Miter [0.2 16] M48 448 L592 448
+stroke #1f1f1fff 1 Butt Miter [] M48 496 L208 496
+stroke #1f1f1fff 2 Butt Miter [] M240 496 L400 496
+stroke #1f1f1fff 6 Butt Miter [] M432 496 L592 496
+stroke #1f1f1fff 4 Butt Miter [] M320 524 L320 580
+stroke #5b7bd566 24 Butt Miter [] M48 552 L592 552

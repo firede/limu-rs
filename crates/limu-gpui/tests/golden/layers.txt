@@ -1,0 +1,14 @@
+fill #6e6e6eff M40 20 L80 20 L80 360 L40 360 Z
+fill #6e6e6eff M160 20 L200 20 L200 360 L160 360 Z
+fill #6e6e6eff M280 20 L320 20 L320 360 L280 360 Z
+fill #6e6e6eff M400 20 L440 20 L440 360 L400 360 Z
+fill #6e6e6eff M520 20 L560 20 L560 360 L520 360 Z
+fill #6e6e6eff M640 20 L680 20 L680 360 L640 360 Z
+fill #5b7bd580 M80 60 L280 60 L280 180 L80 180 Z
+stroke #1f1f1f80 24 Butt Miter [] M80 60 L280 60 L280 180 L80 180 Z
+fill #5b7bd580 M440 60 L640 60 L640 180 L440 180 Z
+stroke #1f1f1f80 24 Butt Miter [] M440 60 L640 60 L640 180 L440 180 Z
+svg #ffffff80 turn 0 at 180 294 <svg xmlns="http://www.w3.org/2000/svg" width="626" height="626" viewBox="0 0 626 626"><text xml:space="preserve" x="313" y="313" text-anchor="middle" font-family="Arial" font-size="40" fill="none" stroke="#000" stroke-width="12" stroke-linejoin="round"><tspan font-weight="bold">Faded label</tspan></text></svg>
+text #1f1f1f80 40 Middle 180 294 Face(1)"Faded label"0
+stroke #1f1f1f80 6 Butt Miter [] M440 280 L680 280
+fill #1f1f1f80 M680 280 L664 286.72 L664 273.28 Z

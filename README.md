@@ -23,7 +23,7 @@ compare its output with Pele's, number for number. It is the Rust sibling of
 | `limu-scene` | The scene, its style, the drawing every backend shares, hit testing and SVG. A backend depends on it alone. |
 | `limu-tiny-skia` | Draws a scene into a bitmap. |
 | `limu-coregraphics` | Draws a scene with Core Graphics, and measures text with Core Text. |
-| `limu-gpui` | Draws a scene in a GPUI window. |
+| `limu-gpui` | Draws a scene in a GPUI window, and measures text with GPUI's text system. |
 | `limu-ascii` | Draws a scene as text, for terminals. |
 
 The core crates, `limu` and `limu-scene`, use the standard library alone, with serde behind
@@ -38,6 +38,8 @@ an optional feature.
 This downloads the fixtures the tests compare with and the fonts the golden images are drawn
 in, once, and runs rustfmt, clippy, the docs and the tests. The fixtures are written from
 Pele by [pele-oracle](https://github.com/firede/pele-oracle).
+limu-gpui is a workspace of its own, checked by `./scripts/verify-gpui.sh`, and
+`cargo run --example viewer` in `crates/limu-gpui` shows the samples every backend draws.
 [docs/design.md](docs/design.md) explains how limu-rs is built and how it's checked against
 Pele, and [AGENTS.md](AGENTS.md) has the rules for changing it.
 

@@ -1,0 +1,13 @@
+stroke #8a8a8aff 1 Butt Miter [] M15 34 L15 186 Q15 190 19 190 L23 190 M15 50 L23 50
+stroke #8a8a8aff 1 Butt Miter [] M35 62 L35 158 Q35 162 39 162 L43 162 M35 78 L43 78
+stroke #8a8a8aff 1 Butt Miter [] M55 90 L55 130 Q55 134 59 134 L63 134 M55 106 L63 106
+stroke #8a8a8aff 1 Butt Miter [] M35 202 L35 214 Q35 218 39 218 L43 218
+text #1f1f1fff 16 Start 8 27.6 Face(1)"packages"0
+text #1f1f1fff 16 Start 28 55.6 Face(1)"mermaid"0
+text #1f1f1fff 16 Start 48 83.6 Face(1)"src"0
+text #1f1f1fff 16 Start 68 111.6 Face(0)"parser.ts"0
+text #1f1f1fff 16 Start 68 139.6 Face(0)"renderer.ts"0
+text #1f1f1fff 16 Start 48 167.6 Face(0)"package.json"0
+text #1f1f1fff 16 Start 28 195.6 Face(1)"parser"0
+text #1f1f1fff 16 Start 48 223.6 Face(1)"src"0
+text #1f1f1fff 16 Start 8 251.6 Face(0)"README.md"0

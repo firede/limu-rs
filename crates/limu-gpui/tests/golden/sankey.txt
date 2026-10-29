@@ -1,0 +1,15 @@
+fill #4c78a866 M18 18.66 C308 18.66 308 8 598 8 L598 91.42 C308 91.42 308 102.09 18 102.09 Z
+fill #4c78a866 M18 102.09 C308 102.09 308 103.42 598 103.42 L598 354.41 C308 354.41 308 353.08 18 353.08 Z
+fill #4c78a866 M18 353.08 C308 353.08 308 366.41 598 366.41 L598 408 C308 408 308 394.66 18 394.66 Z
+fill #4c78a8ff M10 18.66 L16 18.66 C17.1 18.66 18 19.56 18 20.66 L18 392.66 C18 393.77 17.1 394.66 16 394.66 L10 394.66 C8.9 394.66 8 393.77 8 392.66 L8 20.66 C8 19.56 8.9 18.66 10 18.66 Z
+fill #f58518ff M600 8 L606 8 C607.1 8 608 8.9 608 10 L608 89.42 C608 90.53 607.1 91.42 606 91.42 L600 91.42 C598.9 91.42 598 90.53 598 89.42 L598 10 C598 8.9 598.9 8 600 8 Z
+fill #54a24bff M600 103.42 L606 103.42 C607.1 103.42 608 104.32 608 105.42 L608 352.41 C608 353.52 607.1 354.41 606 354.41 L600 354.41 C598.9 354.41 598 353.52 598 352.41 L598 105.42 C598 104.32 598.9 103.42 600 103.42 Z
+fill #e45756ff M600 366.41 L606 366.41 C607.1 366.41 608 367.31 608 368.41 L608 406 C608 407.1 607.1 408 606 408 L600 408 C598.9 408 598 407.1 598 406 L598 368.41 C598 367.31 598.9 366.41 600 366.41 Z
+svg #ffffffff turn 0 at 24 211.56 <svg xmlns="http://www.w3.org/2000/svg" width="238" height="238" viewBox="0 0 238 238"><text xml:space="preserve" x="119" y="119" text-anchor="start" font-family="Arial" font-size="14" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round"><tspan>Electricity grid</tspan></text></svg>
+text #1f1f1fff 14 Start 24 211.56 Face(0)"Electricity grid"0
+svg #ffffffff turn 0 at 614 54.61 <svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420"><text xml:space="preserve" x="210" y="210" text-anchor="start" font-family="Arial" font-size="14" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round"><tspan>Heating and cooling - homes</tspan></text></svg>
+text #1f1f1fff 14 Start 614 54.61 Face(0)"Heating and cooling - homes"0
+svg #ffffffff turn 0 at 614 233.82 <svg xmlns="http://www.w3.org/2000/svg" width="162" height="162" viewBox="0 0 162 162"><text xml:space="preserve" x="81" y="81" text-anchor="start" font-family="Arial" font-size="14" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round"><tspan>Industry</tspan></text></svg>
+text #1f1f1fff 14 Start 614 233.82 Face(0)"Industry"0
+svg #ffffffff turn 0 at 614 392.11 <svg xmlns="http://www.w3.org/2000/svg" width="152" height="152" viewBox="0 0 152 152"><text xml:space="preserve" x="76" y="76" text-anchor="start" font-family="Arial" font-size="14" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round"><tspan>Losses</tspan></text></svg>
+text #1f1f1fff 14 Start 614 392.11 Face(0)"Losses"0

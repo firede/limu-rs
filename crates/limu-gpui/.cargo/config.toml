@@ -1,0 +1,4 @@
+# The crate is a workspace of its own, so that the root workspace never builds GPUI. Its
+# builds go under the root's target directory all the same, to be cleaned with the rest.
+[build]
+target-dir = "../../target/gpui"

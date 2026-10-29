@@ -45,7 +45,14 @@ is a crate of its own.
 The workspace forbids unsafe code. Core Graphics and Core Text can't be called without it,
 so limu-coregraphics denies it instead and allows it in one module, which wraps each call
 in a function that can't misuse it and says why the call is sound. The crate is empty on
-platforms other than Apple's, so the workspace builds everywhere. Both core crates have an optional `serde` feature that serializes the
+platforms other than Apple's, so the workspace builds everywhere.
+
+limu-gpui is a workspace of its own, which the root workspace leaves out. GPUI takes long
+to build and builds only where it has a platform, so `scripts/verify.sh` would be slow and
+fail on some machines with it. `scripts/verify-gpui.sh` checks it, and CI runs that on
+macOS when limu-gpui or what it draws changes.
+
+Both core crates have an optional `serde` feature that serializes the
 scene and the style, so a host can carry a scene to another process or language.
 
 The split puts what changes rarely apart from what changes often. The scene is a contract
@@ -213,6 +220,13 @@ boxes into paths where a canvas has no box of its own, and draws markers from th
 outlines in the color of the edge's line. Every backend draws the same scene the same way,
 as far as its canvas lets it, and the differences that remain belong to the canvas.
 
+GPUI's canvas lets it least. GPUI paints a glyph only upright and only filled, as Zed's
+GPUI does, and the charts of GPUI Kit keep their text upright. limu-gpui
+writes a turned run and a halo as SVG text instead, which GPUI's SVG renderer draws as a
+mask and turns as it turns icons. That text is shaped by usvg rather than by GPUI's text
+system, in the system's fonts and those the app bundles. GPUI has no layers either, and it
+draws images opaque.
+
 A host that wants its own look for some items gives `draw_with` a hook. The hook receives
 the item, its resolved style and a `Painter`, whose `item`, `parts`, `ends`, `label` and
 `picture` draw the default's pieces, and whose canvas it may draw on itself. The hook
@@ -364,7 +378,10 @@ change is meant and looked at before they are committed. limu-tiny-skia's are dr
 Liberation fonts and compared with a little room. A backend that draws pixels in another
 way, as CoreGraphics does, compares with its own images where it runs, and also with
 limu-tiny-skia's with more room, which catches a drawing that is wrong rather than
-slightly different, such as one turned upside down. limu-ascii's golden files are text.
+slightly different, such as one turned upside down. limu-gpui can't draw without a window,
+so its tests record the calls its canvas would make of one, and compare the records with
+golden files of text. What a record can't show, such as where glyphs fall, is looked at in
+its viewer example, which shows the samples in a window. limu-ascii's golden files are text.
 
 ## Where limu-rs differs from limu
 

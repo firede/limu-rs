@@ -22,7 +22,7 @@ Pele 的逐个数值比对。它是 [limu](https://github.com/firede/limu) 的 R
 | `limu-scene` | 场景、样式、各后端共用的绘制、命中测试和 SVG。后端只依赖它。 |
 | `limu-tiny-skia` | 把场景画成位图。 |
 | `limu-coregraphics` | 用 Core Graphics 绘制场景，用 Core Text 测量文字。 |
-| `limu-gpui` | 在 GPUI 窗口里绘制场景。 |
+| `limu-gpui` | 在 GPUI 窗口里绘制场景，用 GPUI 的文字系统测量文字。 |
 | `limu-ascii` | 把场景画成文字，给终端用。 |
 
 核心的 `limu` 和 `limu-scene` 只用标准库，serde 是可选的 feature。
@@ -36,7 +36,8 @@ Pele 的逐个数值比对。它是 [limu](https://github.com/firede/limu) 的 R
 它会下载一次测试比对用的 fixture 和 golden 图用的字体，然后运行 rustfmt、clippy、文档和全部测试。fixture 由
 [pele-oracle](https://github.com/firede/pele-oracle) 从 Pele 生成。limu-rs 的构建方式以及它
 如何与 Pele 比对，见 [docs/design.md](docs/design.md)，修改代码的规则见
-[AGENTS.md](AGENTS.md)。
+[AGENTS.md](AGENTS.md)。limu-gpui 是单独的 workspace，用 `./scripts/verify-gpui.sh` 检查，
+在 `crates/limu-gpui` 里运行 `cargo run --example viewer` 可以看到各后端共用的样例。
 
 ## 许可
 

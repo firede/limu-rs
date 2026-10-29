@@ -1,0 +1,28 @@
+text #1f1f1fff 32 Start 48 67.2 Face(0)"Regular"0
+text #1f1f1fff 32 Start 48 119.2 Face(1)"Bold"0
+text #1f1f1fff 32 Start 48 171.2 Face(2)"Italic"0
+text #1f1f1fff 32 Start 48 223.2 Face(3)"Bold italic"0
+text #1f1f1fff 32 Start 48 275.2 Face(4)"Mono 0O1lI"0
+text #1f1f1fff 32 Start 48 327.2 Face(32)"Underlined"0
+text #1f1f1fff 32 Start 48 379.2 Face(0)"H"0 Face(8)"2"6.4 Face(0)"O and x"0 Face(16)"2"-10.67
+text #1f1f1fff 32 Start 48 431.2 Face(0)"Mixed "0 Face(1)"bold"0 Face(0)" and "0 Face(4)"mono"0
+text #1f1f1fff 20 Start 48 487 Face(0)"Small 10"0
+text #1f1f1fff 48 Start 48 552.8 Face(0)"Large 24"0
+stroke #6e6e6eff 2 Butt Miter [] M660 28 L660 212
+text #1f1f1fff 32 Start 660 71.2 Face(0)"Start"0
+text #1f1f1fff 32 Middle 660 131.2 Face(0)"Middle"0
+text #1f1f1fff 32 End 660 191.2 Face(0)"End"0
+text #1f1f1fff 28 Middle 660 267.8 Face(0)"Three lines"0
+text #1f1f1fff 28 Middle 660 309.8 Face(0)"centered on"0
+text #1f1f1fff 28 Middle 660 351.8 Face(0)"one point"0
+fill #1f1f1fff M664 300 C664 302.21 662.21 304 660 304 C657.79 304 656 302.21 656 300 C656 297.79 657.79 296 660 296 C662.21 296 664 297.79 664 300 Z
+svg #1f1f1fff turn -90 at 509.8 460 <svg xmlns="http://www.w3.org/2000/svg" width="386" height="386" viewBox="0 0 386 386"><text xml:space="preserve" x="193" y="193" text-anchor="middle" font-family="Arial" font-size="28" fill="#000"><tspan>Turned -90</tspan></text></svg>
+fill #1f1f1fff M504 460 C504 462.21 502.21 464 500 464 C497.79 464 496 462.21 496 460 C496 457.79 497.79 456 500 456 C502.21 456 504 457.79 504 460 Z
+svg #1f1f1fff turn 45 at 653.07 466.93 <svg xmlns="http://www.w3.org/2000/svg" width="368" height="368" viewBox="0 0 368 368"><text xml:space="preserve" x="184" y="184" text-anchor="middle" font-family="Arial" font-size="28" fill="#000"><tspan>Turned 45</tspan></text></svg>
+fill #1f1f1fff M664 460 C664 462.21 662.21 464 660 464 C657.79 464 656 462.21 656 460 C656 457.79 657.79 456 660 456 C662.21 456 664 457.79 664 460 Z
+svg #1f1f1fff turn 180 at 860 450.2 <svg xmlns="http://www.w3.org/2000/svg" width="436" height="436" viewBox="0 0 436 436"><text xml:space="preserve" x="218" y="218" text-anchor="middle" font-family="Arial" font-size="28" fill="#000"><tspan>Upside down</tspan></text></svg>
+fill #1f1f1fff M864 460 C864 462.21 862.21 464 860 464 C857.79 464 856 462.21 856 460 C856 457.79 857.79 456 860 456 C862.21 456 864 457.79 864 460 Z
+stroke #5b7bd5ff 12 Butt Miter [] M48 612 L400 612
+svg #ffffffff turn 0 at 224 623.2 <svg xmlns="http://www.w3.org/2000/svg" width="618" height="618" viewBox="0 0 618 618"><text xml:space="preserve" x="309" y="309" text-anchor="middle" font-family="Arial" font-size="32" fill="none" stroke="#000" stroke-width="8" stroke-linejoin="round"><tspan font-weight="bold">Halo over a line</tspan></text></svg>
+text #1f1f1fff 32 Middle 224 623.2 Face(1)"Halo over a line"0
+text #cc0033ff 32 Middle 660 623.2 Face(0)"A color of its own"0

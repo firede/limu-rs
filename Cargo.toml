@@ -1,6 +1,8 @@
 [workspace]
 members = ["crates/limu-scene", "crates/limu", "crates/limu-tiny-skia", "crates/limu-coregraphics", "crates/limu-fixtures", "crates/limu-samples"]
 resolver = "3"
+# limu-gpui is a workspace of its own, which these checks leave out.
+exclude = ["crates/limu-gpui"]
 
 [workspace.package]
 version = "0.1.0"

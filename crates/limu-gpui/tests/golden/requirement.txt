@@ -1,0 +1,24 @@
+stroke #1f1f1fff 1 Round Miter [5 4] M100.76 114 L100.76 195
+stroke #1f1f1fff 1 Round Round [] M96.26 186 L100.76 195 L105.26 186
+fill #ffffffff M66.35 144 L135.16 144 C136.82 144 138.16 145.34 138.16 147 L138.16 162 C138.16 163.66 136.82 165 135.16 165 L66.35 165 C64.7 165 63.35 163.66 63.35 162 L63.35 147 C63.35 145.34 64.7 144 66.35 144 Z
+text #6e6e6eff 14 Middle 100.76 159.4 Face(0)"«satisfies»"0
+fill #f3f3f3ff M12 195 L189.52 195 C191.73 195 193.52 196.79 193.52 199 L193.52 366 C193.52 368.21 191.73 370 189.52 370 L12 370 C9.79 370 8 368.21 8 366 L8 199 C8 196.79 9.79 195 12 195 Z
+stroke #8a8a8aff 1 Butt Miter [] M12 195 L189.52 195 C191.73 195 193.52 196.79 193.52 199 L193.52 366 C193.52 368.21 191.73 370 189.52 370 L12 370 C9.79 370 8 368.21 8 366 L8 199 C8 196.79 9.79 195 12 195 Z
+stroke #8a8a8aff 1 Butt Miter [] M8 260 L193.52 260
+text #1f1f1fff 16 Middle 100.76 243.6 Face(1)"test_req"0
+text #6e6e6eff 14 Middle 100.76 220.4 Face(0)"«Requirement»"0
+text #6e6e6eff 14 Start 22 285.4 Face(0)"ID"0
+text #1f1f1fff 14 Start 103.24 285.4 Face(0)"1"0
+text #6e6e6eff 14 Start 22 308.4 Face(0)"Text"0
+text #1f1f1fff 14 Start 103.24 308.4 Face(0)"the test text."0
+text #6e6e6eff 14 Start 22 331.4 Face(0)"Risk"0
+text #1f1f1fff 14 Start 103.24 331.4 Face(0)"High"0
+text #6e6e6eff 14 Start 22 354.4 Face(0)"Verification"0
+text #1f1f1fff 14 Start 103.24 354.4 Face(0)"Test"0
+fill #f3f3f3ff M37.69 8 L163.83 8 C166.04 8 167.83 9.79 167.83 12 L167.83 110 C167.83 112.21 166.04 114 163.83 114 L37.69 114 C35.48 114 33.69 112.21 33.69 110 L33.69 12 C33.69 9.79 35.48 8 37.69 8 Z
+stroke #8a8a8aff 1 Butt Miter [] M37.69 8 L163.83 8 C166.04 8 167.83 9.79 167.83 12 L167.83 110 C167.83 112.21 166.04 114 163.83 114 L37.69 114 C35.48 114 33.69 112.21 33.69 110 L33.69 12 C33.69 9.79 35.48 8 37.69 8 Z
+stroke #8a8a8aff 1 Butt Miter [] M33.69 73 L167.83 73
+text #1f1f1fff 16 Middle 100.76 56.6 Face(1)"test_entity"0
+text #6e6e6eff 14 Middle 100.76 33.4 Face(0)"«Element»"0
+text #6e6e6eff 14 Start 47.69 98.4 Face(0)"Type"0
+text #1f1f1fff 14 Start 90.81 98.4 Face(0)"simulation"0

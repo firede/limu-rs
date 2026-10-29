@@ -1,0 +1,43 @@
+name: gpui
+
+# limu-gpui is a workspace of its own, and GPUI takes long to build, so it is checked only
+# when it or what it draws changes.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/limu-gpui/**"
+      - "crates/limu-scene/**"
+      - "crates/limu-samples/**"
+      - "crates/limu/**"
+      - "scripts/verify-gpui.sh"
+      - ".github/workflows/gpui.yml"
+  pull_request:
+    paths:
+      - "crates/limu-gpui/**"
+      - "crates/limu-scene/**"
+      - "crates/limu-samples/**"
+      - "crates/limu/**"
+      - "scripts/verify-gpui.sh"
+      - ".github/workflows/gpui.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: gpui-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify (macos arm64)
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup toolchain install stable --profile minimal --component rustfmt,clippy && rustup default stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            target/gpui
+          key: gpui-${{ hashFiles('crates/limu-gpui/Cargo.lock') }}
+      - run: ./scripts/verify-gpui.sh

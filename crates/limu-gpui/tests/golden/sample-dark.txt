@@ -1,0 +1,21 @@
+fill #1b2f3480 M24 16 L456 16 C460.42 16 464 19.58 464 24 L464 416 C464 420.42 460.42 424 456 424 L24 424 C19.58 424 16 420.42 16 416 L16 24 C16 19.58 19.58 16 24 16 Z
+stroke #557176ff 2 Butt Miter [] M24 16 L456 16 C460.42 16 464 19.58 464 24 L464 416 C464 420.42 460.42 424 456 424 L24 424 C19.58 424 16 420.42 16 416 L16 24 C16 19.58 19.58 16 24 16 Z
+text #7f989bff 32 Middle 240 59.2 Face(0)"Group & co"0
+stroke #b4c7c7ff 2 Round Miter [6] M200 160 C200 200 200 200 200 226
+fill #b4c7c7ff M200 240 L193.28 224 L206.72 224 Z
+fill #0c1618ff M173.88 179 L226.12 179 C229.44 179 232.12 181.69 232.12 185 L232.12 215 C232.12 218.31 229.44 221 226.12 221 L173.88 221 C170.56 221 167.88 218.31 167.88 215 L167.88 185 C167.88 181.69 170.56 179 173.88 179 Z
+text #d0dddcff 28 Middle 200 209.8 Face(2)"Yes"0
+fill #ff99ffff M128 80 L272 80 C276.42 80 280 83.58 280 88 L280 152 C280 156.42 276.42 160 272 160 L128 160 C123.58 160 120 156.42 120 152 L120 88 C120 83.58 123.58 80 128 80 Z
+stroke #557176ff 4 Butt Miter [] M128 80 L272 80 C276.42 80 280 83.58 280 88 L280 152 C280 156.42 276.42 160 272 160 L128 160 C123.58 160 120 156.42 120 152 L120 88 C120 83.58 123.58 80 128 80 Z
+text #d0dddcff 32 Middle 200 131.2 Face(32)"Start"0
+fill #142428ff M200 240 L340 310 L200 380 L60 310 Z
+stroke #557176ff 2 Butt Miter [] M200 240 L340 310 L200 380 L60 310 Z
+text #d0dddcff 32 Middle 200 321.2 Face(0)"Is it "0 Face(1)"ready"0 Face(4)"x"0 Face(16)"2"-10.67
+fill #ee849480 M300 60 L420 60 L420 180 L300 180 Z
+stroke #b4c7c780 2 Butt Miter [] M300 60 L420 60 L420 180 L300 180 Z
+fill #ee849480 M340 100 L460 100 L460 160 L340 160 Z
+stroke #b4c7c780 2 Butt Miter [] M340 100 L460 100 L460 160 L340 160 Z
+svg #ee8494ff turn -90 at 51.2 240 <svg xmlns="http://www.w3.org/2000/svg" width="436" height="436" viewBox="0 0 436 436"><text xml:space="preserve" x="218" y="218" text-anchor="middle" font-family="Arial" font-size="32" fill="none" stroke="#000" stroke-width="8" stroke-linejoin="round"><tspan font-weight="bold">Sideways</tspan></text></svg>
+svg #d0dddcff turn -90 at 51.2 240 <svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420"><text xml:space="preserve" x="210" y="210" text-anchor="middle" font-family="Arial" font-size="32" fill="#000"><tspan font-weight="bold">Sideways</tspan></text></svg>
+stroke #d0dddcff 4 Round Round [] M422 384 C422 393.94 413.94 402 404 402 C394.06 402 386 393.94 386 384 C386 374.06 394.06 366 404 366 C413.94 366 422 374.06 422 384 Z
+fill #d0dddcff M410 384 C410 387.31 407.31 390 404 390 C400.69 390 398 387.31 398 384 C398 380.69 400.69 378 404 378 C407.31 378 410 380.69 410 384 Z
