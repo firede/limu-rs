@@ -479,9 +479,10 @@ lays out what is typed into it, built from limu, limu-ascii and the SVG writer f
 WebAssembly, and shows it as SVG, as text for a terminal, or as its scene in JSON, with an
 error's place in the source. The page calls the module through a few functions it exports,
 which pass text through the module's memory, so it needs no generated glue and no tool but
-cargo to build. WebAssembly has no clock, so the page gives the time a Gantt chart takes as
-today. The source is kept in the page's address, so a diagram is shared, or reported, as a
-link. `./scripts/playground.sh` builds it into `target/playground`.
+cargo to build. `limu.js` is the script that calls them, which limu's website loads too, for
+its own page of the playground. WebAssembly has no clock, so the page gives the time a Gantt chart takes as
+today. The source is kept in the page's address as `#source=…`, as Pele's playground and limu's
+website keep it, so a diagram is shared, or reported, as a link. `./scripts/playground.sh` builds it into `target/playground`.
 
 ## Where limu-rs differs from limu
 

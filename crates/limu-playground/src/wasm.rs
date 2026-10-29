@@ -42,9 +42,10 @@ pub extern "C" fn input(len: usize) -> *mut u8 {
 
 /// Shows the source written into the input as the page asks: in a view of 0 for SVG, 1 for
 /// text and 2 for the scene, a theme of 0 for Pele's, 1 for Kohu and 2 for Kohu's dark one,
-/// in ASCII alone where ascii is not 0, laid out for a number of columns, with now as today.
+/// its colors written as colors where literal is not 0, in ASCII alone where ascii is not 0,
+/// laid out for a number of columns, with now as today.
 #[unsafe(no_mangle)]
-pub extern "C" fn show(view: u32, theme: u32, ascii: u32, columns: f64, now: f64) {
+pub extern "C" fn show(view: u32, theme: u32, literal: u32, ascii: u32, columns: f64, now: f64) {
     let src = INPUT.with_borrow(|b| String::from_utf8_lossy(b).into_owned());
     let r = Request {
         view: match view {
@@ -57,6 +58,7 @@ pub extern "C" fn show(view: u32, theme: u32, ascii: u32, columns: f64, now: f64
             2 => Theme::KOHU_DARK,
             _ => Theme::PELE,
         },
+        literal: literal != 0,
         ascii: ascii != 0,
         columns,
         now,

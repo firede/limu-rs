@@ -15,7 +15,7 @@ CARGO_PROFILE_RELEASE_STRIP=true \
 out=target/playground
 mkdir -p "$out"
 cp target/wasm32-unknown-unknown/release/limu_playground.wasm "$out/"
-cp crates/limu-playground/web/index.html "$out/"
+cp crates/limu-playground/web/index.html crates/limu-playground/web/limu.js "$out/"
 echo "$out"
 if [ "${1:-}" = --serve ]; then
 	python3 -m http.server -d "$out" 8000

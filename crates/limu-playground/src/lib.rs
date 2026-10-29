@@ -35,6 +35,10 @@ pub struct Request {
     pub view: View,
     /// The theme the SVG is drawn in.
     pub theme: Theme,
+    /// Whether the SVG's colors are written as colors, rather than as the `--limu-*`
+    /// variables with the theme's colors to fall back on, which a page that holds the SVG
+    /// sets to draw it in its own theme.
+    pub literal: bool,
     /// Whether text is drawn in ASCII alone rather than in box-drawing characters.
     pub ascii: bool,
     /// How many columns text is laid out to fit.
@@ -95,7 +99,7 @@ fn output(src: &str, r: &Request) -> Result<Value, Value> {
             &scene,
             &svg::Options {
                 look: Look::new(r.theme.clone()),
-                literal: true,
+                literal: r.literal,
                 // Text is measured as Arial, and Liberation Sans is as wide.
                 font_family: Some("Arial,Liberation Sans,sans-serif".into()),
                 ..Default::default()
@@ -155,6 +159,7 @@ mod tests {
         Request {
             view,
             theme: Theme::KOHU,
+            literal: true,
             ascii: false,
             columns: 80.0,
             now: 0.0,

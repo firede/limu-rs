@@ -104,42 +104,14 @@ pre.cells { line-height: normal; }
     <div class="out" id="out"><p class="empty">Loading limu…</p></div>
   </section>
 </main>
-<script>
-// The page calls limu's module through the functions it exports. It writes a diagram's
-// source into the module's memory where input() makes room, calls show(), and reads the JSON
-// show() wrote at output(). A panic writes what it says there before the module traps, and
-// the module is then started anew.
-const enc = new TextEncoder(), dec = new TextDecoder();
-let module, limu;
+<script type="module">
+import { load, linkedSource, sourceHash } from './limu.js';
 
-function start() {
-  limu = new WebAssembly.Instance(module, {}).exports;
-  limu.start();
-}
-
-function read() {
-  return JSON.parse(dec.decode(new Uint8Array(limu.memory.buffer, limu.output(), limu.output_len())));
-}
-
-function call(f) {
-  try {
-    f();
-    return read();
-  } catch (e) {
-    if (!(e instanceof WebAssembly.RuntimeError)) throw e;
-    let said;
-    try { said = read(); } catch { said = {}; }
-    start();
-    return { error: 'limu panicked: ' + (said.panic || e.message) + '\nThis is a bug in limu.', line: 0, column: 0 };
-  }
-}
-
+const viewNames = ['svg', 'text', 'scene'];
+const themeNames = ['pele', 'kohu', 'kohu-dark'];
+let limu;
 function show(src, o) {
-  return call(() => {
-    const b = enc.encode(src);
-    new Uint8Array(limu.memory.buffer, limu.input(b.length), b.length).set(b);
-    limu.show(o.view, o.theme, o.ascii, o.columns, Date.now());
-  });
+  return limu.show(src, { view: viewNames[o.view], theme: themeNames[o.theme], literal: true, ascii: o.ascii === 1, columns: o.columns });
 }
 
 const $ = id => document.getElementById(id);
@@ -152,19 +124,6 @@ try { Object.assign(o, JSON.parse(localStorage.getItem('limu-playground') || '{}
 function keep() {
   try { localStorage.setItem('limu-playground', JSON.stringify(o)); } catch {}
 }
-
-function toHash(text) {
-  let bin = '';
-  for (const b of enc.encode(text)) bin += String.fromCharCode(b);
-  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-function fromHash(hash) {
-  try {
-    const bin = atob(hash.replace(/-/g, '+').replace(/_/g, '/'));
-    return dec.decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
-  } catch { return null; }
-}
-
 function render() {
   const t = performance.now();
   const r = show(src.value, o);
@@ -217,7 +176,7 @@ function later() {
   clearTimeout(timer);
   timer = setTimeout(() => {
     render();
-    history.replaceState(null, '', '#' + toHash(src.value));
+    history.replaceState(null, '', sourceHash(src.value));
     $('sample').value = '';
   }, 120);
 }
@@ -266,7 +225,7 @@ $('sample').addEventListener('change', () => {
   const name = $('sample').value;
   if (!name) return;
   src.value = samples.get(name);
-  history.replaceState(null, '', '#' + toHash(src.value));
+  history.replaceState(null, '', sourceHash(src.value));
   render();
 });
 function flash(button, text) {
@@ -279,19 +238,17 @@ $('copy').addEventListener('click', () => {
   navigator.clipboard.writeText(last).then(() => flash($('copy'), 'Copied'), () => flash($('copy'), 'Failed'));
 });
 $('share').addEventListener('click', () => {
-  history.replaceState(null, '', '#' + toHash(src.value));
+  history.replaceState(null, '', sourceHash(src.value));
   navigator.clipboard.writeText(location.href).then(() => flash($('share'), 'Copied'), () => flash($('share'), 'Failed'));
 });
 
 let samples = new Map();
-WebAssembly.compileStreaming(fetch('limu_playground.wasm'))
-  .catch(() => fetch('limu_playground.wasm').then(r => r.arrayBuffer()).then(b => WebAssembly.compile(b)))
-  .then(m => {
-    module = m;
-    start();
-    samples = new Map(call(() => limu.samples()));
+load('limu_playground.wasm')
+  .then(l => {
+    limu = l;
+    samples = new Map(limu.samples());
     for (const name of samples.keys()) $('sample').append(new Option(name, name));
-    const shared = location.hash.length > 1 ? fromHash(location.hash.slice(1)) : null;
+    const shared = linkedSource();
     if (shared !== null) {
       src.value = shared;
       $('sample').value = [...samples].find(([, s]) => s === shared)?.[0] ?? '';
