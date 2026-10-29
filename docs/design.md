@@ -294,7 +294,9 @@ keeps one, so connectors between things never vanish. Then each node's box is dr
 about its text, its top and bottom next to it and its sides a cell from it, since the rows
 and columns of its room often have other things in them and can't be cut whole. Lines
 drawn to a side are drawn on to where it is now, and the room between things is cut once
-more. A box whose text is set against a side keeps its width, as a Kanban card does, since
+more. A group's box is drawn in about the things in it in the same way, as wide as they
+are and not as its title, after the boxes in it. A box whose text is set against a side
+keeps its width, as a Kanban card does, since
 its width is a column's. So does a node with more than text in it, as a quadrant with its
 points, and a box that shares a side with another. Block diagrams and treemaps keep their
 boxes as they are, because their sizes are columns and values. A host that wants every cell where

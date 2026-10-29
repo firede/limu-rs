@@ -290,13 +290,13 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
             // row off it.
         } else {
             p.parts(it, s);
-            // A node drawn as boxes, as a class's, is drawn in about what is in them.
+            // A node drawn as boxes, as a class's, is drawn in about what is in them, and
+            // a group's box about the things in it, as wide as they are and not as its title.
             let c = p.canvas();
-            if matches!(it.kind, Kind::Node)
+            let node = matches!(it.kind, Kind::Node)
                 && it.label.is_some()
-                && s.stroke.visible()
-                && !crowded.contains(&it.bounds)
-            {
+                && !crowded.contains(&it.bounds);
+            if (node || matches!(it.kind, Kind::Group)) && s.stroke.visible() {
                 for part in &it.parts {
                     if let Outline::Box { rect, .. } = part.outline
                         && !c.tiny(rect)
@@ -307,7 +307,7 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
                         ];
                         c.boxes.push(Frame {
                             corners,
-                            across: across(it),
+                            across: !node || across(it),
                         });
                     }
                 }
@@ -437,7 +437,9 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
             .flat_map(|f| f.corners.map(|at| c.grid.at(at)))
             .collect();
         c.grid.squeeze(&mut corners);
-        for (ab, f) in corners.chunks(2).zip(&boxes) {
+        // A box in another is drawn after it, and is drawn in first, so that the one it is
+        // in comes in about it as it is then.
+        for (ab, f) in corners.chunks(2).zip(&boxes).rev() {
             c.grid.tighten(ab[0], ab[1], f.across);
         }
         c.grid.squeeze(&mut []);
