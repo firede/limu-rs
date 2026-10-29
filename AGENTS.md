@@ -41,6 +41,20 @@ layout.
 - Where limu-rs is built otherwise than limu, say so in docs/design.md, under "Where
   limu-rs differs from limu", with the reason.
 
+## Releasing
+
+- limu-rs is released as a tag `v…` with a release on GitHub. It isn't on crates.io yet, and
+  publishing it there waits on its owner.
+- The website, [firede/limu-website](https://github.com/firede/limu-website), shows limu-rs
+  beside limu. Its `limu-rs.json` names the commit its Rust playground is built from until
+  the first release, and the release's tag after. After a release, follow it there, as its
+  README says, and change its documents for what the release changed. Every Rust example
+  there compiles against the release. Its daily check fails until the site follows the
+  latest release.
+- A release's notes list what changed that the site describes, such as the API, the
+  options, the backends, the diagrams limu-ascii draws and the Pele the port follows, so
+  that following it misses none.
+
 ## Writing
 
 Comments and documents are plain and exact. Say what a thing does and why, in full
