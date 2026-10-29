@@ -1,0 +1,64 @@
+[package]
+name = "limu-coregraphics"
+description = "Draws limu's scenes with Core Graphics, measuring text with Core Text."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+limu-scene = { workspace = true }
+
+[target.'cfg(target_vendor = "apple")'.dependencies]
+objc2-core-foundation = { version = "0.3.2", default-features = false, features = [
+    "std",
+    "CFArray",
+    "CFAttributedString",
+    "CFCGTypes",
+    "CFData",
+    "CFDictionary",
+    "CFString",
+] }
+objc2-core-graphics = { version = "0.3.2", default-features = false, features = [
+    "std",
+    "CGAffineTransform",
+    "CGBase",
+    "CGBitmapContext",
+    "CGColor",
+    "CGColorSpace",
+    "CGContext",
+    "CGDataProvider",
+    "CGFont",
+    "CGGeometry",
+    "CGImage",
+    "CGPath",
+] }
+objc2-core-text = { version = "0.3.2", default-features = false, features = [
+    "std",
+    "objc2-core-graphics",
+    "CTFont",
+    "CTFontDescriptor",
+    "CTFontManager",
+    "CTLine",
+    "CTRun",
+    "CTStringAttributes",
+] }
+
+[dev-dependencies]
+limu-fixtures = { path = "../limu-fixtures" }
+limu-samples = { path = "../limu-samples" }
+# Reads and writes the golden images, and reads limu-tiny-skia's to compare with.
+tiny-skia = "0.12"
+
+# The workspace forbids unsafe code. Calling Core Graphics and Core Text needs it, so here it
+# is denied instead, and allowed only in the module that wraps those calls.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+# A test of !(x > 0) is how a port says that NaN fails it, as it does in JavaScript.
+neg_cmp_op_on_partial_ord = "allow"

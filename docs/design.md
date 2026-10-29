@@ -40,7 +40,12 @@ never moves anything.
 | `limu-ascii` | Draws a scene as text in a grid of cells, for terminals and TUIs, and measures in cells. | `limu-scene` |
 
 `limu-scene` and `limu` use the standard library alone. A backend that needs another crate
-is a crate of its own. Both core crates have an optional `serde` feature that serializes the
+is a crate of its own.
+
+The workspace forbids unsafe code. Core Graphics and Core Text can't be called without it,
+so limu-coregraphics denies it instead and allows it in one module, which wraps each call
+in a function that can't misuse it and says why the call is sound. The crate is empty on
+platforms other than Apple's, so the workspace builds everywhere. Both core crates have an optional `serde` feature that serializes the
 scene and the style, so a host can carry a scene to another process or language.
 
 The split puts what changes rarely apart from what changes often. The scene is a contract
