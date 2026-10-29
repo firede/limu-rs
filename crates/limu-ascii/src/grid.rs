@@ -172,6 +172,46 @@ impl Grid {
         }
     }
 
+    /// Whether a line across passes through a cell.
+    pub(crate) fn across(&self, (c, r): (i64, i64)) -> bool {
+        if c < 0 || r < 0 || c as usize >= self.cols || r as usize >= self.rows {
+            return false;
+        }
+        let cell = &self.cells[r as usize * self.cols + c as usize];
+        cell.glyph.is_none() && cell.lines & (LEFT | RIGHT) != 0
+    }
+
+    /// Cuts the empty rows and columns about the grid away, and each run of rows that
+    /// nothing but straight lines down passes through, and of columns that nothing but
+    /// straight lines across passes through, to one. Nothing comes apart, as lines that
+    /// only pass through such a row or column are shortened by it, and nothing else is in
+    /// it. It is how text renderers of diagrams space them, a cell between things.
+    pub(crate) fn squeeze(&mut self) {
+        let cell = |g: &Grid, c: usize, r: usize| g.cells[r * g.cols + c];
+        let blank = |x: Cell| x == Cell::default();
+        let through =
+            |x: Cell, way: u8| x.glyph.is_none() && !x.tail && (x.lines == 0 || x.lines == way);
+        let rows: Vec<usize> = keep(
+            (0..self.rows).map(|r| (0..self.cols).all(|c| blank(cell(self, c, r)))),
+            (0..self.rows).map(|r| (0..self.cols).all(|c| through(cell(self, c, r), UP | DOWN))),
+        );
+        let cols: Vec<usize> = keep(
+            (0..self.cols).map(|c| (0..self.rows).all(|r| blank(cell(self, c, r)))),
+            (0..self.cols).map(|c| (0..self.rows).all(|r| through(cell(self, c, r), LEFT | RIGHT))),
+        );
+        let mut cells = Vec::with_capacity(rows.len() * cols.len());
+        for &r in &rows {
+            for &c in &cols {
+                cells.push(cell(self, c, r));
+            }
+        }
+        *self = Grid {
+            cols: cols.len(),
+            rows: rows.len(),
+            cells,
+        };
+    }
+
     /// The grid as text, a line for each row, without the spaces that end a row or the rows
     /// that end the grid empty.
     pub(crate) fn write(&self, charset: Charset) -> String {
@@ -192,6 +232,20 @@ impl Grid {
         out.push('\n');
         out
     }
+}
+
+/// The rows or columns kept of a grid's: none of those that are blank at either end, and
+/// the first of each run of those that may go.
+fn keep(blank: impl Iterator<Item = bool>, may_go: impl Iterator<Item = bool>) -> Vec<usize> {
+    let blank: Vec<bool> = blank.collect();
+    let may_go: Vec<bool> = may_go.collect();
+    let Some(start) = blank.iter().position(|&b| !b) else {
+        return Vec::new();
+    };
+    let end = blank.iter().rposition(|&b| !b).map_or(start, |e| e + 1);
+    (start..end)
+        .filter(|&i| !(may_go[i] && i > start && may_go[i - 1]))
+        .collect()
 }
 
 /// The character that draws the lines of a cell.

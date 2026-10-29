@@ -1,40 +1,36 @@
+Todo                             2    In progress                      1
+╭──────────────────────────────────╮ ╭──────────────────────────────────╮
+│Create Documentation              │ │ Create renderer so that it       │
+│                                  │ │ works in all cases. We also add  │
+├──────────────────────────────────┤ │ some extra text here for         │
+│Create Blog about the new         │ │ testing purposes. And some more  │
+│diagram                           │ ╰─just for the extra flare.────────╯
+╰──────────────────────────────────╯
 
+Ready for deploy                 1    Ready for test                   2
+╭──────────────────────────────────╮ ╭──────────────────────────────────╮
+│                                  │ │┃                                 │
+│Design grammar                    │ │┃Create parsing tests             │
+│                            knsv  │ │┃MC-2038             K.Sveidqvist │
+╰──────────────────────────────────╯ ╰┴─────────────────────────────────╯
+                                     ╭┬─────────────────────────────────╮
+                                     │┃last item                        │
+                                     │┃                            knsv │
+                                     │┃                                 │
+                                     ╰──────────────────────────────────╯
 
-   Todo                             2      In progress                      1
-   ╭──────────────────────────────────╮   ╭──────────────────────────────────╮
-   │Create Documentation              │   │ Create renderer so that it       │
-   │                                  │   │ works in all cases. We also add  │
-   ├──────────────────────────────────┤   │ some extra text here for         │
-   │Create Blog about the new         │   │ testing purposes. And some more  │
-   │diagram                           │   ╰─just for the extra flare.────────╯
-   ╰──────────────────────────────────╯
-
-
-   Ready for deploy                 1      Ready for test                   2
-   ╭──────────────────────────────────╮   ╭──────────────────────────────────╮
-   │                                  │   │┃                                 │
-   │Design grammar                    │   │┃Create parsing tests             │
-   │                            knsv  │   │┃MC-2038             K.Sveidqvist │
-   ╰──────────────────────────────────╯   ╰┴─────────────────────────────────╯
-                                          ╭┬─────────────────────────────────╮
-                                          │┃last item                        │
-                                          │┃                            knsv │
-                                          │┃                                 │
-                                          ╰──────────────────────────────────╯
-
-
-   Done                             3      Can't reproduce                  1
-   ╭──────────────────────────────────╮   ╭──────────────────────────────────╮
-   │define getData                    │   │ Weird flickering in Firefox      │
-   ╰──────────────────────────────────╯   ╰──────────────────────────────────╯
-   ╭──────────────────────────────────╮
-   ┃Title of diagram is more than     │
-   ┃100 chars when user duplicates    │
-   ┃diagram with 100 char             │
-   ┃MC-2036                           │
-   ╰──────────────────────────────────╯
-   ╭──────────────────────────────────╮
-   ┃Update DB function                │
-   ┃MC-2037                     knsv  │
-   ┃                                  │
-   ╰──────────────────────────────────╯
+Done                             3    Can't reproduce                  1
+╭──────────────────────────────────╮ ╭──────────────────────────────────╮
+│define getData                    │ │ Weird flickering in Firefox      │
+╰──────────────────────────────────╯ ╰──────────────────────────────────╯
+╭──────────────────────────────────╮
+┃Title of diagram is more than     │
+┃100 chars when user duplicates    │
+┃diagram with 100 char             │
+┃MC-2036                           │
+╰──────────────────────────────────╯
+╭──────────────────────────────────╮
+┃Update DB function                │
+┃MC-2037                     knsv  │
+┃                                  │
+╰──────────────────────────────────╯

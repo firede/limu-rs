@@ -1,32 +1,21 @@
+             Timeline of Industrial Revolution
 
-                        Timeline of Industrial Revolution
-
-                                │
-                                17th-20th century
-                                │
-                                │
-                                │           Machinery, Water power, Steam
-         Industry 1.0        ───●─────                  power
-                                │
-                                │
-                                │         Electricity, Internal combustion
-         Industry 2.0        ───●─────         engine, Mass production
-                                │
-                                │
-                                │
-                                │
-         Industry 3.0        ───●─────   Electronics, Computers, Automation
-                                │
-                                │
-
-                                  21st century
-                                │
-                                │
-         Industry 4.0        ───●───── Internet, Robotics, Internet of Things
-                                │
-                                │
-                                │       Artificial intelligence, Big data, 3D
-         Industry 5.0        ───●─────                printing
-                                │
-                                │
-                                ▼
+                     │
+                     17th-20th century
+                     │
+                     │           Machinery, Water power, Steam
+Industry 1.0      ───●─────                  power
+                     │
+                     │         Electricity, Internal combustion
+Industry 2.0      ───●─────         engine, Mass production
+                     │
+Industry 3.0      ───●─────   Electronics, Computers, Automation
+                     │
+                       21st century
+                     │
+Industry 4.0      ───●───── Internet, Robotics, Internet of Things
+                     │
+                     │       Artificial intelligence, Big data, 3D
+Industry 5.0      ───●─────                printing
+                     │
+                     ▼

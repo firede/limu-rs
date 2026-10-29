@@ -111,3 +111,17 @@ fn centers_in_cells() {
     assert_eq!(middle(5.0, 2.0), 4);
     assert_eq!(middle(5.0, 1.0), 5);
 }
+
+// Without compacting, every cell is where the scene puts it.
+#[test]
+fn loose() {
+    let o = Options {
+        compact: false,
+        ..Options::default()
+    };
+    let some = diagrams()
+        .into_iter()
+        .filter(|s| s.name == "flowchart")
+        .collect();
+    compare(some, &o, "-loose");
+}

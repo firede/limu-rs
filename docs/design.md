@@ -250,6 +250,13 @@ high, and text is set at 8. The scene is snapped to the cells' grid. A terminal'
 the layout's `max_width`, with no breakpoint for turning, so that a diagram that can draw
 itself narrower does. Some diagrams can't, and their text is as wide as they are.
 
+The room Pele leaves between things is several rows and columns in cells, where text
+renderers of diagrams leave one. limu-ascii cuts it after drawing, rather than changing the
+layout. Each run of rows that nothing but straight lines down passes through, and of
+columns that nothing but straight lines across passes through, is cut to one. Lines that
+pass through only grow shorter, so nothing comes apart. A host that wants every cell where
+the scene puts it turns this off.
+
 ## Hit testing
 
 `Scene::item_at` gives the index of the item at a point, the one drawn last of those

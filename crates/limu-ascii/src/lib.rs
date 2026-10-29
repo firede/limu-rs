@@ -106,12 +106,28 @@ pub enum Charset {
 }
 
 /// How a scene is drawn.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Options {
     /// The cells, which should be those the scene was laid out for.
     pub cells: Cells,
     /// The characters lines and markers are drawn in.
     pub charset: Charset,
+    /// Whether the room the layout leaves, which it gives in pixels, is cut to a cell, as
+    /// it is by default. Each run of rows that nothing but straight lines down passes
+    /// through, and of columns that nothing but straight lines across passes through, is
+    /// cut to one, and the empty rows and columns about the diagram are cut away. Without
+    /// it, every cell is where the scene puts it.
+    pub compact: bool,
+}
+
+impl Default for Options {
+    fn default() -> Options {
+        Options {
+            cells: Cells::default(),
+            charset: Charset::default(),
+            compact: true,
+        }
+    }
 }
 
 /// A scene as text, a line for each row of cells, with no spaces at the ends of lines.
@@ -188,6 +204,9 @@ pub fn render(scene: &Scene, o: &Options) -> String {
         };
         c.grid.line(end.line, at, end.stroke);
         c.grid.put(at, end.mark);
+    }
+    if o.compact {
+        c.grid.squeeze();
     }
     c.grid.write(o.charset)
 }
@@ -403,12 +422,27 @@ impl TextCanvas<'_> {
             }
             return;
         }
-        for (line, mid) in lines.iter().zip(mids) {
-            let at = (
-                middle(mid.x / cw, line.width() as f64),
-                middle(mid.y / ch, 1.0),
-            );
-            self.grid.text(at, line);
+        let rows: Vec<((i64, i64), &String)> = lines
+            .iter()
+            .zip(mids)
+            .map(|(line, mid)| {
+                let at = (
+                    middle(mid.x / cw, line.width() as f64),
+                    middle(mid.y / ch, 1.0),
+                );
+                (at, line)
+            })
+            .collect();
+        // A label between rows may be set a row off the room left for it, on a box's side.
+        // It is moved a row down or up where that is clear of lines across.
+        let clear = |shift: i64| {
+            rows.iter().all(|&((c, r), line)| {
+                (c..c + line.width() as i64).all(|c| !self.grid.across((c, r + shift)))
+            })
+        };
+        let shift = [0, 1, -1].into_iter().find(|&s| clear(s)).unwrap_or(0);
+        for ((c, r), line) in rows {
+            self.grid.text((c, r + shift), line);
         }
     }
 }
@@ -464,12 +498,19 @@ impl Canvas for TextCanvas<'_> {
         let (c0, r0) = self.cell(Point::new(rect.x, rect.y));
         let (c1, r1) = self.cell(Point::new(rect.x + rect.w, rect.y + rect.h));
         // A box too narrow to have room inside, as a sequence diagram's activation, is a
-        // heavy line down its middle. One too low, as a branch's name on a git graph, is
+        // heavy line down its middle. A middle is found as a label's is, so that a box and
+        // its label share a row. One too low, as a branch's name on a git graph, is
         // bracketed on the row of its middle, and one that is only filled hides what it
         // covers there.
-        if c1 - c0 <= 1 && r1 > r0 {
+        let mid = {
+            let p = self.turned(rect.center());
+            (
+                middle(p.x / self.o.cells.width, 1.0),
+                middle(p.y / self.o.cells.height, 1.0),
+            )
+        };
+        if c1 - c0 <= 2 && r1 > r0 {
             if pen.is_some() {
-                let mid = self.cell(rect.center());
                 let heavy = Stroke {
                     heavy: true,
                     ..Stroke::default()
@@ -479,7 +520,7 @@ impl Canvas for TextCanvas<'_> {
             return;
         }
         if r1 - r0 <= 1 {
-            let r = self.cell(rect.center()).1;
+            let r = mid.1;
             if fill.is_some() {
                 for c in c0 + 1..c1 {
                     self.grid.clear((c, r));

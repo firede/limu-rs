@@ -1,36 +1,30 @@
-
-    ╭──────────────────────╮
-    │      CUSTOMER        │
-    ├──────────────────────┤
-    │ string   name        │
-    │                      │
-    │ string   custNumber  │
-    │ string   sector      │
-    ╰──────────┼───────────╯
-               │
-               │
-            places
-               │
-               │
-               │
- ╭─────────────^─────────────╮
- │           ORDER           │
- ├───────────────────────────┤
- │ int      orderNumber      │
- │                           │
- │ string   deliveryAddress  │
- ╰─────────────┼─────────────╯
-               │
-
-           contains
-               │
-               │
-   ╭───────────^────────────╮
-   │       LINE-ITEM        │
-   │                        │
-   ├────────────────────────┤
-   │ string   productCode   │
-   │ int      quantity      │
-   │                        │
-   │ float    pricePerUnit  │
-   ╰────────────────────────╯
+   ╭──────────────────────╮
+   │      CUSTOMER        │
+   ├──────────────────────┤
+   │ string   name        │
+   │                      │
+   │ string   custNumber  │
+   │ string   sector      │
+   ╰──────────┼───────────╯
+              │
+           places
+              │
+╭─────────────^─────────────╮
+│           ORDER           │
+├───────────────────────────┤
+│ int      orderNumber      │
+│                           │
+│ string   deliveryAddress  │
+╰─────────────┼─────────────╯
+              │
+          contains
+              │
+  ╭───────────^────────────╮
+  │       LINE-ITEM        │
+  │                        │
+  ├────────────────────────┤
+  │ string   productCode   │
+  │ int      quantity      │
+  │                        │
+  │ float    pricePerUnit  │
+  ╰────────────────────────╯
