@@ -5,10 +5,10 @@
              Complex                       ╎                    Complicated
      Probe → Sense → Respond               ╎             Sense → Analyse → Respond
        Emergent Practices                  ╎                  Good Practices
-   [                         ]             ╎            [                          ]
-     Investigate root cause                ╎             Analyze performance data
+   [ Investigate root cause  ]             ╎            [ Analyze performance data ]
+                                           ╎
     ╭───────────────────────╮             ┌┘              ╭──────────────────────╮
-    │ Run chaos experiment  │             ╎               │Expert review needed  │
+    │ Run chaos experiment  │             ╎               │ Expert review needed │
     ╰───────────────────────╯      ┌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐      ╰──────────────────────╯
                               ┌╌╌╌╌┘               └╌╌╌┐
                            ┌╌╌┘                        └╌╌╌┐

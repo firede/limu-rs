@@ -37,10 +37,20 @@ struct Cell {
 }
 
 /// A grid of cells, by column and row from the top left.
+///
+/// The grid starts as the cells a scene is laid out in, each where the scene puts it, and
+/// may then grow to make room for text: by columns at either side, and by rows put in
+/// between those of the scene. A cell of the scene is found by [`Grid::at`].
 pub(crate) struct Grid {
     cols: usize,
     rows: usize,
     cells: Vec<Cell>,
+    // The column of the scene the first column is.
+    left: i64,
+    // The row of the scene the first row is.
+    top: i64,
+    // The rows of the scene a row was put in before, once for each.
+    put_in: Vec<i64>,
 }
 
 impl Grid {
@@ -49,7 +59,81 @@ impl Grid {
             cols,
             rows,
             cells: vec![Cell::default(); cols * rows],
+            left: 0,
+            top: 0,
+            put_in: Vec::new(),
         }
+    }
+
+    /// Where a cell of the scene is in the grid, once it has grown.
+    pub(crate) fn at(&self, (c, r): (i64, i64)) -> (i64, i64) {
+        let before = self.put_in.iter().filter(|&&p| p <= r).count() as i64;
+        (c - self.left, r - self.top + before)
+    }
+
+    /// Puts a row in before a row of the scene, and after any put in there already, and
+    /// says where it is. Lines down that pass from the row above it to the row below pass
+    /// through it.
+    pub(crate) fn put_row_in(&mut self, before: i64) -> i64 {
+        let r = self.at((0, before)).1.clamp(0, self.rows as i64) as usize;
+        let row: Vec<Cell> = (0..self.cols)
+            .map(|c| {
+                let above = (r > 0).then(|| self.cells[(r - 1) * self.cols + c]);
+                let below = (r < self.rows).then(|| self.cells[r * self.cols + c]);
+                match (above, below) {
+                    (Some(a), Some(b)) if a.lines & DOWN != 0 && b.lines & UP != 0 => Cell {
+                        lines: UP | DOWN,
+                        dashed: a.dashed,
+                        heavy: a.heavy,
+                        ..Cell::default()
+                    },
+                    _ => Cell::default(),
+                }
+            })
+            .collect();
+        self.cells.splice(r * self.cols..r * self.cols, row);
+        self.rows += 1;
+        self.put_in.push(before);
+        r as i64
+    }
+
+    /// Grows the grid by columns or rows at its sides, so that the cells from one to n
+    /// across from it are in it, and says where that cell is then.
+    pub(crate) fn fit(&mut self, (c, r): (i64, i64), n: i64) -> (i64, i64) {
+        let (l, t) = ((-c).max(0), (-r).max(0));
+        let right = (c + n - self.cols as i64).max(0);
+        let bottom = (r + 1 - self.rows as i64).max(0);
+        if l + right + t + bottom == 0 {
+            return (c, r);
+        }
+        let cols = self.cols + (l + right) as usize;
+        let rows = self.rows + (t + bottom) as usize;
+        let mut cells = vec![Cell::default(); cols * rows];
+        for (i, row) in self.cells.chunks(self.cols.max(1)).enumerate() {
+            let at = (i + t as usize) * cols + l as usize;
+            cells[at..at + row.len()].copy_from_slice(row);
+        }
+        *self = Grid {
+            cols,
+            rows,
+            cells,
+            left: self.left - l,
+            top: self.top - t,
+            put_in: std::mem::take(&mut self.put_in),
+        };
+        (c + l, r + t)
+    }
+
+    /// Whether text may be set in the cells from one to n across from it: whether each is
+    /// empty, or has only lines down in it, which text may break or end.
+    pub(crate) fn free(&self, (c, r): (i64, i64), n: i64) -> bool {
+        (c..c + n).all(|c| {
+            if c < 0 || r < 0 || c as usize >= self.cols || r as usize >= self.rows {
+                return true;
+            }
+            let cell = &self.cells[r as usize * self.cols + c as usize];
+            cell.glyph.is_none() && !cell.tail && cell.lines & (LEFT | RIGHT) == 0
+        })
     }
 
     fn cell(&mut self, (c, r): (i64, i64)) -> Option<&mut Cell> {
@@ -101,6 +185,21 @@ impl Grid {
             };
             self.link(at, next, s);
             at = next;
+        }
+    }
+
+    /// Takes away the line that leaves a cell toward the next one a way, a step across or
+    /// down.
+    pub(crate) fn cut(&mut self, at: (i64, i64), (dc, dr): (i64, i64)) {
+        let side = match (dc, dr) {
+            (1, 0) => RIGHT,
+            (-1, 0) => LEFT,
+            (0, 1) => DOWN,
+            (0, -1) => UP,
+            _ => return,
+        };
+        if let Some(cell) = self.cell(at) {
+            cell.lines &= !side;
         }
     }
 
@@ -172,15 +271,6 @@ impl Grid {
         }
     }
 
-    /// Whether a line across passes through a cell.
-    pub(crate) fn across(&self, (c, r): (i64, i64)) -> bool {
-        if c < 0 || r < 0 || c as usize >= self.cols || r as usize >= self.rows {
-            return false;
-        }
-        let cell = &self.cells[r as usize * self.cols + c as usize];
-        cell.glyph.is_none() && cell.lines & (LEFT | RIGHT) != 0
-    }
-
     /// Cuts the empty rows and columns about the grid away, and each run of rows that
     /// nothing but straight lines down passes through, and of columns that nothing but
     /// straight lines across passes through, to one. Nothing comes apart, as lines that
@@ -209,6 +299,7 @@ impl Grid {
             cols: cols.len(),
             rows: rows.len(),
             cells,
+            ..Grid::new(0, 0)
         };
     }
 

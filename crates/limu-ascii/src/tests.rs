@@ -46,13 +46,23 @@ fn golden(name: &str, got: &str) -> Result<(), String> {
 fn compare(samples: Vec<Sample>, o: &Options, suffix: &str) {
     let failed: Vec<String> = samples
         .iter()
-        .filter_map(|s| golden(&format!("{}{suffix}.txt", s.name), &render(&s.scene, o)).err())
+        .filter_map(|s| {
+            let got = render(&s.scene, o).unwrap();
+            golden(&format!("{}{suffix}.txt", s.name), &got).err()
+        })
         .collect();
     assert!(failed.is_empty(), "{}", failed.join("\n"));
 }
 
-/// The diagrams, laid out for cells in a terminal of 80 columns.
+/// The diagrams that can be drawn as text, laid out for cells in a terminal of 80 columns.
 fn diagrams() -> Vec<Sample> {
+    all_diagrams()
+        .into_iter()
+        .filter(|s| !UNSUPPORTED.contains(&s.scene.diagram.as_str()))
+        .collect()
+}
+
+fn all_diagrams() -> Vec<Sample> {
     let cells = Cells::default();
     limu_samples::diagrams_with(&limu::layout::Options {
         measurer: &cells,
@@ -62,6 +72,19 @@ fn diagrams() -> Vec<Sample> {
         direction_breakpoint: f64::INFINITY,
         ..limu::layout::Options::default()
     })
+}
+
+/// The lines of the labels of a scene, each as one string.
+fn label_lines(scene: &Scene) -> Vec<String> {
+    scene
+        .items
+        .iter()
+        .filter_map(|it| it.label.as_ref())
+        .flat_map(|p| &p.label.lines)
+        .map(|spans| spans.iter().map(|s| s.text.as_str()).collect::<String>())
+        .map(|l| l.trim().to_string())
+        .filter(|l| !l.is_empty())
+        .collect()
 }
 
 #[test]
@@ -79,6 +102,42 @@ fn primitives() {
 #[test]
 fn diagrams_in_cells() {
     compare(diagrams(), &Options::default(), "");
+}
+
+// Every line of every label is drawn whole, across, on a line of its own.
+#[test]
+fn keeps_every_label() {
+    let mut lost = Vec::new();
+    for s in diagrams() {
+        let got = render(&s.scene, &Options::default()).unwrap();
+        for line in label_lines(&s.scene) {
+            if !got.contains(&line) {
+                lost.push(format!("{}: {line:?}", s.name));
+            }
+        }
+    }
+    assert!(lost.is_empty(), "lost:\n{}", lost.join("\n"));
+}
+
+#[test]
+fn refuses_what_would_mislead() {
+    let refused: Vec<String> = all_diagrams()
+        .iter()
+        .filter_map(|s| render(&s.scene, &Options::default()).err())
+        .map(|e| e.diagram)
+        .collect();
+    let mut want = UNSUPPORTED.map(String::from).to_vec();
+    want.sort();
+    let mut got = refused.clone();
+    got.sort();
+    assert_eq!(got, want);
+    assert_eq!(
+        Unsupported {
+            diagram: "pie".into()
+        }
+        .to_string(),
+        "a pie diagram can't be drawn as text"
+    );
 }
 
 #[test]

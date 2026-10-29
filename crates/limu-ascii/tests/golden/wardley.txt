@@ -1,35 +1,33 @@
-                   Tea Shop Value Chain
+                            Tea Shop Value Chain
 
-  │         ╎                ╎               ╎
-  │         ╎                ╎   Business    ╎
-  │         ╎                ╎       │       ╎
-  │         ╎                ╎       │       ╎
-  │         ╎                ╎      ┌┘       ╎
-  │         ╎                ╎      │Cup of Tea
-  │         ╎                ╎      ○        ╎
-  │         ╎                ╎      ─┬─┐     ╎
-  │         ╎                ╎       └─┼──┐  ╎
-  │         ╎                ╎         └┐ └──┤
-V │         ╎                ╎          └─┐  ├──┐  Tea
-i │         ╎                ╎            └─┐╎  └○
-s │         ╎                ╎              └┤
-i │         ╎                ╎               ├─┐
-b │         ╎                ╎               ╎ └─ Hot Water
-i │         ╎                ╎             ┌─┼───○
-l │         ╎       Kettle   ╎   ┌─────────┘ ╎
-i │         ╎           ┌────┼───┘           ╎
-t │         ╎     ○╌┬╌╌╌┴╌╌╌╌┼╌╌╌╌╌▶ ○       ╎
-y │         ╎       └─┐      ╎               ╎
-  │         ╎         └──┐  Standardising power allows Kettles to
-  │         ╎            └─┐evolve faster    ╎
-  │         ╎              └─┤               ╎
-  │         ╎                ├─┐             ╎
-  │         ╎                ╎ └─┐           ╎
-  │         ╎                ╎   └──┐        ╎
-  │         ╎                ╎      └─┐      ╎
-  │         ╎                ╎        └─┐  Power
-  │         ╎                ╎          └─○╌╌┼╌╌╌╌╌╌╌▶ ○
-  │         ╎                ╎               ╎
-  └─────────┴────────────────┴───────────────┴─────────────────
-    Genesis   Custom Built        Product         Commodity
-                         Evolution
+           │         ╎                ╎               ╎
+           │         ╎                ╎   Business    ╎
+           │         ╎                ╎       │       ╎
+           │         ╎                ╎       │       ╎
+           │         ╎                ╎      ┌┘       ╎
+           │         ╎                ╎      │Cup of Tea
+           │         ╎                ╎      ○        ╎
+           │         ╎                ╎      ││       ╎
+           │         ╎                ╎      ││       ╎
+           │         ╎                ╎      │└───────┼───┐
+           │         ╎                ╎      │        ╎   │ Tea
+           │         ╎                ╎      │        ╎   ○
+           │         ╎                ╎      │        ╎
+           │         ╎                ╎      └────────┼──┐
+           │         ╎                ╎               ╎  │ Hot Water
+Visibility │         ╎                ╎   ┌───────────┼───○
+           │         ╎                ╎   │           ╎
+           │         ╎       Kettle   ╎   │           ╎
+           │         ╎     ○┌╌╌╌╌╌╌╌╌╌┼╌╌╌┴╌▶ ○       ╎
+           │         ╎      │         ╎               ╎
+           │         ╎      │        Standardising power allows Kettles to
+           │         ╎      │        evolve faster    ╎
+           │         ╎      └─────────┼───────────┐   ╎
+           │         ╎                ╎           │   ╎
+           │         ╎                ╎           │ Power
+           │         ╎                ╎           │○╌╌┼╌╌╌╌╌╌╌▶ ○
+           │         ╎                ╎               ╎
+           │ Genesis ╎ Custom Built   ╎    Product    ╎    Commodity
+           └─────────┴────────────────┴───────────────┴─────────────────
+
+                                  Evolution

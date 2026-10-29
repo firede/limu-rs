@@ -4,7 +4,8 @@ Todo                             2    In progress                      1
 │                                  │ │ works in all cases. We also add  │
 ├──────────────────────────────────┤ │ some extra text here for         │
 │Create Blog about the new         │ │ testing purposes. And some more  │
-│diagram                           │ ╰─just for the extra flare.────────╯
+│                                  │ │ just for the extra flare.        │
+│diagram                           │ ╰──────────────────────────────────╯
 ╰──────────────────────────────────╯
 
 Ready for deploy                 1    Ready for test                   2

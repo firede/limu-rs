@@ -13,9 +13,9 @@
   │  │
   │  └── Beautification filter applied
   │
-  │ ╭──────╮
-  ├─┤User  │
-  │ ╰┬─────╯
+  │╭───────╮
+  ├┤ User  │
+  │╰─┬─────╯
   │  │
   │  └── Shaky hands
   │

@@ -1,6 +1,6 @@
      ╭────────────────────╮
      │      «Element»     │
-     │     test_entity    │
+     │    test_entity     │
      ├────────────────────┤
      │                    │
      │  Type  simulation  │

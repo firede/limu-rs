@@ -17,20 +17,30 @@
 //!     ..limu::layout::Options::default()
 //! };
 //! let scene = limu::layout("flowchart LR\n  a --> b", &o).unwrap();
-//! print!("{}", limu_ascii::render(&scene, &limu_ascii::Options::default()));
+//! print!("{}", limu_ascii::render(&scene, &limu_ascii::Options::default()).unwrap());
 //! ```
 //!
 //! Lines are drawn in box-drawing characters, and where they meet in a cell they are joined
-//! in one, as "┬". A curve is drawn in steps across and down. A node with a label whose
+//! in one, as "┬". An edge is drawn in lines across and down. A node with a label whose
 //! outline curves or slants, as a stadium or a diamond, is drawn as the box it lies in, its
 //! corners rounded where it curves, and its sides pointed where it comes to a point at
 //! either side. A shape too small to outline in cells is drawn as a dot, and a marker as an
-//! arrow or a mark like it. Labels are set a
-//! line to a row, across, or down where they are turned 30 degrees or more. A grid of cells has no
-//! colors, fills or images, so a fill only hides what it covers.
+//! arrow or a mark like it. The ends of an entity relationship are written as how many,
+//! as "0..*". A grid of cells has no colors, fills or images, so a fill only hides what it
+//! covers.
+//!
+//! Labels are set last, a line to a row, and every line of every label is set whole. Text
+//! breaks lines down where it must, but never lines across or other text. It moves a row
+//! for room, and where there is none, a row is put in for it. A label turned 30 degrees or
+//! more, as an axis's title, is set across.
 //!
 //! A diagram is as wide as its layout makes it. Most diagrams fit the width a layout is
 //! given, but some can't be drawn narrower, and nothing is cut off or wrapped to fit.
+//!
+//! Some diagrams say what they say in where things are and how large they are, as a pie's
+//! slices, a chart's bars and a Gantt chart's tasks do, or in lines too close together for
+//! cells to tell apart, as a git graph's branches. Drawn in cells, they would mislead, and
+//! [`render`] gives [`Unsupported`] for them rather than draw them.
 
 mod grid;
 #[cfg(test)]
@@ -38,11 +48,11 @@ mod tests;
 
 use std::collections::HashSet;
 
-use limu_scene::style::{Color, Ink, Look};
+use limu_scene::style::{Color, Ink, Look, Resolved};
 use limu_scene::text::Measurer;
 use limu_scene::{
-    Align, Canvas, Grid as Spacing, Item, Kind, MarkerType, Outline, Pen, Placed, Point, Polyline,
-    Rect, Run, Scene, Step,
+    Align, Canvas, Grid as Spacing, Item, Kind, MarkerType, Outline, Painting, Pen, Point,
+    Polyline, Rect, Run, Scene, Step,
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -130,8 +140,35 @@ impl Default for Options {
     }
 }
 
-/// A scene as text, a line for each row of cells, with no spaces at the ends of lines.
-pub fn render(scene: &Scene, o: &Options) -> String {
+/// The diagrams that can't be drawn in cells without misleading, by the names scenes give
+/// them.
+const UNSUPPORTED: [&str; 8] = [
+    "gantt", "gitGraph", "packet", "pie", "radar", "sankey", "treeView", "xychart",
+];
+
+/// A diagram that can't be drawn in cells without misleading.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Unsupported {
+    /// The kind of diagram, as its scene names it.
+    pub diagram: String,
+}
+
+impl std::fmt::Display for Unsupported {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "a {} diagram can't be drawn as text", self.diagram)
+    }
+}
+
+impl std::error::Error for Unsupported {}
+
+/// A scene as text, a line for each row of cells, with no spaces at the ends of lines, or
+/// [`Unsupported`] for a diagram that can't be drawn in cells without misleading.
+pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
+    if UNSUPPORTED.contains(&scene.diagram.as_str()) {
+        return Err(Unsupported {
+            diagram: scene.diagram.clone(),
+        });
+    }
     let cells = o.cells;
     let cols = (scene.width / cells.width).round().max(0.0) as usize + 1;
     let rows = (scene.height / cells.height).round().max(0.0) as usize + 1;
@@ -140,17 +177,62 @@ pub fn render(scene: &Scene, o: &Options) -> String {
         grid: Grid::new(cols, rows),
         o,
         bg: look.theme.bg,
+        width: scene.width,
         turns: Vec::new(),
         ends: Vec::new(),
+        labels: Vec::new(),
         dots: HashSet::new(),
+        nodes: Vec::new(),
     };
+    c.nodes = scene
+        .items
+        .iter()
+        .filter(|it| matches!(it.kind, Kind::Node) && !it.bounds.is_empty())
+        .map(|it| {
+            let b = it.bounds;
+            (
+                c.cell(Point::new(b.x, b.y)),
+                c.cell(Point::new(b.x + b.w, b.y + b.h)),
+            )
+        })
+        .collect();
     limu_scene::draw_with(scene, &look, &mut c, |p, it, s| {
         let c = p.canvas();
+        // The middle of the box a node is drawn as, which its label is set in.
+        let mut boxed = None;
         if let Some(sides) = c.boxed(it) {
-            c.node(union(it.bounds, it.label_bounds()), sides);
+            // The label has room across inside the box's sides, which take a cell each,
+            // and a cell between them and it. A label's box runs from the middle of a cell
+            // to the middle of a cell, the first and last of its text.
+            let l = it.label_bounds();
+            let cw = cells.width;
+            let (x, n) = ((l.x / cw).ceil(), (l.w / cw).round());
+            let room = Rect::new((x - 2.0) * cw, l.y, (n + 3.0) * cw, l.h);
+            let b = union(it.bounds, room);
+            // The label is set across in the middle of the box's cells, and down where a
+            // box too low for its sides has its row.
+            let ((c0, _), (c1, _)) = c.node(b, sides);
+            boxed = Some(Point::new((c0 + c1) as f64 * cw / 2.0, b.center().y));
         } else if it.label.is_some() && !matches!(it.kind, Kind::Edge(_)) && c.tiny(it.bounds) {
             // A shape too small for its label, as a sequence number's circle, is left to
             // the label.
+        } else if let Kind::Edge(_) = it.kind
+            && it
+                .parts
+                .iter()
+                .all(|p| p.paint == Painting::StrokeOnly && matches!(p.outline, Outline::Path(_)))
+        {
+            if s.stroke.visible() && s.stroke_width > 0.0 {
+                for part in &it.parts {
+                    if let Outline::Path(path) = &part.outline {
+                        c.route(path, line_stroke(s));
+                    }
+                }
+            }
+        } else if matches!(it.kind, Kind::Text) && !s.stroke.visible() {
+            // A label's ground hides the lines under it, but text set in cells breaks them
+            // where it is itself, and the ground, laid out about text a row high, may be a
+            // row off it.
         } else {
             p.parts(it, s);
         }
@@ -181,17 +263,57 @@ pub fn render(scene: &Scene, o: &Options) -> String {
                     tip: c.cell(m.at),
                     back,
                     mark: marker(m.kind, way, o.charset),
-                    stroke: Stroke {
-                        dashed: s.dash.iter().any(|&d| d > 0.0),
-                        heavy: s.stroke_width >= 3.0,
-                    },
+                    stroke: line_stroke(s),
                 });
             }
         }
         if let Some(placed) = &it.label
             && s.text.visible()
         {
-            c.label(placed);
+            let b = it.bounds;
+            let inside = matches!(it.kind, Kind::Node | Kind::Group)
+                && s.stroke.visible()
+                && !b.is_empty()
+                && (b.x..=b.x + b.w).contains(&placed.at.x)
+                && (b.y..=b.y + b.h).contains(&placed.at.y);
+            let lines = placed
+                .label
+                .lines
+                .iter()
+                .map(|spans| spans.iter().map(|s| s.text.as_str()).collect())
+                .filter(|l: &String| !l.trim().is_empty())
+                .collect();
+            // A label in the middle of a node, or about it, as rounding to cells may have
+            // moved it, is set in the middle of the box drawn.
+            let about = |b: Rect| {
+                let m = b.center();
+                let (c0, r0) = c.cell(Point::new(b.x, b.y));
+                let (c1, r1) = c.cell(Point::new(b.x + b.w, b.y + b.h));
+                ((m.x - placed.at.x).abs() <= cells.width
+                    && (m.y - placed.at.y).abs() <= cells.height)
+                    .then(|| {
+                        Point::new(
+                            (c0 + c1) as f64 * cells.width / 2.0,
+                            (r0 + r1) as f64 * cells.height / 2.0,
+                        )
+                    })
+            };
+            let middle = match boxed {
+                Some(mid) => Some(mid),
+                None if matches!(it.kind, Kind::Node) && !b.is_empty() => about(b),
+                None => None,
+            };
+            let at = match middle {
+                Some(mid) if placed.align == Align::Middle && placed.rotate == 0.0 => mid,
+                _ => placed.at,
+            };
+            c.labels.push(Text {
+                lines,
+                at,
+                align: placed.align,
+                rotate: placed.rotate,
+                within: inside.then_some(b),
+            });
         }
     });
     // Markers are drawn last, so that a shape drawn after an edge does not hide its arrow.
@@ -203,12 +325,32 @@ pub fn render(scene: &Scene, o: &Options) -> String {
             end.tip
         };
         c.grid.line(end.line, at, end.stroke);
-        c.grid.put(at, end.mark);
+        // The cells either side of the tip, across the line.
+        let side = (end.back.1.abs(), end.back.0.abs());
+        match end.mark {
+            Mark::Tip(tip) => {
+                c.grid.put(at, tip);
+            }
+            Mark::Back(back, tip) => {
+                c.grid.put((at.0 + end.back.0, at.1 + end.back.1), back);
+                c.grid.put(at, tip);
+            }
+            Mark::Across(before, tip, after) => {
+                c.grid.put((at.0 - side.0, at.1 - side.1), before);
+                c.grid.put(at, tip);
+                c.grid.put((at.0 + side.0, at.1 + side.1), after);
+            }
+            Mark::Beside(text) => c.beside(at, end.back, text),
+        }
+    }
+    // Labels are set after everything else, so that nothing drawn later breaks them.
+    for text in std::mem::take(&mut c.labels) {
+        c.label(&text);
     }
     if o.compact {
         c.grid.squeeze();
     }
-    c.grid.write(o.charset)
+    Ok(c.grid.write(o.charset))
 }
 
 /// The canvas of a grid of cells.
@@ -216,12 +358,19 @@ struct TextCanvas<'a> {
     grid: Grid,
     o: &'a Options,
     bg: Color,
+    // The width of the scene.
+    width: f64,
     // The turns begun, each by degrees about a point.
     turns: Vec<(f64, Point)>,
-    // The markers of edges, drawn last.
+    // The markers of edges, drawn after the rest.
     ends: Vec<End>,
+    // The labels, set last.
+    labels: Vec<Text>,
     // The cells dots are drawn in.
     dots: HashSet<(i64, i64)>,
+    // The cells of the corners of the nodes' boxes, top left and bottom right, which edges
+    // go around.
+    nodes: Vec<((i64, i64), (i64, i64))>,
 }
 
 impl TextCanvas<'_> {
@@ -339,8 +488,9 @@ impl TextCanvas<'_> {
         })
     }
 
-    /// Draws a node as a box, emptied inside.
-    fn node(&mut self, b: Rect, sides: Sides) {
+    /// Draws a node as a box, emptied inside, and gives the cells of its corners, top left
+    /// and bottom right.
+    fn node(&mut self, b: Rect, sides: Sides) -> ((i64, i64), (i64, i64)) {
         let pen = Pen {
             ink: Ink::NONE,
             width: 1.0,
@@ -359,6 +509,152 @@ impl TextCanvas<'_> {
         if sides.right && r > r0 && r < r1 {
             self.grid.put((c1, r), '>');
         }
+        ((c0, r0), (c1, r1))
+    }
+
+    /// Draws an edge's path in cells, in lines across and down. Steps that follow a curve
+    /// cell by cell are hard to follow in cells, and text renderers of diagrams draw lines
+    /// across and down, as trees are drawn in text.
+    ///
+    /// Each stretch of the path that runs one way across and one way down is drawn as a
+    /// line the way it leaves, a line the other way, and a line the way it arrives, either
+    /// of the first and last of which may be none. Of the ways to draw it, the one taken
+    /// goes through the fewest cells of nodes, then keeps nearest the path, then leaves
+    /// and arrives the ways the path does, then turns nearest halfway. Labels are set by
+    /// the path, and lines near it pass by them.
+    fn route(&mut self, path: &limu_scene::Path, s: Stroke) {
+        let tol = self.o.cells.width.min(self.o.cells.height) / 4.0;
+        for line in path.flatten(tol) {
+            let pts: Vec<Point> = line.points.iter().map(|&p| self.turned(p)).collect();
+            let pts = self.clip(&pts);
+            for stretch in stretches(&pts) {
+                let (a, b) = (self.cell(stretch[0]), self.cell(stretch[stretch.len() - 1]));
+                let down = |p: &[Point]| {
+                    let (dx, dy) = (p[1].x - p[0].x, p[1].y - p[0].y);
+                    dy.abs() / self.o.cells.height > dx.abs() / self.o.cells.width
+                };
+                let n = stretch.len();
+                let ways = (down(&stretch[..2]), down(&stretch[n - 2..]));
+                let mut from = a;
+                for to in self.corners(stretch, a, b, ways).into_iter().chain([b]) {
+                    self.grid.line(from, to, s);
+                    from = to;
+                }
+            }
+        }
+    }
+
+    /// A polyline without the stretches at its ends that are inside nodes, as an edge's
+    /// that starts at a side of a diamond, which is drawn as the box it lies in. It is cut
+    /// to the nearest half cell. A polyline all inside nodes is kept whole.
+    fn clip(&self, pts: &[Point]) -> Vec<Point> {
+        let step = self.o.cells.width.min(self.o.cells.height) / 2.0;
+        let mut fine = Vec::new();
+        for w in pts.windows(2) {
+            let (a, b) = (w[0], w[1]);
+            let n = ((b.x - a.x).hypot(b.y - a.y) / step).ceil().max(1.0) as usize;
+            for i in 0..n {
+                let t = i as f64 / n as f64;
+                fine.push(Point::new(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t));
+            }
+        }
+        fine.extend(pts.last());
+        let inside = |p: &Point| {
+            let (c, r) = self.cell(*p);
+            self.nodes
+                .iter()
+                .any(|&((c0, r0), (c1, r1))| c0 < c && c < c1 && r0 < r && r < r1)
+        };
+        let start = fine.iter().position(|p| !inside(p));
+        let end = fine.iter().rposition(|p| !inside(p));
+        match (start, end) {
+            (Some(s), Some(e)) if e > s => fine[s..=e].to_vec(),
+            _ => pts.to_vec(),
+        }
+    }
+
+    /// The corners of the lines across and down from one cell to another, as
+    /// [`TextCanvas::route`] picks them, given whether the path leaves and arrives down.
+    fn corners(
+        &self,
+        stretch: &[Point],
+        a: (i64, i64),
+        b: (i64, i64),
+        ways: (bool, bool),
+    ) -> Vec<(i64, i64)> {
+        if a.0 == b.0 || a.1 == b.1 {
+            return Vec::new();
+        }
+        // Each way, by the row it goes across in, or the column it goes down in.
+        let across = (a.1.min(b.1)..=a.1.max(b.1)).map(|m| {
+            let ways = (m != a.1, m != b.1);
+            (vec![(a.0, m), (b.0, m)], ways, (2 * m - a.1 - b.1).abs())
+        });
+        let down = (a.0.min(b.0)..=a.0.max(b.0)).map(|m| {
+            let ways = (m == a.0, m == b.0);
+            (vec![(m, a.1), (m, b.1)], ways, (2 * m - a.0 - b.0).abs())
+        });
+        // How far the path is from the lines, in cells, summed over its points.
+        let (cw, ch) = (self.o.cells.width, self.o.cells.height);
+        let pts: Vec<(f64, f64)> = stretch.iter().map(|p| (p.x / cw, p.y / ch)).collect();
+        let off_path = |corners: &[(i64, i64)]| {
+            let mut route = vec![a];
+            route.extend(corners);
+            route.push(b);
+            pts.iter()
+                .map(|&p| {
+                    route
+                        .windows(2)
+                        .map(|w| apart(p, w[0], w[1]))
+                        .fold(f64::INFINITY, f64::min)
+                })
+                .sum::<f64>()
+        };
+        across
+            .chain(down)
+            .map(|(corners, w, off)| {
+                let missed = (w.0 != ways.0) as u8 + (w.1 != ways.1) as u8;
+                let key = (
+                    self.through(a, &corners, b),
+                    off_path(&corners),
+                    missed,
+                    off,
+                );
+                (corners, key)
+            })
+            .min_by(|(_, x), (_, y)| {
+                (x.0.cmp(&y.0))
+                    .then(x.1.total_cmp(&y.1))
+                    .then(x.2.cmp(&y.2))
+                    .then(x.3.cmp(&y.3))
+            })
+            .map(|(corners, _)| corners)
+            .unwrap_or_default()
+    }
+
+    /// How many cells of nodes lines across and down through corners pass through, between
+    /// the cells they start and end in.
+    fn through(&self, a: (i64, i64), corners: &[(i64, i64)], b: (i64, i64)) -> usize {
+        let mut cells = Vec::new();
+        let mut from = a;
+        for &to in corners.iter().chain([&b]) {
+            let (dc, dr) = ((to.0 - from.0).signum(), (to.1 - from.1).signum());
+            let mut at = from;
+            while at != to {
+                at = (at.0 + dc, at.1 + dr);
+                cells.push(at);
+            }
+            from = to;
+        }
+        cells.pop();
+        cells
+            .iter()
+            .filter(|&&(c, r)| {
+                self.nodes
+                    .iter()
+                    .any(|&((c0, r0), (c1, r1))| (c0..=c1).contains(&c) && (r0..=r1).contains(&r))
+            })
+            .count()
     }
 
     /// Draws polylines in cells.
@@ -378,71 +674,106 @@ impl TextCanvas<'_> {
         }
     }
 
+    /// Sets text beside an edge's line, a cell back from its tip: to the right of a line
+    /// down, and above a line across, ending before the tip or starting after it.
+    fn beside(&mut self, tip: (i64, i64), back: (i64, i64), text: &str) {
+        let (cw, ch) = (self.o.cells.width, self.o.cells.height);
+        let (c, r) = (tip.0 + back.0, tip.1 + back.1);
+        let (at, align) = match back {
+            (0, _) => (
+                Point::new((c as f64 + 0.5) * cw, r as f64 * ch),
+                Align::Start,
+            ),
+            (1, _) => (
+                Point::new((c as f64 - 0.5) * cw, (r - 1) as f64 * ch),
+                Align::Start,
+            ),
+            _ => (
+                Point::new((c as f64 + 0.5) * cw, (r - 1) as f64 * ch),
+                Align::End,
+            ),
+        };
+        self.labels.push(Text {
+            lines: vec![text.to_string()],
+            at,
+            align,
+            rotate: 0.0,
+            within: None,
+        });
+    }
+
     /// Sets a label's lines in cells about its point: a line to a row, centered on it, or
-    /// starting or ending there as the label is aligned. A label turned 30 degrees or more
-    /// is set down, a character to a row, its lines side by side.
-    fn label(&mut self, placed: &Placed) {
-        let lines: Vec<String> = placed
-            .label
-            .lines
-            .iter()
-            .map(|spans| spans.iter().map(|s| s.text.as_str()).collect())
-            .filter(|l: &String| !l.trim().is_empty())
-            .collect();
+    /// starting or ending there as the label is aligned.
+    ///
+    /// Text is set where it breaks no more than lines down, and no other text, a
+    /// row up or down from there if it must, and inside the box it is in. Where there is no
+    /// such room, a row is put in for each line that has none.
+    fn label(&mut self, text: &Text) {
+        let lines = &text.lines;
         if lines.is_empty() {
             return;
         }
         let (cw, ch) = (self.o.cells.width, self.o.cells.height);
-        let at = placed.at;
+        let at = text.at;
         let m = lines.len() as f64;
-        // The middle of each line, in the scene's units, before the label is turned.
-        let mids = lines.iter().enumerate().map(|(i, line)| {
-            let w = line.width() as f64 * cw;
-            let x = match placed.align {
-                Align::Middle => at.x,
-                Align::Start => at.x + w / 2.0,
-                Align::End => at.x - w / 2.0,
-            };
-            Point::new(x, at.y + (i as f64 - (m - 1.0) / 2.0) * ch)
+        let row = |i: usize| at.y + (i as f64 - (m - 1.0) / 2.0) * ch;
+        // Text can't be turned in cells. A label turned far enough that it would run into
+        // what is beside it, as an axis's title, is set across about the point it is turned
+        // about, running out from the diagram there: leftward in its left half, and
+        // rightward in its right half.
+        let turn = text.rotate.abs() % 180.0;
+        let turned = (30.0..=150.0).contains(&turn);
+        let starts: Vec<(i64, i64)> = lines
+            .iter()
+            .enumerate()
+            .map(|(i, line)| {
+                let n = line.width() as f64;
+                let w = n * cw;
+                let x = match text.align {
+                    _ if turned && at.x < self.width / 2.0 => at.x - w / 2.0,
+                    _ if turned => at.x + w / 2.0,
+                    Align::Middle => at.x,
+                    Align::Start => at.x + w / 2.0,
+                    Align::End => at.x - w / 2.0,
+                };
+                (middle(x / cw, n), middle(row(i) / ch, 1.0))
+            })
+            .collect();
+        let widths: Vec<i64> = lines.iter().map(|l| l.width() as i64).collect();
+        // The rows of the box's sides above and below, which text stays between.
+        let sides = text.within.map(|b| {
+            let (_, r0) = self.cell(Point::new(b.x, b.y));
+            let (_, r1) = self.cell(Point::new(b.x, b.y + b.h));
+            (r0, r1)
         });
-        // Text can't be turned in cells. Turned far enough that it would run into what is
-        // beside it, a line is set down, about where its middle is turned to.
-        let turn = placed.rotate.abs() % 180.0;
-        if (30.0..=150.0).contains(&turn) {
-            let (sin, cos) = placed.rotate.to_radians().sin_cos();
-            for (line, mid) in lines.iter().zip(mids) {
-                let (x, y) = (mid.x - at.x, mid.y - at.y);
-                let (x, y) = (at.x + x * cos - y * sin, at.y + x * sin + y * cos);
-                let chars: Vec<char> = line.chars().collect();
-                let c = (x / cw).round() as i64;
-                let r0 = middle(y / ch, chars.len() as f64);
-                for (j, &ch) in chars.iter().enumerate() {
-                    self.grid.put((c, r0 + j as i64), ch);
-                }
+        let fits = |shift: i64| {
+            starts.iter().zip(&widths).all(|(&(c, r), &n)| {
+                let r = r + shift;
+                sides.is_none_or(|(r0, r1)| r0 < r && r < r1)
+                    && self.grid.free(self.grid.at((c, r)), n)
+            })
+        };
+        if let Some(shift) = [0, -1, 1].into_iter().find(|&s| fits(s)) {
+            for ((&(c, r), &n), line) in starts.iter().zip(&widths).zip(lines) {
+                let at = self.grid.at((c, r + shift));
+                let at = self.grid.fit(at, n);
+                self.grid.text(at, line);
             }
             return;
         }
-        let rows: Vec<((i64, i64), &String)> = lines
-            .iter()
-            .zip(mids)
-            .map(|(line, mid)| {
-                let at = (
-                    middle(mid.x / cw, line.width() as f64),
-                    middle(mid.y / ch, 1.0),
-                );
-                (at, line)
-            })
-            .collect();
-        // A label between rows may be set a row off the room left for it, on a box's side.
-        // It is moved a row down or up where that is clear of lines across.
-        let clear = |shift: i64| {
-            rows.iter().all(|&((c, r), line)| {
-                (c..c + line.width() as i64).all(|c| !self.grid.across((c, r + shift)))
-            })
-        };
-        let shift = [0, 1, -1].into_iter().find(|&s| clear(s)).unwrap_or(0);
-        for ((c, r), line) in rows {
-            self.grid.text((c, r + shift), line);
+        for ((&(c, r), &n), line) in starts.iter().zip(&widths).zip(lines) {
+            let mut at = self.grid.at((c, r));
+            if !self.grid.free(at, n) {
+                // The row is put in below, inside the box, unless the line is on its side
+                // below.
+                let before = match sides {
+                    Some((_, r1)) if r >= r1 => r,
+                    _ => r + 1,
+                };
+                at.1 = self.grid.put_row_in(before);
+            }
+            let at = self.grid.fit(at, n);
+            self.grid.text(at, line);
         }
     }
 }
@@ -533,10 +864,17 @@ impl Canvas for TextCanvas<'_> {
             return;
         }
         if fill.is_some() {
+            // What is inside is hidden, and with it the lines from the sides into it.
             for r in r0 + 1..r1 {
                 for c in c0 + 1..c1 {
                     self.grid.clear((c, r));
                 }
+                self.grid.cut((c0, r), (1, 0));
+                self.grid.cut((c1, r), (-1, 0));
+            }
+            for c in c0 + 1..c1 {
+                self.grid.cut((c, r0), (0, 1));
+                self.grid.cut((c, r1), (0, -1));
             }
         }
         if let Some(pen) = pen {
@@ -572,6 +910,17 @@ impl Canvas for TextCanvas<'_> {
     }
 }
 
+/// Text set in cells: a label's lines, or a mark beside an edge.
+struct Text {
+    lines: Vec<String>,
+    // The point the text is set about, turned by degrees about it.
+    at: Point,
+    align: Align,
+    rotate: f64,
+    // The box with an outline the text is in, which it stays in.
+    within: Option<Rect>,
+}
+
 /// A marker at an end of an edge, in cells.
 struct End {
     // Where the edge's line stops.
@@ -580,8 +929,21 @@ struct End {
     tip: (i64, i64),
     // A step back from the tip, against the way the marker points.
     back: (i64, i64),
-    mark: char,
+    mark: Mark,
     stroke: Stroke,
+}
+
+/// How a marker is drawn in cells.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Mark {
+    /// A character at the tip.
+    Tip(char),
+    /// A character a cell back from the tip, and one at it.
+    Back(char, char),
+    /// A character at the tip, and one either side of it across the line.
+    Across(char, char, char),
+    /// Text beside the line, a cell back from the tip, which the line is drawn on to.
+    Beside(&'static str),
 }
 
 /// The point a path's first step goes to.
@@ -606,6 +968,14 @@ fn middle(at: f64, n: f64) -> i64 {
     (at - (n - 1.0) / 2.0 - 0.5).ceil() as i64
 }
 
+/// How an item's line is drawn in cells, as [`stroke`] draws a pen's.
+fn line_stroke(s: &Resolved) -> Stroke {
+    Stroke {
+        dashed: s.dash.iter().any(|&d| d > 0.0),
+        heavy: s.stroke_width >= 3.0,
+    }
+}
+
 /// How a pen's line is drawn in cells: dashed where it has a dash, and heavy where it is
 /// thicker than most lines are, as a flowchart's thick edges.
 fn stroke(pen: &Pen<'_>) -> Stroke {
@@ -615,8 +985,13 @@ fn stroke(pen: &Pen<'_>) -> Stroke {
     }
 }
 
-/// The character of a marker pointing a way, which is in cells.
-fn marker(kind: MarkerType, (dx, dy): (f64, f64), charset: Charset) -> char {
+/// How a marker pointing a way, which is in cells, is drawn.
+///
+/// The ends of an entity relationship are written as how many each side has, "1", "0..1",
+/// "1..*" or "0..*", as a crow's foot can't be drawn in a cell without looking like an
+/// arrow. In ASCII, a hollow triangle, as a class's extension, is written in two or three
+/// characters, so that it is not read as an arrow.
+fn marker(kind: MarkerType, (dx, dy): (f64, f64), charset: Charset) -> Mark {
     use MarkerType as M;
     // 0 right, 1 down, 2 left, 3 up.
     let way = if dx.abs() >= dy.abs() {
@@ -626,31 +1001,72 @@ fn marker(kind: MarkerType, (dx, dy): (f64, f64), charset: Charset) -> char {
     } else {
         3
     };
-    let pick = |chars: [char; 4]| chars[way];
+    let pick = |chars: [char; 4]| Mark::Tip(chars[way]);
     match (charset, kind) {
-        (
-            Charset::Ascii,
-            M::ArrowCircle | M::ClassAggregation | M::ClassLollipop | M::ErZeroOrOne,
-        ) => 'o',
-        (Charset::Ascii, M::ArrowCross) => 'x',
-        (Charset::Ascii, M::ClassComposition | M::ErMdParent) => '*',
-        (Charset::Ascii, M::ErOnlyOne | M::RequirementContains) => '+',
-        (Charset::Ascii, M::ErOneOrMore | M::ErZeroOrMore) => pick(['<', '^', '>', 'v']),
+        (_, M::ErOnlyOne) => Mark::Beside("1"),
+        (_, M::ErZeroOrOne) => Mark::Beside("0..1"),
+        (_, M::ErOneOrMore) => Mark::Beside("1..*"),
+        (_, M::ErZeroOrMore) => Mark::Beside("0..*"),
+        (Charset::Ascii, M::ClassExtension | M::UsecaseExtension | M::RequirementArrow) => [
+            Mark::Back('|', '>'),
+            Mark::Across('\\', 'V', '/'),
+            Mark::Back('|', '<'),
+            Mark::Across('/', '_', '\\'),
+        ][way],
+        (Charset::Ascii, M::ArrowCircle | M::ClassAggregation | M::ClassLollipop) => Mark::Tip('o'),
+        (Charset::Ascii, M::ArrowCross) => Mark::Tip('x'),
+        (Charset::Ascii, M::ClassComposition | M::ErMdParent) => Mark::Tip('*'),
+        (Charset::Ascii, M::RequirementContains) => Mark::Tip('+'),
         (Charset::Ascii, _) => pick(['>', 'v', '<', '^']),
-        (_, M::ArrowCircle) => '●',
-        (_, M::ArrowCross) => '×',
+        (_, M::ArrowCircle) => Mark::Tip('●'),
+        (_, M::ArrowCross) => Mark::Tip('×'),
         (_, M::ClassExtension | M::UsecaseExtension | M::RequirementArrow) => {
             pick(['▷', '▽', '◁', '△'])
         }
-        (_, M::ClassComposition | M::ErMdParent) => '◆',
-        (_, M::ClassAggregation) => '◇',
-        (_, M::ClassLollipop | M::ErZeroOrOne) => '○',
-        (_, M::ErOnlyOne) => '┼',
-        (_, M::ErOneOrMore | M::ErZeroOrMore) => pick(['<', '^', '>', 'v']),
-        (_, M::RequirementContains) => '⊕',
+        (_, M::ClassComposition | M::ErMdParent) => Mark::Tip('◆'),
+        (_, M::ClassAggregation) => Mark::Tip('◇'),
+        (_, M::ClassLollipop) => Mark::Tip('○'),
+        (_, M::RequirementContains) => Mark::Tip('⊕'),
         (_, M::SequenceOpen | M::ClassDependency) => pick(['>', 'v', '<', '^']),
         _ => pick(['▶', '▼', '◀', '▲']),
     }
+}
+
+/// How far a point is from a line across or down between two cells, in cells.
+fn apart((x, y): (f64, f64), a: (i64, i64), b: (i64, i64)) -> f64 {
+    let (x0, x1) = (a.0.min(b.0) as f64, a.0.max(b.0) as f64);
+    let (y0, y1) = (a.1.min(b.1) as f64, a.1.max(b.1) as f64);
+    let dx = (x0 - x).max(x - x1).max(0.0);
+    let dy = (y0 - y).max(y - y1).max(0.0);
+    dx.hypot(dy)
+}
+
+/// A polyline cut where it turns back across or down, into stretches that each run one way
+/// across and one way down, of two points or more.
+fn stretches(pts: &[Point]) -> Vec<&[Point]> {
+    let mut out = Vec::new();
+    let mut start = 0;
+    let (mut sx, mut sy) = (0.0, 0.0);
+    for i in 1..pts.len() {
+        let (dx, dy) = (pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+        let turns = |was: f64, d: f64| was * d < 0.0;
+        if turns(sx, dx) || turns(sy, dy) {
+            out.push(&pts[start..i]);
+            start = i - 1;
+            (sx, sy) = (0.0, 0.0);
+        }
+        if dx != 0.0 {
+            sx = dx.signum();
+        }
+        if dy != 0.0 {
+            sy = dy.signum();
+        }
+    }
+    if pts.len() - start >= 2 {
+        out.push(&pts[start..]);
+    }
+    out.retain(|s| s.len() >= 2);
+    out
 }
 
 /// The box two boxes lie in, where the second is not empty.

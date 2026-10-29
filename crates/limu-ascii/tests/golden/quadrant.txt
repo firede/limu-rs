@@ -1,38 +1,24 @@
-            Reach and engagement of campaigns
+                          Reach and engagement of campaigns
 
-  ╭──────────────────────────╮╭──────────────────────────╮
-H │ Need to promote          ││         We should expand │
-i │                          ││                          │
-g │                          ││                          │
-h │                          ││                          │
-  │                          ││                          │
-E │                          ││                          │
-n │               ●          ││                          │
-g │          Campaign F      ││                          │
-a │                          ││                          │
-g │                          ││                          │
-e │                          ││   ● Campaign C           │
-m │                          ││                          │
-e │                          ││                          │
-n │           ●              ││                          │
-t │      Campaign A          ││                          │
-  │                          ││                          │
-  ├──────────────────────────┤├──────────────────────────┤
-  │   Re-evaluate            ││          May be improved │
-L │                          ││                          │
-o │                          ││                          │
-w │                          ││                          │
-  │                          ││                          │
-E │                   ●      ││                   ●      │
-n │              Campaign E  ││              Campaign D  │
-g │                          ││                          │
-a │                          ││                          │
-g │           Campaign B ●   ││                          │
-e │                          ││                          │
-m │                          ││                          │
-e │                          ││                          │
-n │                          ││                          │
-t │                          ││                          │
-  │                          ││                          │
-  ╰──────────────────────────╯╰──────────────────────────╯
-       Low Reach                           High Reach
+                ╭──────────────────────────╮╭──────────────────────────╮
+                │ Need to promote          ││         We should expand │
+                │                          ││                          │
+                │               ●          ││                          │
+High Engagement │          Campaign F      ││                          │
+                │                          ││                          │
+                │                          ││   ● Campaign C           │
+                │                          ││                          │
+                │           ●              ││                          │
+                │      Campaign A          ││                          │
+                │                          ││                          │
+                ├──────────────────────────┤├──────────────────────────┤
+                │   Re-evaluate            ││          May be improved │
+                │                          ││                          │
+                │                   ●      ││                   ●      │
+                │              Campaign E  ││              Campaign D  │
+                │                          ││                          │
+ Low Engagement │                          ││                          │
+                │           Campaign B ●   ││                          │
+                │                          ││                          │
+                ╰──────────────────────────╯╰──────────────────────────╯
+                     Low Reach                           High Reach

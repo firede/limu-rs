@@ -1,8 +1,9 @@
      ┌─┐      ┌─┐              ┌─┐     ┌─┐
     ┌┘ └─┐   ┌┘ └─┐           ┌┘ └─┐  ┌┘ └─┐
     └┐ ┌─┘   └┐ ┌─┘           └┐ ┌─┘  └┐ ┌─┘               ┌────┐
-     └─┘      └─┘              └─┘     └─┘                 │   ┌┘
+     └─┘      └─┘              └─┘     └─┘                 │   ─┘
    ╭─────╮  ╭─────╮          ╭─────╮ ╭─────╮
-   │     │  │     │          │     │ │     │                └─┘
+   │     │  │     │          │     │ │     │                ───
    ╰─────╯  ╰─────╯          ╰─────╯ ╰─────╯
-FillAndStrStrokeOnlyFillOnly  Solid  Hollow  Shade DotShade, own fill
+FillAndStroke       FillOnly  Solid  Hollow  Shade DotShade, own fill
+          StrokeOnly

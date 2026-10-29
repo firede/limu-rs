@@ -6,15 +6,15 @@ Italic                          │
                               End
 Bold italic                     │
 Mono 0O1lI                 Three lines
-                           cente●ed on
-Underlined            T     one Toint
-H2O and x2            u         u
-                      r         r
-Mixed bold and mono   n         n
-                      ●         ●       Upsid● down
-Small 10              d         d
+                                ●
+                           centered on
+Underlined                  one point
+H2O and x2
 
-Large 24              -         4
-                      9         5
-━━━━━━━━━━━━━━━━━━━━━ 0 A color of its own
+Mixed bold and mono    Turned -90       Upside down
+                      ●         ●Turned 45   ●
+Small 10
+
+Large 24
    Halo over a line
+━━━━━━━━━━━━━━━━━━━━━   A color of its own

@@ -1,9 +1,9 @@
 ╭─────────────╮
-│   mindmap   │
+│  mindmap    │
 │             │
 ╰─┬───────────╯
-  ├┐╭──────────╮
-  │└┤ Origins  │
+  │ ╭──────────╮
+  ├─┤ Origins  │
   │ ╰─┬────────╯
   │   ├───Long history
   │   │
@@ -12,8 +12,8 @@
   │        │  British popular psychology author
   │        └──Tony Buzan
   │
-  ├┐╭───────────╮
-  │└┤ Research  │
+  │ ╭───────────╮
+  ├─┤ Research  │
   │ ╰─┬─────────╯
   │   ├───On effectiveness
   │   │   and features
@@ -23,13 +23,13 @@
   │        └─┤ Uses  │
   │          ╰─┬─────╯
   │            ├───Creative techniques
-  │            ├┐
-  │            │└──Strategic planning
-  │            └┐
-  │             └──Argument mapping
+  │            │
+  │            ├───Strategic planning
+  │            │
+  │            └───Argument mapping
   │
-  └┐╭────────╮
-   └┤ Tools  │
+  │ ╭────────╮
+  └─┤ Tools  │
     ╰─┬──────╯
       ├───Pen and paper
       │
