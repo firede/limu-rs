@@ -118,3 +118,120 @@ fn names_read_back() {
     }
     assert_eq!(crate::DiagramType::from_name("nothing"), None);
 }
+
+/// The roles of the items laid out from every case of the fixtures of rendering.
+fn laid_out_roles() -> std::collections::BTreeSet<String> {
+    #[derive(Deserialize)]
+    struct Case {
+        src: String,
+        #[serde(rename = "maxWidth")]
+        max_width: Option<f64>,
+    }
+    #[derive(Deserialize)]
+    struct Fixture {
+        cases: Vec<Case>,
+    }
+    let mut roles = std::collections::BTreeSet::new();
+    let mut names: Vec<String> = std::fs::read_dir(limu_fixtures::dir())
+        .expect("the fixtures")
+        .filter_map(|e| {
+            let name = e.ok()?.file_name().into_string().ok()?;
+            Some(name.strip_suffix("-render.json.gz")?.to_string())
+        })
+        .collect();
+    names.sort();
+    for name in names {
+        for c in load::<Fixture>(&format!("{name}-render")).cases {
+            let mut o = Options::default();
+            if let Some(w) = c.max_width {
+                o.max_width = w;
+            }
+            if let Ok(sc) = crate::layout(&c.src, &o) {
+                roles.extend(sc.items.iter().map(|it| it.role.as_str().to_string()));
+            }
+        }
+    }
+    roles
+}
+
+/// Every role laid out is one `roles` names, so that a host finds each there.
+#[test]
+fn roles_are_named() {
+    let named: Vec<&str> = [
+        #[cfg(feature = "agentflow")]
+        crate::roles::agentflow::ALL,
+        #[cfg(feature = "architecture")]
+        crate::roles::architecture::ALL,
+        #[cfg(feature = "block")]
+        crate::roles::block::ALL,
+        #[cfg(feature = "c4")]
+        crate::roles::c4::ALL,
+        #[cfg(feature = "class")]
+        crate::roles::class::ALL,
+        #[cfg(feature = "cynefin")]
+        crate::roles::cynefin::ALL,
+        #[cfg(feature = "er")]
+        crate::roles::er::ALL,
+        #[cfg(feature = "eventmodeling")]
+        crate::roles::eventmodeling::ALL,
+        #[cfg(feature = "flowchart")]
+        crate::roles::flowchart::ALL,
+        #[cfg(feature = "gantt")]
+        crate::roles::gantt::ALL,
+        #[cfg(feature = "gitgraph")]
+        crate::roles::gitgraph::ALL,
+        #[cfg(feature = "info")]
+        crate::roles::info::ALL,
+        #[cfg(feature = "ishikawa")]
+        crate::roles::ishikawa::ALL,
+        #[cfg(feature = "journey")]
+        crate::roles::journey::ALL,
+        #[cfg(feature = "kanban")]
+        crate::roles::kanban::ALL,
+        #[cfg(feature = "mindmap")]
+        crate::roles::mindmap::ALL,
+        #[cfg(feature = "packet")]
+        crate::roles::packet::ALL,
+        #[cfg(feature = "pie")]
+        crate::roles::pie::ALL,
+        #[cfg(feature = "quadrant")]
+        crate::roles::quadrant::ALL,
+        #[cfg(feature = "radar")]
+        crate::roles::radar::ALL,
+        #[cfg(feature = "railroad")]
+        crate::roles::railroad::ALL,
+        #[cfg(feature = "requirement")]
+        crate::roles::requirement::ALL,
+        #[cfg(feature = "sankey")]
+        crate::roles::sankey::ALL,
+        #[cfg(feature = "sequence")]
+        crate::roles::sequence::ALL,
+        #[cfg(feature = "state")]
+        crate::roles::state::ALL,
+        #[cfg(feature = "swimlane")]
+        crate::roles::swimlane::ALL,
+        #[cfg(feature = "timeline")]
+        crate::roles::timeline::ALL,
+        #[cfg(feature = "treemap")]
+        crate::roles::treemap::ALL,
+        #[cfg(feature = "treeview")]
+        crate::roles::treeview::ALL,
+        #[cfg(feature = "usecase")]
+        crate::roles::usecase::ALL,
+        #[cfg(feature = "venn")]
+        crate::roles::venn::ALL,
+        #[cfg(feature = "wardley")]
+        crate::roles::wardley::ALL,
+        #[cfg(feature = "xychart")]
+        crate::roles::xychart::ALL,
+    ]
+    .concat();
+    let missing: Vec<String> = laid_out_roles()
+        .into_iter()
+        .filter(|r| !named.contains(&r.as_str()))
+        .collect();
+    assert!(
+        missing.is_empty(),
+        "roles laid out that roles names not: {missing:?}"
+    );
+}

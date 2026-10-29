@@ -151,7 +151,7 @@ macro_rules! name {
 
 name! {
     /// Which part of which diagram an item is, as "flowchart.node" or "sequence.lifeline".
-    /// Styles are given by role. Each diagram's module in `limu` names its roles.
+    /// Styles are given by role. `limu::roles` names the roles of each diagram.
     Role
 }
 

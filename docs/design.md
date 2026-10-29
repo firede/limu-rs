@@ -59,8 +59,9 @@ The split puts what changes rarely apart from what changes often. The scene is a
 between layout and backends, and it should change only when that contract does. Layout
 changes each time limu-rs follows a new Pele. A backend depends on `limu-scene` alone, so it
 neither compiles the parsers nor moves with every release of `limu`. A backend that draws
-by role and wants the diagrams' role constants depends on `limu` too, or matches the role's
-name.
+by role and wants the diagrams' role names as constants, from `limu::roles`, depends on
+`limu` too, or matches the role's name. A test lays out every case of Pele's fixtures and
+checks that `limu::roles` names each role laid out.
 
 A few things layout uses stay in `limu-scene` because the scene owns what they describe.
 `MARKER_SIZE` and `MarkerType::trim` say how large the scene's markers are, and layout
