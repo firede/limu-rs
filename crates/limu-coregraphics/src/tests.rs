@@ -79,10 +79,11 @@ fn keep(name: &str, got: &Pixmap) -> PathBuf {
 }
 
 /// Compares a pixmap with a golden image of this crate's, which it may differ from by a
-/// little in a few pixels, and with limu-tiny-skia's, which it may differ from by more in
-/// more pixels, as two rasterizers do, but not as a drawing turned over, out of place or
-/// missing a stroke does. Core Graphics and tiny-skia draw the samples within a channel of
-/// 32 of each other in all but some tenths of a percent of their pixels.
+/// little in a few pixels, as Core Graphics smooths edges a little differently from one
+/// release of macOS to the next. Then compares it with limu-tiny-skia's, which it may differ
+/// from by more in more pixels, as two rasterizers do, but not as a drawing turned over, out
+/// of place or missing a stroke does. Core Graphics and tiny-skia draw the samples within a
+/// channel of 32 of each other in all but some tenths of a percent of their pixels.
 fn golden(name: &str, got: &Pixmap) -> Result<(), String> {
     let path = here().join("tests/golden").join(name);
     if std::env::var_os("UPDATE_GOLDEN").is_some() {
@@ -93,7 +94,7 @@ fn golden(name: &str, got: &Pixmap) -> Result<(), String> {
     let own = Pixmap::load_png(&path)
         .ok()
         .and_then(|want| differ(&want, got, 8));
-    if own.is_none_or(|n| n > pixels / 1000) {
+    if own.is_none_or(|n| n > pixels / 200) {
         let kept = keep(name, got);
         return Err(format!(
             "{name}: {} pixels differ from its golden image; what was drawn is in {}",
