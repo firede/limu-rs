@@ -193,6 +193,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "limu-playground"
+version = "0.1.0"
+dependencies = [
+ "limu",
+ "limu-ascii",
+ "limu-samples",
+ "limu-scene",
+ "serde_json",
+]
+
+[[package]]
 name = "limu-samples"
 version = "0.1.0"
 dependencies = [

@@ -474,6 +474,15 @@ drew into `target/golden/<backend>`, and the page shows that, the golden file, a
 or lines that differ. The page holds what it shows, so it opens from the disk. The SVG leaves
 out the samples' icons, which the samples give as parts and the SVG writer takes as markup.
 
+The gallery shows the samples, and `limu-playground` shows any diagram. It is a page that
+lays out what is typed into it, built from limu, limu-ascii and the SVG writer for
+WebAssembly, and shows it as SVG, as text for a terminal, or as its scene in JSON, with an
+error's place in the source. The page calls the module through a few functions it exports,
+which pass text through the module's memory, so it needs no generated glue and no tool but
+cargo to build. WebAssembly has no clock, so the page gives the time a Gantt chart takes as
+today. The source is kept in the page's address, so a diagram is shared, or reported, as a
+link. `./scripts/playground.sh` builds it into `target/playground`.
+
 ## Where limu-rs differs from limu
 
 limu-rs keeps limu's words for things unless there is a reason to change them, and each

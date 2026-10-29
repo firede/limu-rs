@@ -18,6 +18,10 @@ for crate in limu-scene limu; do
 done
 cargo fmt --all -- --check
 cargo clippy -q --workspace --all-targets --all-features -- -D warnings
+# The playground is built for WebAssembly, where the functions its page calls are compiled.
+rustup target list --installed | grep -qx wasm32-unknown-unknown ||
+	rustup target add wasm32-unknown-unknown
+cargo clippy -q -p limu-playground --target wasm32-unknown-unknown -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc -q --workspace --no-deps --all-features
 cargo test -q --workspace --all-features
 cargo test -q --workspace --no-default-features

@@ -79,7 +79,7 @@ macro_rules! sources {
 }
 
 /// The sources of the diagrams, by the names of their samples.
-const SOURCES: [(&str, &str); 33] = sources!(
+pub const SOURCES: [(&str, &str); 33] = sources!(
     "agentflow",
     "architecture",
     "block",

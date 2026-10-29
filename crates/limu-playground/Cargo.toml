@@ -1,0 +1,30 @@
+[package]
+name = "limu-playground"
+description = "A web page that lays Mermaid out with limu as it is typed, built for WebAssembly."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lib]
+# A module for the page, and a library for the tests.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+limu = { path = "../limu", features = ["serde"] }
+limu-ascii = { path = "../limu-ascii" }
+limu-samples = { path = "../limu-samples" }
+limu-scene = { workspace = true, features = ["serde"] }
+serde_json = "1"
+
+# The workspace forbids unsafe code. The functions the page calls are exported by name, which
+# needs it, so here it is denied instead, and allowed only in the module that exports them.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

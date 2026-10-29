@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>limu playground</title>
+<style>
+:root {
+  --bg: #f7f7f5; --fg: #1d1d1b; --muted: #6d6d68; --line: #dcdcd6; --card: #ffffff;
+  --accent: #b4441b; --error-bg: #fbe9e4; --error-fg: #8a2a0e;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151514; --fg: #e6e6e1; --muted: #9a9a93; --line: #34342f; --card: #1d1d1b;
+    --accent: #f08a5d; --error-bg: #3b1d14; --error-fg: #f6b49a;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  display: flex; flex-direction: column; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  padding: 10px 16px; border-bottom: 1px solid var(--line); }
+header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+header h1 a { color: inherit; text-decoration: none; }
+header .status { color: var(--muted); font-size: 13px; margin-left: auto;
+  font-variant-numeric: tabular-nums; }
+select, input, button { font: inherit; font-size: 13px; color: var(--fg); background: var(--card);
+  border: 1px solid var(--line); border-radius: 5px; padding: 3px 7px; }
+button { cursor: pointer; }
+input[type=number] { width: 4.5em; }
+label { color: var(--muted); font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(280px, 2fr) 3fr; }
+.pane { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.pane + .pane { border-left: 1px solid var(--line); }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); min-height: 44px; }
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.tabs button { border: 0; border-radius: 0; background: none; color: var(--muted); padding: 3px 10px; }
+.tabs button + button { border-left: 1px solid var(--line); }
+.tabs button.on { background: var(--fg); color: var(--bg); }
+.bar .end { margin-left: auto; display: inline-flex; gap: 6px; }
+textarea { flex: 1; min-height: 0; width: 100%; resize: none; border: 0; outline: none; margin: 0;
+  padding: 12px 14px; background: var(--card); color: var(--fg); tab-size: 2;
+  font: 13px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.error { margin: 0; padding: 8px 14px; background: var(--error-bg); color: var(--error-fg);
+  border-top: 1px solid var(--line); white-space: pre-wrap; max-height: 40%; overflow: auto;
+  font: 12px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace; cursor: pointer; }
+.out { flex: 1; min-height: 0; overflow: auto; padding: 16px; }
+.out.stale { opacity: 0.45; }
+.picture { display: inline-block; padding: 16px; border-radius: 6px; border: 1px solid var(--line); }
+.picture img { display: block; height: auto; }
+.picture img.fit { max-width: 100%; }
+pre { margin: 0; font: 13px/1.35 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+/* Text drawn in box-drawing characters is set at the font's own line height, which their
+   lines are drawn to fill, so that lines down meet from row to row. */
+pre.cells { line-height: normal; }
+.empty { color: var(--muted); }
+[hidden] { display: none !important; }
+@media (max-width: 760px) {
+  main { grid-template-columns: 1fr; grid-template-rows: minmax(220px, 40vh) auto; }
+  .pane + .pane { border-left: 0; border-top: 1px solid var(--line); }
+  .out { overflow: visible; }
+  body { height: auto; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="https://github.com/firede/limu-rs">limu</a> playground</h1>
+  <label>Sample <select id="sample"><option value="">—</option></select></label>
+  <span class="status" id="status">Loading…</span>
+</header>
+<main>
+  <section class="pane">
+    <div class="bar">
+      <label>Mermaid</label>
+      <span class="end"><button id="share" title="Copy a link to this diagram">Copy link</button></span>
+    </div>
+    <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off"
+      aria-label="Mermaid source"></textarea>
+    <p class="error" id="error" hidden title="Click to go to the error"></p>
+  </section>
+  <section class="pane">
+    <div class="bar">
+      <span class="tabs" id="views">
+        <button data-view="0" class="on">SVG</button><button data-view="1">Text</button><button data-view="2">Scene</button>
+      </span>
+      <label data-for="0">Theme <select id="theme">
+        <option value="0">Pele</option><option value="1">Kohu</option><option value="2">Kohu dark</option>
+      </select></label>
+      <label data-for="0">Zoom <select id="zoom">
+        <option value="0">Fit</option><option value="1">100%</option><option value="2">200%</option>
+      </select></label>
+      <label data-for="1">Characters <select id="ascii">
+        <option value="0">Box drawing</option><option value="1">ASCII</option>
+      </select></label>
+      <label data-for="1">Columns <input type="number" id="columns" min="20" max="400" value="80"></label>
+      <span class="end"><button id="copy">Copy</button></span>
+    </div>
+    <div class="out" id="out"><p class="empty">Loading limu…</p></div>
+  </section>
+</main>
+<script>
+// The page calls limu's module through the functions it exports. It writes a diagram's
+// source into the module's memory where input() makes room, calls show(), and reads the JSON
+// show() wrote at output(). A panic writes what it says there before the module traps, and
+// the module is then started anew.
+const enc = new TextEncoder(), dec = new TextDecoder();
+let module, limu;
+
+function start() {
+  limu = new WebAssembly.Instance(module, {}).exports;
+  limu.start();
+}
+
+function read() {
+  return JSON.parse(dec.decode(new Uint8Array(limu.memory.buffer, limu.output(), limu.output_len())));
+}
+
+function call(f) {
+  try {
+    f();
+    return read();
+  } catch (e) {
+    if (!(e instanceof WebAssembly.RuntimeError)) throw e;
+    let said;
+    try { said = read(); } catch { said = {}; }
+    start();
+    return { error: 'limu panicked: ' + (said.panic || e.message) + '\nThis is a bug in limu.', line: 0, column: 0 };
+  }
+}
+
+function show(src, o) {
+  return call(() => {
+    const b = enc.encode(src);
+    new Uint8Array(limu.memory.buffer, limu.input(b.length), b.length).set(b);
+    limu.show(o.view, o.theme, o.ascii, o.columns, Date.now());
+  });
+}
+
+const $ = id => document.getElementById(id);
+const src = $('src'), out = $('out'), error = $('error'), status = $('status');
+const o = { view: 0, theme: 0, zoom: 0, ascii: 0, columns: 80 };
+let errorAt = null, url = null, last = null;
+
+// The options a viewer chose are kept in this browser, and the source in the page's address.
+try { Object.assign(o, JSON.parse(localStorage.getItem('limu-playground') || '{}')); } catch {}
+function keep() {
+  try { localStorage.setItem('limu-playground', JSON.stringify(o)); } catch {}
+}
+
+function toHash(text) {
+  let bin = '';
+  for (const b of enc.encode(text)) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function fromHash(hash) {
+  try {
+    const bin = atob(hash.replace(/-/g, '+').replace(/_/g, '/'));
+    return dec.decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+  } catch { return null; }
+}
+
+function render() {
+  const t = performance.now();
+  const r = show(src.value, o);
+  const ms = performance.now() - t;
+  if (r.error !== undefined) {
+    // Pele's parse errors say their line, and the others are given it.
+    const placed = r.line && !/\bline \d/i.test(r.error);
+    error.textContent = (placed ? 'Line ' + r.line + ', column ' + r.column + ': ' : '') + r.error;
+    error.hidden = false;
+    errorAt = r.line ? { line: r.line, column: r.column } : null;
+    out.classList.toggle('stale', last !== null);
+    if (last === null) {
+      out.replaceChildren(Object.assign(document.createElement('p'),
+        { className: 'empty', textContent: 'Nothing to show until the error is mended.' }));
+    }
+    status.textContent = 'Error';
+    return;
+  }
+  error.hidden = true;
+  errorAt = null;
+  out.classList.remove('stale');
+  last = r.output;
+  status.textContent = r.diagram + ' · ' + Math.round(r.width) + ' × ' + Math.round(r.height) +
+    ' · ' + ms.toFixed(1) + ' ms';
+  out.replaceChildren();
+  if (o.view === 0) {
+    if (url) URL.revokeObjectURL(url);
+    url = URL.createObjectURL(new Blob([r.output], { type: 'image/svg+xml' }));
+    const box = document.createElement('div');
+    box.className = 'picture';
+    box.style.background = r.background;
+    const img = document.createElement('img');
+    img.alt = r.diagram + ' diagram';
+    img.src = url;
+    // Fit shrinks a diagram wider than the pane and leaves a smaller one as it is.
+    img.width = Math.ceil(r.width * (o.zoom === 2 ? 2 : 1));
+    img.classList.toggle('fit', o.zoom === 0);
+    box.append(img);
+    out.append(box);
+  } else {
+    const pre = document.createElement('pre');
+    pre.textContent = r.output;
+    if (o.view === 1) pre.className = 'cells';
+    out.append(pre);
+  }
+}
+
+let timer = 0;
+function later() {
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    render();
+    history.replaceState(null, '', '#' + toHash(src.value));
+    $('sample').value = '';
+  }, 120);
+}
+
+function controls() {
+  document.querySelectorAll('#views button').forEach(b => b.classList.toggle('on', +b.dataset.view === o.view));
+  document.querySelectorAll('[data-for]').forEach(l => l.hidden = +l.dataset.for !== o.view);
+  $('theme').value = o.theme;
+  $('zoom').value = o.zoom;
+  $('ascii').value = o.ascii;
+  $('columns').value = o.columns;
+}
+
+src.addEventListener('input', later);
+// Tab indents rather than leaving the editor.
+src.addEventListener('keydown', e => {
+  if (e.key !== 'Tab' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;
+  e.preventDefault();
+  document.execCommand('insertText', false, '  ');
+});
+// The error's line and column are counted as a text area counts, in UTF-16 code units.
+error.addEventListener('click', () => {
+  if (!errorAt) return;
+  const lines = src.value.split('\n');
+  let at = 0;
+  for (let i = 0; i < errorAt.line - 1 && i < lines.length; i++) at += lines[i].length + 1;
+  at += Math.max(0, errorAt.column - 1);
+  src.focus();
+  src.setSelectionRange(at, at);
+});
+$('views').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  o.view = +b.dataset.view;
+  last = null;
+  keep(); controls(); render();
+});
+for (const [id, key] of [['theme', 'theme'], ['zoom', 'zoom'], ['ascii', 'ascii']]) {
+  $(id).addEventListener('change', () => { o[key] = +$(id).value; keep(); render(); });
+}
+$('columns').addEventListener('change', () => {
+  o.columns = Math.min(400, Math.max(20, +$('columns').value || 80));
+  keep(); controls(); render();
+});
+$('sample').addEventListener('change', () => {
+  const name = $('sample').value;
+  if (!name) return;
+  src.value = samples.get(name);
+  history.replaceState(null, '', '#' + toHash(src.value));
+  render();
+});
+function flash(button, text) {
+  const was = button.textContent;
+  button.textContent = text;
+  setTimeout(() => button.textContent = was, 1200);
+}
+$('copy').addEventListener('click', () => {
+  if (last === null) return;
+  navigator.clipboard.writeText(last).then(() => flash($('copy'), 'Copied'), () => flash($('copy'), 'Failed'));
+});
+$('share').addEventListener('click', () => {
+  history.replaceState(null, '', '#' + toHash(src.value));
+  navigator.clipboard.writeText(location.href).then(() => flash($('share'), 'Copied'), () => flash($('share'), 'Failed'));
+});
+
+let samples = new Map();
+WebAssembly.compileStreaming(fetch('limu_playground.wasm'))
+  .catch(() => fetch('limu_playground.wasm').then(r => r.arrayBuffer()).then(b => WebAssembly.compile(b)))
+  .then(m => {
+    module = m;
+    start();
+    samples = new Map(call(() => limu.samples()));
+    for (const name of samples.keys()) $('sample').append(new Option(name, name));
+    const shared = location.hash.length > 1 ? fromHash(location.hash.slice(1)) : null;
+    if (shared !== null) {
+      src.value = shared;
+      $('sample').value = [...samples].find(([, s]) => s === shared)?.[0] ?? '';
+    } else {
+      src.value = samples.get('flowchart');
+      $('sample').value = 'flowchart';
+    }
+    controls();
+    render();
+  })
+  .catch(e => {
+    status.textContent = 'Failed';
+    out.innerHTML = '<p class="empty"></p>';
+    out.firstChild.textContent = 'limu could not be loaded: ' + e.message +
+      '. The page has to be served over HTTP, as by ./scripts/playground.sh.';
+  });
+</script>
+</body>
+</html>

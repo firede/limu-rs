@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/limu-scene", "crates/limu", "crates/limu-tiny-skia", "crates/limu-coregraphics", "crates/limu-ascii", "crates/limu-fixtures", "crates/limu-samples", "crates/limu-gallery"]
+members = ["crates/limu-scene", "crates/limu", "crates/limu-tiny-skia", "crates/limu-coregraphics", "crates/limu-ascii", "crates/limu-fixtures", "crates/limu-samples", "crates/limu-gallery", "crates/limu-playground"]
 resolver = "3"
 # limu-gpui is a workspace of its own, which these checks leave out.
 exclude = ["crates/limu-gpui"]

@@ -25,6 +25,9 @@ Pele 的逐个数值比对。它是 [limu](https://github.com/firede/limu) 的 R
 | `limu-gpui` | 在 GPUI 窗口里绘制场景，用 GPUI 的文字系统测量文字。 |
 | `limu-ascii` | 用制表符把场景画成文字，给终端用。 |
 
+各后端的选项形式一致：外观（look）、绘制用的字体、图标（统一为 `limu_scene::Icons`）和图片。
+`limu_ascii::supports` 说明哪些图能画成文字。
+
 核心的 `limu` 和 `limu-scene` 只用标准库，serde 是可选的 feature。
 
 ## 示例
@@ -53,6 +56,8 @@ echo 'flowchart LR; a --> b' | cargo run -p limu-tiny-skia --example png -- font
 在 `crates/limu-gpui` 里运行 `cargo run --example viewer` 可以看到各后端共用的样例。
 `cargo run -p limu-gallery` 会生成一个页面，把每个后端的 golden 文件和场景的 SVG 并排放在
 一起，并标出后端测试画得与 golden 不同的样例。地址后加 `?changed` 打开时只显示这些样例。
+运行 `./scripts/playground.sh --serve` 会在 http://localhost:8000 生成一个页面，输入任意图表即时
+排布，可以看 SVG、终端文本或场景。
 
 ## 许可
 

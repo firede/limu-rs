@@ -25,6 +25,10 @@ compare its output with Pele's, number for number. It is the Rust sibling of
 | `limu-gpui` | Draws a scene in a GPUI window, and measures text with GPUI's text system. |
 | `limu-ascii` | Draws a scene as text in box-drawing characters, for terminals. |
 
+Every backend takes its options with a look, the fonts it draws in, and the icons, as
+`limu_scene::Icons`, and images it can draw. `limu_ascii::supports` says which diagrams can be
+drawn as text.
+
 The core crates, `limu` and `limu-scene`, use the standard library alone, with serde behind
 an optional feature.
 
@@ -56,6 +60,8 @@ limu-gpui is a workspace of its own, checked by `./scripts/verify-gpui.sh`, and
 `cargo run -p limu-gallery` writes a page that sets them side by side, the golden file of
 each backend next to the scene's SVG, and shows where a backend's tests drew a sample
 otherwise. Open it with `?changed` after its address to see only those.
+`./scripts/playground.sh --serve` builds a page at http://localhost:8000 that lays out any
+diagram as you type it, and shows it as SVG, as terminal text, or as its scene.
 [docs/design.md](docs/design.md) explains how limu-rs is built and how it's checked against
 Pele, and [AGENTS.md](AGENTS.md) has the rules for changing it.
 
