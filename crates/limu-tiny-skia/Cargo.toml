@@ -15,6 +15,7 @@ tiny-skia = "0.12"
 
 [dev-dependencies]
 limu-fixtures = { path = "../limu-fixtures" }
+limu-samples = { path = "../limu-samples" }
 
 [lints]
 workspace = true

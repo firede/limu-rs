@@ -1,0 +1,12 @@
+flowchart TD
+  A([Mermaid text]) --> B{Supported?}
+  B -- Yes --> C[Parse]
+  B -- No --> H[Fall back]
+
+  subgraph Pele
+    C --> D[Layout]
+    D --> E[Render]
+  end
+
+  E --> F[(SVG)]
+  F -.-> G[Theme with CSS]

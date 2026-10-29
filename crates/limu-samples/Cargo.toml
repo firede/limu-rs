@@ -1,0 +1,17 @@
+[package]
+name = "limu-samples"
+description = "The scenes every backend of limu-rs draws in its tests."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+limu = { path = "../limu" }
+limu-scene = { workspace = true }
+
+[lints]
+workspace = true

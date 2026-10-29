@@ -162,6 +162,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "limu-samples"
+version = "0.1.0"
+dependencies = [
+ "limu",
+ "limu-scene",
+]
+
+[[package]]
 name = "limu-scene"
 version = "0.1.0"
 dependencies = [
@@ -175,6 +183,7 @@ name = "limu-tiny-skia"
 version = "0.1.0"
 dependencies = [
  "limu-fixtures",
+ "limu-samples",
  "limu-scene",
  "rustybuzz",
  "tiny-skia",

@@ -340,6 +340,27 @@ it was written from, and the tests fail on a fixture of another. To follow a new
 pele-oracle writes the fixtures anew from it, limu-rs pins the new release, and what Pele's
 diff changed is ported.
 
+## Checking backends
+
+A backend has no oracle. The scene it draws is checked against Pele already, and so is the
+default drawing, through the SVG writer, which is a canvas like any other. What is left to
+a backend is to draw a canvas's few calls well, and how that comes out in pixels depends on
+its rasterizer, its fonts and its GPU, which no two backends share to the bit.
+
+Every backend instead draws the same samples, from `limu-samples`, a crate of the workspace
+that is never published. Some samples are built by hand, each to try one thing a canvas
+does, such as caps, joins and dashes, every marker, every painting, faces, alignments and
+turns of text, halos, layers at an opacity, curves and the nonzero rule, icons and images.
+The rest are one diagram of each type, laid out by limu from an example of Pele's
+documentation. Text in them is measured as Arial, so every backend draws the same scene.
+
+Each backend compares its drawings with golden images of its own, written anew when a
+change is meant and looked at before they are committed. limu-tiny-skia's are drawn in the
+Liberation fonts and compared with a little room. A backend that draws pixels in another
+way, as CoreGraphics does, compares with its own images where it runs, and also with
+limu-tiny-skia's with more room, which catches a drawing that is wrong rather than
+slightly different, such as one turned upside down. limu-ascii's golden files are text.
+
 ## Where limu-rs differs from limu
 
 limu-rs keeps limu's words for things unless there is a reason to change them, and each
