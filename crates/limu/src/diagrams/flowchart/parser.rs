@@ -162,10 +162,6 @@ impl Parser<'_, '_> {
         self.toks[self.i].kind
     }
 
-    fn kind_at(&self, i: usize) -> T {
-        self.toks[i].kind
-    }
-
     /// The text of the token at i, and moves past it.
     fn take(&mut self) -> String {
         let s = self.toks[self.i].text.to_string();

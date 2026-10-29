@@ -10,8 +10,46 @@
 //! Much of limu is ported from Pele, the Mermaid renderer of the Obsidian team, and its tests
 //! compare what limu does with what Pele does, number for number.
 
-// The parsers and layouts are ported after the parts they use.
-#![allow(dead_code, unused_imports)]
+// Where only some types of diagram are built, the parts the others alone use go unused.
+// Unused code is looked for where every type is built.
+#![cfg_attr(
+    not(all(
+        feature = "agentflow",
+        feature = "architecture",
+        feature = "block",
+        feature = "c4",
+        feature = "class",
+        feature = "cynefin",
+        feature = "er",
+        feature = "eventmodeling",
+        feature = "flowchart",
+        feature = "gantt",
+        feature = "gitgraph",
+        feature = "info",
+        feature = "ishikawa",
+        feature = "journey",
+        feature = "kanban",
+        feature = "mindmap",
+        feature = "packet",
+        feature = "pie",
+        feature = "quadrant",
+        feature = "radar",
+        feature = "railroad",
+        feature = "requirement",
+        feature = "sankey",
+        feature = "sequence",
+        feature = "state",
+        feature = "swimlane",
+        feature = "timeline",
+        feature = "treemap",
+        feature = "treeview",
+        feature = "usecase",
+        feature = "venn",
+        feature = "wardley",
+        feature = "xychart",
+    )),
+    allow(dead_code, unused_imports)
+)]
 
 pub use limu_scene as scene;
 

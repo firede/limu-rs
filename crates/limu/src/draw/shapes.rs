@@ -1137,6 +1137,7 @@ fn or_fallback(shape: &str) -> &'static ShapeDef {
 }
 
 /// The names of the shapes, in Pele's order.
+#[cfg(test)]
 pub(crate) fn shape_names() -> impl Iterator<Item = &'static str> {
     SHAPES.iter().map(|(name, _)| *name)
 }

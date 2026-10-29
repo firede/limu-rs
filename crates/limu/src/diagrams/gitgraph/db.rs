@@ -39,8 +39,10 @@ pub(crate) struct Branch {
     pub(crate) head: Option<String>,
 }
 
-/// A git graph, Pele's GitModel.
+/// A git graph, Pele's GitModel. Its branches, current branch, head and warnings are read
+/// only by the tests that compare it with Pele's.
 #[derive(Clone, Debug)]
+#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) struct GitModel {
     pub(crate) title: Option<String>,
     pub(crate) acc_title: Option<String>,

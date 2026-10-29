@@ -12,6 +12,7 @@ pub(crate) enum MemberType {
 }
 
 impl MemberType {
+    #[cfg(test)]
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             MemberType::Method => "method",

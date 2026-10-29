@@ -129,11 +129,6 @@ impl Default for ErDb {
 }
 
 impl ErDb {
-    /// The entity of a name.
-    pub(crate) fn entity(&self, name: &str) -> Option<&ErEntity> {
-        self.entity_at.get(name).map(|&i| &self.entities[i])
-    }
-
     /// The class of an id.
     pub(crate) fn class(&self, id: &str) -> Option<&ErClassDef> {
         self.class_at.get(id).map(|&i| &self.classes[i])

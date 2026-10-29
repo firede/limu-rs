@@ -61,8 +61,10 @@ pub(crate) enum Statement {
     Chain(Vec<usize>),
 }
 
-/// A class of styles a classDef statement defines, Pele's BlockClassDef.
+/// A class of styles a classDef statement defines, Pele's BlockClassDef. Its id is read
+/// only by the tests that compare it with Pele's.
 #[derive(Clone, Debug)]
+#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) struct BlockClassDef {
     pub(crate) id: String,
     pub(crate) styles: Vec<String>,
@@ -136,7 +138,6 @@ struct Frame {
     at: usize,
     parent: usize,
     children: Vec<usize>,
-    columns: f64,
 }
 
 /// The diagram of a model, as Pele's BlockDb is: the tree of blocks under its root, the
@@ -205,11 +206,6 @@ impl BlockDb {
     pub(crate) fn add(&mut self, block: Block) -> usize {
         self.arena.push(block);
         self.arena.len() - 1
-    }
-
-    /// The block of an id.
-    pub(crate) fn get(&self, id: &str) -> Option<&Block> {
-        self.by_id.get(id).map(|&(_, b)| &self.arena[b])
     }
 
     /// The next id of a block that has none of its own, as Pele's generateId gives it.
@@ -289,21 +285,15 @@ impl BlockDb {
         b
     }
 
-    /// The frame of the statements of parent, Pele's frame: the statements flattened, and
-    /// the columns the first column setting among them gives.
+    /// The frame of the statements of parent, Pele's frame, the statements flattened. Pele
+    /// also keeps the columns the first column setting among them gives, which it reads only
+    /// to warn, and a host is not warned.
     fn frame(&self, statements: &[Statement], parent: usize) -> Frame {
-        let list = flatten(statements);
-        let columns = list
-            .iter()
-            .map(|&b| &self.arena[b])
-            .find(|b| b.r#type == "column-setting")
-            .map_or(-1.0, |b| b.columns.unwrap_or(-1.0));
         Frame {
-            list,
+            list: flatten(statements),
             at: 0,
             parent,
             children: Vec::new(),
-            columns,
         }
     }
 

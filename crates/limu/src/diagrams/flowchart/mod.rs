@@ -13,7 +13,9 @@ mod tokens;
 mod tests;
 
 pub(crate) use db::FlowDb;
-pub(crate) use graph::{FlowGraph, GraphNode, build_flow_graph};
+#[cfg(test)]
+pub(crate) use graph::build_flow_graph;
+pub(crate) use graph::{FlowGraph, GraphNode};
 pub(crate) use render::{Roles, Variant, layout, layout_variant};
 // An agent flow takes its shapes from a flowchart's.
 #[cfg(feature = "agentflow")]
@@ -53,6 +55,7 @@ pub(crate) fn parse(
 
 /// The curve a flowchart's configuration gives its edges, where it is a string, as Pele's
 /// renderFlowchart reads it.
+#[cfg(test)]
 pub(crate) fn default_curve(config: &Map) -> Option<&str> {
     flowchart_config(config)
         .and_then(|f| f.get("curve"))

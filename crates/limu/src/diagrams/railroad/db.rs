@@ -61,6 +61,7 @@ pub(crate) enum Notation {
 
 impl Notation {
     /// The notation's name, as Pele writes it.
+    #[cfg(test)]
     pub(crate) fn name(self) -> &'static str {
         match self {
             Notation::Railroad => "railroad",
@@ -118,6 +119,7 @@ impl RailroadDb {
     }
 
     /// The rule of a name, the last defined where it is defined more than once.
+    #[cfg(test)]
     pub(crate) fn get_rule(&self, name: &str) -> Option<&RailroadRule> {
         self.by_name.get(name).map(|&i| &self.rules[i])
     }

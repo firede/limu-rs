@@ -1,8 +1,6 @@
 //! What a requirement diagram's parser fills, as Pele's RequirementDb in db.ts has it: its
 //! requirements, elements, relationships and classes, as Mermaid's requirementDb keeps them.
 
-use std::collections::HashMap;
-
 use crate::detect::DiagramType;
 use crate::errors::{Error, ErrorCode};
 use crate::js::chars::{drop_indents, trim_start};

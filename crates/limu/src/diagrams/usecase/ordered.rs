@@ -75,12 +75,6 @@ impl<K: Clone + Eq + Hash, V> Ordered<K, V> {
         }
     }
 
-    /// Takes every key out, as Map's clear does.
-    pub(crate) fn clear(&mut self) {
-        self.entries.clear();
-        self.index.clear();
-    }
-
     /// The keys and values, in order, as iterating a Map gives them.
     pub(crate) fn iter(&self) -> impl Iterator<Item = (&K, &V)> {
         self.entries.iter().flatten().map(|(k, v)| (k, v))
@@ -89,11 +83,6 @@ impl<K: Clone + Eq + Hash, V> Ordered<K, V> {
     /// The values, in order.
     pub(crate) fn values(&self) -> impl Iterator<Item = &V> {
         self.iter().map(|(_, v)| v)
-    }
-
-    /// The values, in order, to change.
-    pub(crate) fn values_mut(&mut self) -> impl Iterator<Item = &mut V> {
-        self.entries.iter_mut().flatten().map(|(_, v)| v)
     }
 
     /// The keys, in order.

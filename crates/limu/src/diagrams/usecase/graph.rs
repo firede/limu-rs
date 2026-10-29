@@ -42,8 +42,10 @@ pub(crate) struct UsecaseGraphNode {
 }
 
 /// An edge of the graph, Pele's UsecaseGraphEdge. An internal edge is the dotted line from a
-/// note to what it is about.
+/// note to what it is about. Its classes, animation and explicit id are read only by the
+/// tests that compare it with Pele's.
 #[derive(Clone, Debug)]
+#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) struct UsecaseGraphEdge {
     pub(crate) id: String,
     pub(crate) start: String,

@@ -13,6 +13,7 @@ pub(crate) enum LabelType {
 }
 
 impl LabelType {
+    #[cfg(test)]
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             LabelType::Text => "text",

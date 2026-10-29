@@ -21,6 +21,7 @@ pub(crate) enum EntityKind {
 
 impl EntityKind {
     /// The kind as Pele names it.
+    #[cfg(test)]
     pub(crate) fn name(self) -> &'static str {
         match self {
             EntityKind::Ui => "ui",
@@ -42,6 +43,7 @@ pub(crate) enum LaneGroup {
 
 impl LaneGroup {
     /// The group as Pele names it.
+    #[cfg(test)]
     pub(crate) fn name(self) -> &'static str {
         match self {
             LaneGroup::Trigger => "trigger",

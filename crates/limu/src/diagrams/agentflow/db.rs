@@ -25,6 +25,7 @@ pub(crate) enum LabelType {
 }
 
 impl LabelType {
+    #[cfg(test)]
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             LabelType::Text => "text",
@@ -168,6 +169,7 @@ pub(crate) enum StatementType {
 }
 
 impl StatementType {
+    #[cfg(test)]
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             StatementType::Vertex => "vertex",
@@ -195,6 +197,7 @@ pub(crate) enum Severity {
 }
 
 impl Severity {
+    #[cfg(test)]
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             Severity::Warning => "warning",
@@ -216,6 +219,7 @@ pub(crate) struct Diagnostic {
 
 /// A node of the semantic model, Pele's SemanticVertex.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg(test)]
 pub(crate) struct SemanticVertex {
     pub(crate) id: String,
     pub(crate) label: Option<String>,
@@ -226,6 +230,7 @@ pub(crate) struct SemanticVertex {
 
 /// An edge of the semantic model, Pele's SemanticEdge.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg(test)]
 pub(crate) struct SemanticEdge {
     pub(crate) start: String,
     pub(crate) end: String,
@@ -240,6 +245,7 @@ pub(crate) struct SemanticEdge {
 
 /// A flow of the semantic model, Pele's SemanticSubgraph.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg(test)]
 pub(crate) struct SemanticSubgraph {
     pub(crate) id: String,
     pub(crate) title: String,
@@ -250,6 +256,7 @@ pub(crate) struct SemanticSubgraph {
 
 /// A connector of the semantic model, Pele's SemanticConnector.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg(test)]
 pub(crate) struct SemanticConnector {
     pub(crate) id: String,
     pub(crate) title: Option<String>,
@@ -259,6 +266,7 @@ pub(crate) struct SemanticConnector {
 /// The diagram with what only says how it is drawn left out, for tools that read what it
 /// means, Pele's SemanticModel.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg(test)]
 pub(crate) struct SemanticModel<'a> {
     pub(crate) direction: Option<&'a str>,
     pub(crate) vertices: Vec<SemanticVertex>,
@@ -385,6 +393,7 @@ const TOOL_SHAPES: [&str; 5] = [
 
 /// The keys of metadata that say only how a thing is drawn, left out of the semantic model,
 /// Pele's PRESENTATION_KEYS.
+#[cfg(test)]
 const PRESENTATION_KEYS: [&str; 11] = [
     "shape",
     "view",
@@ -608,6 +617,7 @@ fn destruct_end_link(raw: &str) -> LinkInfo {
 
 /// Metadata without the keys that only say how a thing is drawn, or none where nothing is
 /// left, as Pele's semanticMetadata gives it.
+#[cfg(test)]
 fn semantic_metadata(metadata: Option<&Map>) -> Option<Map> {
     let out: Map = metadata?
         .iter()
@@ -1286,6 +1296,7 @@ impl AgentflowDb {
 
     /// The diagram as tools that read what it means take it, as Pele's semanticModel gives
     /// it.
+    #[cfg(test)]
     pub(crate) fn semantic_model(&self) -> SemanticModel<'_> {
         let mut vertices = Vec::new();
         let mut connectors = Vec::new();

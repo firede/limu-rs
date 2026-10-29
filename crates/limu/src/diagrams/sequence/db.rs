@@ -384,11 +384,6 @@ impl SeqDb {
         }
     }
 
-    /// The participant of an id, as Map.get on Pele's actors finds it.
-    pub(crate) fn actor(&self, id: &str) -> Option<&SeqActor> {
-        self.actor_index.get(id).map(|&i| &self.actors[i])
-    }
-
     fn actor_mut(&mut self, id: &str) -> Option<&mut SeqActor> {
         self.actor_index.get(id).map(|&i| &mut self.actors[i])
     }

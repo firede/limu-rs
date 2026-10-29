@@ -12,6 +12,7 @@ pub(crate) enum DiagnosticId {
 }
 
 impl DiagnosticId {
+    #[cfg(test)]
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             DiagnosticId::ShapeUnsupported => "SHAPE_UNSUPPORTED",

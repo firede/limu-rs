@@ -45,6 +45,7 @@ pub(crate) const T_ANNOTATION: usize = 27;
 pub(crate) const T_ACCELERATOR: usize = 28;
 pub(crate) const T_DEACCELERATOR: usize = 29;
 pub(crate) const T_NAME: usize = 30;
+#[cfg(test)]
 pub(crate) const T_WS: usize = 31;
 pub(crate) const T_ACC_DESCR: usize = 32;
 pub(crate) const T_ACC_TITLE: usize = 33;
@@ -53,9 +54,12 @@ pub(crate) const T_INT: usize = 35;
 pub(crate) const T_STRING: usize = 36;
 pub(crate) const T_ID: usize = 37;
 pub(crate) const T_NEWLINE: usize = 38;
+#[cfg(test)]
 pub(crate) const T_WHITESPACE: usize = 39;
 pub(crate) const T_YAML: usize = 40;
+#[cfg(test)]
 pub(crate) const T_DIRECTIVE: usize = 41;
+#[cfg(test)]
 pub(crate) const T_COMMENT: usize = 42;
 
 /// The end of the run of ASCII digits from byte i, as Pele's digits finds it.
