@@ -40,6 +40,9 @@ in, once, and runs rustfmt, clippy, the docs and the tests. The fixtures are wri
 Pele by [pele-oracle](https://github.com/firede/pele-oracle).
 limu-gpui is a workspace of its own, checked by `./scripts/verify-gpui.sh`, and
 `cargo run --example viewer` in `crates/limu-gpui` shows the samples every backend draws.
+`cargo run -p limu-gallery` writes a page that sets them side by side, the golden file of
+each backend next to the scene's SVG, and shows where a backend's tests drew a sample
+otherwise. Open it with `?changed` after its address to see only those.
 [docs/design.md](docs/design.md) explains how limu-rs is built and how it's checked against
 Pele, and [AGENTS.md](AGENTS.md) has the rules for changing it.
 

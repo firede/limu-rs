@@ -1,6 +1,6 @@
 //! The samples every backend draws, drawn by tiny-skia in the Liberation fonts, compared
 //! with golden images. A golden image is written anew where UPDATE_GOLDEN is set. What a test
-//! draws is written into target/golden for a look when it differs.
+//! draws is written into target/golden/tiny-skia for a look when it differs.
 
 use limu_scene::style::{Look, Theme};
 use limu_scene::text::{self, Face};
@@ -59,7 +59,8 @@ fn golden(name: &str, got: &tiny_skia::Pixmap) -> Result<(), String> {
         _ => usize::MAX,
     };
     if off > got.data().len() / 4 / 1000 {
-        let out = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/golden");
+        let out =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/golden/tiny-skia");
         std::fs::create_dir_all(&out).unwrap();
         got.save_png(out.join(name)).unwrap();
         let off = if off == usize::MAX {
@@ -68,7 +69,7 @@ fn golden(name: &str, got: &tiny_skia::Pixmap) -> Result<(), String> {
             format!("{off} pixels differ")
         };
         return Err(format!(
-            "{name}: {off}; what was drawn is in target/golden/{name}"
+            "{name}: {off}; what was drawn is in target/golden/tiny-skia/{name}"
         ));
     }
     Ok(())

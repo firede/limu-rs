@@ -446,6 +446,13 @@ so its tests record the calls its canvas would make of one, and compare the reco
 golden files of text. What a record can't show, such as where glyphs fall, is looked at in
 its viewer example, which shows the samples in a window. limu-ascii's golden files are text.
 
+Golden images are hard to look at in a diff, so `limu-gallery`, another crate that is never
+published, writes a page that sets every sample side by side, the scene written as SVG and
+each backend's golden file. Where a backend's test drew a sample otherwise, it writes what it
+drew into `target/golden/<backend>`, and the page shows that, the golden file, and the pixels
+or lines that differ. The page holds what it shows, so it opens from the disk. The SVG leaves
+out the samples' icons, which the samples give as parts and the SVG writer takes as markup.
+
 ## Where limu-rs differs from limu
 
 limu-rs keeps limu's words for things unless there is a reason to change them, and each

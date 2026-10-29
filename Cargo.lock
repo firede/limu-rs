@@ -185,6 +185,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "limu-gallery"
+version = "0.1.0"
+dependencies = [
+ "limu-samples",
+ "limu-scene",
+]
+
+[[package]]
 name = "limu-samples"
 version = "0.1.0"
 dependencies = [

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>limu-rs gallery</title>
+<style>
+:root {
+  --bg: #fafafa; --fg: #1f1f1f; --muted: #6b6b6b; --line: #dedede; --card: #ffffff;
+  --accent: #b4441b; --add: #e3f4e1; --del: #fbe3e1;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161616; --fg: #e8e8e8; --muted: #9a9a9a; --line: #333; --card: #1f1f1f;
+    --accent: #f08a5d; --add: #1f3a22; --del: #47211f;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  font: 14px/1.4 system-ui, -apple-system, sans-serif; }
+header { position: sticky; top: 0; z-index: 1; background: var(--bg);
+  border-bottom: 1px solid var(--line); padding: 10px 16px;
+  display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; }
+header h1 { font-size: 16px; margin: 0; }
+header .count { color: var(--muted); }
+header label { white-space: nowrap; }
+main { padding: 0 16px 40px; }
+.sample { border-bottom: 1px solid var(--line); padding: 14px 0; }
+.sample h2 { font-size: 15px; margin: 0 0 8px; }
+.sample h2 a { color: inherit; text-decoration: none; }
+.badge { font-size: 12px; font-weight: normal; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 9px; padding: 0 7px; }
+.cells { display: flex; gap: 12px; overflow-x: auto; align-items: flex-start; }
+.cell { margin: 0; flex: 0 0 auto; max-width: 560px; background: var(--card);
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+.cell.changed { border-color: var(--accent); }
+figcaption { font-size: 12px; color: var(--muted); margin-bottom: 6px;
+  display: flex; gap: 8px; align-items: center; }
+.tabs button { font: inherit; background: none; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; cursor: pointer; }
+.tabs button.on { color: var(--fg); border-color: var(--fg); }
+img, canvas { display: block; width: min(var(--w, 540px), 540px); height: auto;
+  cursor: zoom-in; background: #fff; }
+img.full, canvas.full { width: auto; cursor: zoom-out; }
+pre { margin: 0; font: 12px/1.25 ui-monospace, "SF Mono", Menlo, monospace;
+  overflow: auto; max-height: 640px; }
+pre .add { background: var(--add); display: block; }
+pre .del { background: var(--del); display: block; }
+details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+.none { color: var(--muted); margin: 0; }
+.note { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
+body.only-changed .sample[data-changed="false"] { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>limu-rs gallery</h1>
+  <span class="count">{{count}} samples, {{changed}} drawn otherwise than their golden files</span>
+  <label><input type="checkbox" id="only"> only changed</label>
+  <span>{{columns}}</span>
+</header>
+<main>
+{{rows}}
+</main>
+<script>
+// Hides a column, or the samples that no backend drew otherwise, as the page does from the
+// start where its address ends in "?changed".
+const only = document.getElementById('only');
+only.addEventListener('change', () => document.body.classList.toggle('only-changed', only.checked));
+if (location.search === '?changed') {
+  only.checked = true;
+  document.body.classList.add('only-changed');
+}
+document.querySelectorAll('header input[data-col]').forEach(box => {
+  box.addEventListener('change', () => {
+    document.querySelectorAll('.cell[data-col="' + box.dataset.col + '"]').forEach(c => {
+      c.hidden = !box.checked;
+    });
+  });
+});
+// An image is shown at its size, or back to fit, on a click.
+document.addEventListener('click', e => {
+  if (e.target.matches('img, canvas')) e.target.classList.toggle('full');
+});
+
+// Shows one view of a changed cell.
+function show(cell, view) {
+  cell.querySelectorAll('.view').forEach(v => v.hidden = v.dataset.view !== view);
+  cell.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.show === view));
+}
+
+// The golden image faded, with the pixels that differ in a channel by more than 8 in red,
+// which is as much as limu-tiny-skia's tests let pass.
+function imageDiff(golden, now) {
+  const load = img => img && (img.complete ? Promise.resolve(img)
+    : new Promise(r => { img.onload = () => r(img); img.onerror = () => r(null); }));
+  return Promise.all([load(golden), load(now)]).then(([a, b]) => {
+    const out = document.createElement('div');
+    if (!a || !b) { out.innerHTML = '<p class="none">no golden image</p>'; return out; }
+    const w = b.naturalWidth, h = b.naturalHeight;
+    if (a.naturalWidth !== w || a.naturalHeight !== h) {
+      out.innerHTML = '<p class="note">sizes differ: ' + a.naturalWidth + '×' + a.naturalHeight +
+        ' golden, ' + w + '×' + h + ' new</p>';
+      return out;
+    }
+    const pixels = img => {
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const cx = c.getContext('2d');
+      cx.drawImage(img, 0, 0);
+      return cx.getImageData(0, 0, w, h);
+    };
+    const pa = pixels(a), pb = pixels(b);
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const cx = c.getContext('2d');
+    const d = cx.createImageData(w, h);
+    let off = 0;
+    for (let i = 0; i < pa.data.length; i += 4) {
+      let differs = false;
+      for (let k = 0; k < 4; k++) differs ||= Math.abs(pa.data[i + k] - pb.data[i + k]) > 8;
+      if (differs) {
+        off++;
+        d.data.set([230, 30, 30, 255], i);
+      } else {
+        const v = 255 - (255 - (pa.data[i] + pa.data[i + 1] + pa.data[i + 2]) / 3) * 0.25;
+        d.data.set([v, v, v, 255], i);
+      }
+    }
+    cx.putImageData(d, 0, 0);
+    out.append(c);
+    const note = document.createElement('p');
+    note.className = 'note';
+    note.textContent = off + ' of ' + (w * h) + ' pixels differ';
+    out.append(note);
+    return out;
+  });
+}
+
+// The lines of two texts, those only in the first marked as taken out and those only in the
+// second as put in, by their longest common subsequence.
+function textDiff(a, b) {
+  const x = a.split('\n'), y = b.split('\n');
+  const n = x.length, m = y.length;
+  const l = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
+  for (let i = n - 1; i >= 0; i--)
+    for (let j = m - 1; j >= 0; j--)
+      l[i][j] = x[i] === y[j] ? l[i + 1][j + 1] + 1 : Math.max(l[i + 1][j], l[i][j + 1]);
+  const pre = document.createElement('pre');
+  const line = (text, cls) => {
+    const s = document.createElement('span');
+    if (cls) s.className = cls;
+    s.textContent = (cls === 'add' ? '+ ' : cls === 'del' ? '- ' : '  ') + text;
+    pre.append(s, cls ? '' : '\n');
+  };
+  let i = 0, j = 0;
+  while (i < n || j < m) {
+    if (i < n && j < m && x[i] === y[j]) { line(x[i], ''); i++; j++; }
+    else if (j < m && (i === n || l[i][j + 1] >= l[i + 1][j])) line(y[j++], 'add');
+    else line(x[i++], 'del');
+  }
+  return pre;
+}
+
+document.querySelectorAll('.cell.changed').forEach(cell => {
+  cell.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(cell, b.dataset.show)));
+  const view = name => cell.querySelector('.view[data-view="' + name + '"]');
+  const diff = view('diff');
+  if (cell.dataset.kind === 'image') {
+    imageDiff(view('golden').querySelector('img'), view('new').querySelector('img'))
+      .then(d => diff.append(d));
+  } else {
+    const text = name => (view(name).querySelector('pre') || { textContent: '' }).textContent;
+    diff.append(textDiff(text('golden'), text('new')));
+  }
+  show(cell, 'diff');
+});
+</script>
+</body>
+</html>

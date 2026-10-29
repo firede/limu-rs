@@ -38,6 +38,8 @@ Pele 的逐个数值比对。它是 [limu](https://github.com/firede/limu) 的 R
 如何与 Pele 比对，见 [docs/design.md](docs/design.md)，修改代码的规则见
 [AGENTS.md](AGENTS.md)。limu-gpui 是单独的 workspace，用 `./scripts/verify-gpui.sh` 检查，
 在 `crates/limu-gpui` 里运行 `cargo run --example viewer` 可以看到各后端共用的样例。
+`cargo run -p limu-gallery` 会生成一个页面，把每个后端的 golden 文件和场景的 SVG 并排放在
+一起，并标出后端测试画得与 golden 不同的样例。地址后加 `?changed` 打开时只显示这些样例。
 
 ## 许可
 

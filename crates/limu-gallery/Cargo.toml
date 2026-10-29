@@ -1,0 +1,17 @@
+[package]
+name = "limu-gallery"
+description = "A page that sets the samples every backend of limu-rs draws side by side."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+limu-samples = { path = "../limu-samples" }
+limu-scene = { workspace = true }
+
+[lints]
+workspace = true
