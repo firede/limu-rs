@@ -87,6 +87,32 @@ impl Error {
     }
 }
 
+impl Error {
+    /// The byte of src the error is at, where src is the text it was found in, or none where
+    /// the error has no place, or src has no such line and column, or the column falls
+    /// between the two code units of a character. It turns the column, which is counted in
+    /// UTF-16 code units, into a byte for a host that slices src.
+    pub fn byte_offset(&self, src: &str) -> Option<usize> {
+        if self.line == 0 || self.column == 0 {
+            return None;
+        }
+        let mut start = 0;
+        for _ in 1..self.line {
+            start += src[start..].find('\n')? + 1;
+        }
+        let line = &src[start..];
+        let line = &line[..line.find('\n').unwrap_or(line.len())];
+        let mut units = self.column - 1;
+        for (i, c) in line.char_indices() {
+            if units < c.len_utf16() {
+                return (units == 0).then_some(start + i);
+            }
+            units -= c.len_utf16();
+        }
+        (units == 0).then_some(start + line.len())
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.message)
@@ -310,5 +336,51 @@ pub(crate) fn syntax_error(
         line: loc.line,
         column: loc.column,
         snippet: loc.snippet,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn finds_the_byte_of_a_place() {
+        let src = "graph TD\n  a😀b --> 中\n\nx\n";
+        for (at, _) in src.char_indices().chain([(src.len(), ' ')]) {
+            let loc = locate_in(src, at);
+            let e = Error {
+                line: loc.line,
+                column: loc.column,
+                ..Error::new("", ErrorCode::Syntax)
+            };
+            assert_eq!(e.byte_offset(src), Some(at), "{at}");
+        }
+        let at = |line, column| {
+            Error {
+                line,
+                column,
+                ..Error::new("", ErrorCode::Syntax)
+            }
+            .byte_offset(src)
+        };
+        // After the emoji, inside it, at a line's end and past it, on no line, and with no
+        // place.
+        assert_eq!(at(2, 6), Some(16));
+        assert_eq!(at(2, 5), None);
+        assert_eq!(at(1, 9), Some(8));
+        assert_eq!(at(1, 10), None);
+        assert_eq!(at(6, 1), None);
+        assert_eq!(at(0, 0), None);
+    }
+
+    /// The place of a byte, found as locate finds it but without its rules for the end of
+    /// the text.
+    fn locate_in(src: &str, offset: usize) -> Location {
+        let line_start = src[..offset].rfind('\n').map_or(0, |i| i + 1);
+        Location {
+            line: 1 + src[..offset].matches('\n').count(),
+            column: len16(&src[line_start..offset]) + 1,
+            snippet: String::new(),
+        }
     }
 }
