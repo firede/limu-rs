@@ -58,6 +58,12 @@ impl std::ops::BitOr for Monospace {
     }
 }
 
+impl std::ops::BitOrAssign for Monospace {
+    fn bitor_assign(&mut self, other: Monospace) {
+        self.0 |= other.0;
+    }
+}
+
 /// A time zone, which a gantt chart's dates are read and written in, as JavaScript reads
 /// them in the machine's. The standard library knows no zones but UTC, so a host that wants
 /// another implements this, with a crate such as jiff.

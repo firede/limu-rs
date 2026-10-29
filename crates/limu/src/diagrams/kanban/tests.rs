@@ -355,7 +355,7 @@ fn stripe_line(it: &Item) -> String {
     };
     let mut points = Vec::new();
     let mut at = 0;
-    for &op in &path.ops {
+    for &op in path.ops() {
         let letter = match op {
             Op::MoveTo => "M",
             Op::LineTo => "L",
@@ -363,7 +363,7 @@ fn stripe_line(it: &Item) -> String {
             Op::CubeTo => "C",
             Op::Close => "Z",
         };
-        let a = &path.args[at..];
+        let a = &path.args()[at..];
         points.push(format!("{letter} {},{}", num(a[0]), num(a[1])));
         at += op.args();
     }

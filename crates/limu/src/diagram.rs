@@ -491,7 +491,7 @@ impl Diagram {
         if let Some(grid) = o.snap {
             sc.snap(grid);
         }
-        if !sc.is_finite() {
+        if !crate::items::finite(&sc) {
             let message = "Diagram cannot be laid out in finite numbers.";
             return Err(Error::new(message, ErrorCode::Limit).tagged(self.found));
         }

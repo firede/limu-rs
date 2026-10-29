@@ -267,7 +267,7 @@ fn path_line(p: &Path, mut hints: &[Arc]) -> String {
     let pt = |x: f64, y: f64| format!("{},{}", n(x), n(y));
     let mut out: Vec<String> = Vec::new();
     let mut last = Point::new(0.0, 0.0);
-    let (ops, args) = (&p.ops, &p.args);
+    let (ops, args) = (p.ops(), p.args());
     let (mut i, mut at) = (0, 0);
     while i < ops.len() {
         let op = ops[i];
@@ -308,7 +308,7 @@ fn path_line(p: &Path, mut hints: &[Arc]) -> String {
                     let mut q = Path::new();
                     q.move_to(last.x, last.y)
                         .arc_to(h.rx, h.ry, h.rot, h.large, h.sweep, h.to.x, h.to.y);
-                    if q.args[2..] == curves[..k] && !q.ops[1..].contains(&Op::LineTo) {
+                    if q.args()[2..] == curves[..k] && !q.ops()[1..].contains(&Op::LineTo) {
                         out.push(format!("A {} {}", h.text, pt(h.to.x, h.to.y)));
                         taken = k;
                     }
@@ -397,7 +397,7 @@ fn scene_lines(sc: &Scene, want: &dyn Fn(usize) -> String) -> Vec<String> {
                     // pie's center, with the radius of Pele's circle where that draws exactly
                     // it. The center is where the ellipse's first curve ends across and where
                     // it starts down.
-                    let (cx, cy) = (path.args[6], path.args[1]);
+                    let (cx, cy) = (path.args()[6], path.args()[1]);
                     let hint = want(lines.len());
                     let f: Vec<&str> = hint.split_whitespace().collect();
                     let mut r = "?".to_string();
@@ -407,7 +407,7 @@ fn scene_lines(sc: &Scene, want: &dyn Fn(usize) -> String) -> Vec<String> {
                     {
                         let mut q = Path::new();
                         q.ellipse(cx, cy, v, v);
-                        if q.args == path.args {
+                        if q.args() == path.args() {
                             r = n(v);
                         }
                     }

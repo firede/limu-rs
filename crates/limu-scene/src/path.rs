@@ -48,14 +48,15 @@ pub enum Step {
 }
 
 /// Lines and curves: the steps, and the numbers they take, in turn. Arcs are made of cubic
-/// curves when they are added, so a backend draws only the four kinds of step.
+/// curves when they are added, so a backend draws only the four kinds of step. A path is
+/// built by its methods, which keep its steps and numbers together.
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Path {
-    /// The steps.
-    pub ops: Vec<Op>,
-    /// The numbers the steps take, x and y in turn, the steps' after one another.
-    pub args: Vec<f64>,
+    // The steps.
+    pub(crate) ops: Vec<Op>,
+    // The numbers the steps take, x and y in turn, the steps' after one another.
+    pub(crate) args: Vec<f64>,
 }
 
 /// 4/3 (√2 − 1), how far along a quarter of a circle's tangents the control points of the
@@ -107,11 +108,22 @@ impl Path {
         self.ops.is_empty()
     }
 
-    /// The steps with their points, in turn.
+    /// The kinds of its steps, in turn.
+    pub fn ops(&self) -> &[Op] {
+        &self.ops
+    }
+
+    /// The numbers its steps take, x and y in turn, the steps' after one another.
+    pub fn args(&self) -> &[f64] {
+        &self.args
+    }
+
+    /// The steps with their points, in turn. A path read from data whose steps take more
+    /// numbers than it has ends at the first step without them.
     pub fn steps(&self) -> impl Iterator<Item = Step> + '_ {
         let mut at = 0;
-        self.ops.iter().map(move |&op| {
-            let a = &self.args[at..at + op.args()];
+        self.ops.iter().map_while(move |&op| {
+            let a = self.args.get(at..at + op.args())?;
             at += op.args();
             let p = |i: usize| Point::new(a[i], a[i + 1]);
             match op {
@@ -121,6 +133,7 @@ impl Path {
                 Op::CubeTo => Step::CubeTo(p(0), p(2), p(4)),
                 Op::Close => Step::Close,
             }
+            .into()
         })
     }
 
@@ -302,18 +315,6 @@ impl Path {
         Rect::new(x0, y0, x1 - x0, y1 - y0)
     }
 
-    /// The path's points and the control points of its curves, in order: the line its curves
-    /// are drawn about, which runs straight between them. It is the route of an edge whose
-    /// layout gives it none, as a self-loop: the curve out of its node and back.
-    pub fn corners(&self) -> Vec<Point> {
-        self.args
-            .as_chunks::<2>()
-            .0
-            .iter()
-            .map(|&[x, y]| Point::new(x, y))
-            .collect()
-    }
-
     /// The path scaled by s about the origin, then moved by dx, dy, as an icon drawn on a
     /// grid of its own is placed in a box.
     pub fn scaled(&self, s: f64, dx: f64, dy: f64) -> Path {
@@ -326,6 +327,21 @@ impl Path {
         Path {
             ops: self.ops.clone(),
             args,
+        }
+    }
+
+    /// Adds another path's steps after this one's.
+    pub fn append(&mut self, other: &Path) -> &mut Path {
+        self.ops.extend_from_slice(&other.ops);
+        self.args.extend_from_slice(&other.args);
+        self
+    }
+
+    /// Moves each of the path's points where a function takes it, as a turn does.
+    pub fn map_points(&mut self, mut f: impl FnMut(Point) -> Point) {
+        for [x, y] in self.args.as_chunks_mut::<2>().0 {
+            let p = f(Point::new(*x, *y));
+            (*x, *y) = (p.x, p.y);
         }
     }
 

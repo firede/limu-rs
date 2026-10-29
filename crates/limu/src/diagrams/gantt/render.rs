@@ -463,7 +463,7 @@ pub(crate) fn layout(db: &GanttDb, config: &Map, o: &Options) -> Result<Scene, E
         tick.style.text = Some(Paint::MUTED);
         if top_axis {
             let mut top = tick.clone();
-            top.move_by(0.0, top_y - bottom_y);
+            crate::items::move_by(&mut top, 0.0, top_y - bottom_y);
             axis_top.push(top);
         }
         axis_bottom.push(tick);

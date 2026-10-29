@@ -52,7 +52,7 @@ const ROW_GAP: f64 = 10.0;
 pub(crate) fn outline(shape: &str, cx: f64, cy: f64, w: f64, h: f64) -> Vec<Part> {
     let mut frame = Item::new(Kind::Node, ROLE_NODE);
     frame.parts = draw_shape(shape, 0.0, 0.0, w, h);
-    frame.move_by(cx, cy);
+    crate::items::move_by(&mut frame, cx, cy);
     frame.parts
 }
 
@@ -482,7 +482,7 @@ fn draw(m: &MindmapDb, config: &Map, o: &Options, down: bool) -> Scene {
     let ox = pad - min_x + (width - max_x + min_x) / 2.0;
     let oy = pad + title_height - min_y;
     for it in &mut items {
-        it.move_by(ox, oy);
+        crate::items::move_by(it, ox, oy);
     }
     if !title.is_empty() {
         let at = Point::new(sc.width / 2.0, pad + title.height / 2.0);

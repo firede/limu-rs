@@ -393,7 +393,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 };
                 // A circle, as Path::ellipse draws it: from its right end, four quarters about
                 // its middle. Its first quarter ends below the middle.
-                let (cx, cy, r) = (path.args[6], path.args[1], it.bounds.w / 2.0);
+                let (cx, cy, r) = (path.args()[6], path.args()[1], it.bounds.w / 2.0);
                 let mut s = format!(
                     "point {} [{}] {} {}",
                     id(it.id.as_deref().unwrap_or("")),
@@ -401,7 +401,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                     pt(cx, cy),
                     n(r)
                 );
-                if path.args[0] != cx + r || it.bounds.x != cx - r {
+                if path.args()[0] != cx + r || it.bounds.x != cx - r {
                     s.push_str(" not a circle about its box");
                 }
                 let pen = it.author.over(&it.style);

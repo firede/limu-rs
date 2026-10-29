@@ -396,7 +396,7 @@ fn draw(db: &IshikawaDb, o: &Options, down: bool) -> Scene {
         items.push(title_item(title, width, pad));
     }
     for it in &mut body {
-        it.move_by(ox, oy);
+        crate::items::move_by(it, ox, oy);
     }
     items.extend(body);
     if let Some((root, label, head_w, head_h)) = head {

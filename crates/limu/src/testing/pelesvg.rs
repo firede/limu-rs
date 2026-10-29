@@ -127,7 +127,7 @@ pub(crate) fn casing_line(it: &Item) -> String {
     );
     let mut marks = String::new();
     for part in &it.parts[1..] {
-        let ops = &path_of(part).ops;
+        let ops = &path_of(part).ops();
         marks.push(if ops.contains(&Op::CubeTo) {
             'o'
         } else if ops.contains(&Op::Close) {

@@ -427,7 +427,7 @@ fn arcs(line: &str) -> Vec<Arc> {
 fn path_line(p: &Path, mut hints: &[Arc]) -> String {
     let mut out: Vec<String> = Vec::new();
     let mut last = Point::new(0.0, 0.0);
-    let (ops, args) = (&p.ops, &p.args);
+    let (ops, args) = (p.ops(), p.args());
     let (mut i, mut at) = (0, 0);
     while i < ops.len() {
         let op = ops[i];
@@ -457,7 +457,7 @@ fn path_line(p: &Path, mut hints: &[Arc]) -> String {
             let mut q = Path::new();
             q.move_to(last.x, last.y)
                 .arc_to(h.rx, h.ry, h.rot, h.large, h.sweep, h.to.x, h.to.y);
-            if q.args[2..] == *curves && !q.ops[1..].contains(&Op::LineTo) {
+            if q.args()[2..] == *curves && !q.ops()[1..].contains(&Op::LineTo) {
                 s = format!("A {} {}", h.text, pt(h.to.x, h.to.y));
             }
         }
@@ -551,9 +551,9 @@ fn scene_lines(sc: &Scene, want: &dyn Fn(usize) -> String) -> Vec<String> {
                         let p = path_of(part);
                         let mut points = Vec::new();
                         let mut at = 0;
-                        for &op in &p.ops {
+                        for &op in p.ops() {
                             if op != Op::Close {
-                                points.push(pt(p.args[at], p.args[at + 1]));
+                                points.push(pt(p.args()[at], p.args()[at + 1]));
                             }
                             at += op.args();
                         }

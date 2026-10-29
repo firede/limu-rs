@@ -668,7 +668,7 @@ fn draw(db: &AgentflowDb, config: &Map, o: &Options, turned: bool) -> Scene {
             if points.is_empty() {
                 // A self-loop, which the layout gives no route: the corners its curve is drawn
                 // about.
-                points = path.path.corners();
+                points = crate::items::corners(&path.path);
             }
             let noise = [
                 "edge-thickness-normal",

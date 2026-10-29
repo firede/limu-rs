@@ -365,7 +365,7 @@ fn draw(
         if route.is_empty() {
             // A self-loop, which the layout gives no route: the corners its curve is drawn
             // about.
-            route = r.path.corners();
+            route = crate::items::corners(&r.path);
         }
         let marker = |at: (f64, f64), dx: f64, dy: f64| Marker {
             kind: MarkerType::ArrowPoint,
@@ -766,13 +766,13 @@ fn draw(
     }
     for layer in [clusters, casings, edges] {
         for mut it in layer {
-            it.move_by(ox, oy);
+            crate::items::move_by(&mut it, ox, oy);
             sc.items.push(it);
         }
     }
     sc.items.extend(shapes);
     for mut it in labels {
-        it.move_by(ox, oy);
+        crate::items::move_by(&mut it, ox, oy);
         sc.items.push(it);
     }
     (sc, lanes.squeezed)

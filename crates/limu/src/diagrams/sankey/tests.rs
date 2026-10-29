@@ -319,8 +319,8 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 };
                 let mut d = Vec::new();
                 let mut at = 0;
-                for &op in &path.ops {
-                    let a = &path.args[at..at + op.args()];
+                for &op in path.ops() {
+                    let a = &path.args()[at..at + op.args()];
                     at += op.args();
                     let mut s = match op {
                         Op::MoveTo => "M",

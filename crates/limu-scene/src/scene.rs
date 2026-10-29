@@ -20,8 +20,7 @@ use crate::style::Style;
 use crate::text::Label;
 
 /// A diagram laid out. Every number in a scene that `limu` gives that places or sizes
-/// something is finite (see [`Scene::is_finite`]). Where Pele would draw NaN, layout gives an
-/// error instead.
+/// something is finite. Where Pele would draw NaN, layout gives an error instead.
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Scene {
@@ -84,7 +83,7 @@ impl Kind {
 pub struct Edge {
     /// The route the edge takes, as the corners of a line that runs straight between them.
     /// Its curves are in the item's parts. Every edge has a route. A self-loop's, which no
-    /// layout routes, is the corners its curve is drawn about ([`Path::corners`]).
+    /// layout routes, is the points and control points its curve is drawn about.
     pub route: Vec<Point>,
     /// The markers at its start and its end, where it has them.
     pub ends: [Option<Marker>; 2],
@@ -240,33 +239,6 @@ impl Item {
         match &self.label {
             Some(p) => p.bounds(),
             None => Rect::default(),
-        }
-    }
-
-    /// Moves the item by dx, dy: its bounds, parts, route, markers, label and picture.
-    pub fn move_by(&mut self, dx: f64, dy: f64) {
-        let point = |p: &mut Point| {
-            p.x += dx;
-            p.y += dy;
-        };
-        self.bounds = self.bounds.moved(dx, dy);
-        for part in &mut self.parts {
-            match &mut part.outline {
-                Outline::Path(p) => p.translate(dx, dy),
-                Outline::Box { rect, .. } => *rect = rect.moved(dx, dy),
-            }
-        }
-        if let Kind::Edge(e) = &mut self.kind {
-            e.route.iter_mut().for_each(point);
-            for m in e.ends.iter_mut().flatten() {
-                point(&mut m.at);
-            }
-        }
-        if let Some(l) = &mut self.label {
-            point(&mut l.at);
-        }
-        if let Some(p) = &mut self.picture {
-            p.bounds = p.bounds.moved(dx, dy);
         }
     }
 }
@@ -471,42 +443,6 @@ impl Grid {
 }
 
 impl Scene {
-    /// Whether every number that places or sizes something in the scene is finite: its size,
-    /// and the bounds, paths, routes, markers, labels and pictures of its items. A layout
-    /// given numbers at the edge of what an f64 holds, as a sankey diagram's flow of 5e-324,
-    /// can work out NaN where Pele does too. `limu` gives an error for such a scene rather
-    /// than hand it to a backend.
-    pub fn is_finite(&self) -> bool {
-        let ok = |vs: &[f64]| vs.iter().all(|v| v.is_finite());
-        let rect = |r: &Rect| ok(&[r.x, r.y, r.w, r.h]);
-        let point = |p: &Point| ok(&[p.x, p.y]);
-        if !ok(&[self.width, self.height, self.font_size]) {
-            return false;
-        }
-        self.items.iter().all(|it| {
-            rect(&it.bounds)
-                && it.parts.iter().all(|p| match &p.outline {
-                    Outline::Path(p) => ok(&p.args),
-                    Outline::Box { rect: r, .. } => rect(r),
-                })
-                && it.edge().is_none_or(|e| {
-                    e.route.iter().all(point)
-                        && e.ends
-                            .iter()
-                            .flatten()
-                            .all(|m| point(&m.at) && ok(&[m.dx, m.dy]))
-                })
-                && it.label.as_ref().is_none_or(|p| {
-                    let l = &p.label;
-                    point(&p.at)
-                        && ok(&[p.rotate, l.width, l.height, l.size, l.line_height])
-                        && ok(&l.widths)
-                        && l.lines.iter().flatten().all(|s| s.width.is_finite())
-                })
-                && it.picture.as_ref().is_none_or(|p| rect(&p.bounds))
-        })
-    }
-
     /// Moves everything in the scene onto a grid: the corners of boxes, the points of paths
     /// and routes, the tips of markers and the points labels are drawn about. It is for a
     /// backend that draws on whole pixels or cells, after layout. A box's sides are snapped
@@ -707,52 +643,6 @@ mod tests {
     }
 
     #[test]
-    fn move_by() {
-        let mut it = Item::new(
-            Kind::Edge(Edge {
-                route: vec![Point::new(1.0, 1.0), Point::new(2.0, 2.0)],
-                ends: [Some(marker(5.0, 5.0)), None],
-            }),
-            "x.edge",
-        );
-        it.bounds = Rect::new(0.0, 0.0, 10.0, 10.0);
-        it.parts = vec![
-            Part::path(
-                path(|p| p.move_to(1.0, 2.0).line_to(3.0, 4.0)),
-                Painting::StrokeOnly,
-            ),
-            Part::rect(
-                Rect::new(1.0, 1.0, 2.0, 2.0),
-                false,
-                Painting::FillAndStroke,
-            ),
-        ];
-        it.label = Some(Placed::new(Label::default(), Point::new(5.0, 5.0)));
-        it.picture = Some(Picture {
-            source: PictureSource::Icon("fa:fa-car".into()),
-            bounds: Rect::new(1.0, 1.0, 2.0, 2.0),
-        });
-        it.move_by(10.0, 20.0);
-        assert_eq!(it.bounds, Rect::new(10.0, 20.0, 10.0, 10.0));
-        assert_eq!(it.label.as_ref().unwrap().at, Point::new(15.0, 25.0));
-        let e = it.edge().unwrap();
-        assert_eq!(e.ends[0].unwrap().at, Point::new(15.0, 25.0));
-        assert_eq!(e.route, [Point::new(11.0, 21.0), Point::new(12.0, 22.0)]);
-        assert_eq!(
-            it.parts[0].outline,
-            Outline::Path(path(|p| p.move_to(11.0, 22.0).line_to(13.0, 24.0)))
-        );
-        assert_eq!(
-            it.parts[1].outline,
-            Outline::Box {
-                rect: Rect::new(11.0, 21.0, 2.0, 2.0),
-                rounded: false
-            }
-        );
-        assert_eq!(it.picture.unwrap().bounds, Rect::new(11.0, 21.0, 2.0, 2.0));
-    }
-
-    #[test]
     fn snap() {
         let mut node = Item::new(Kind::Node, "x.node");
         node.bounds = Rect::new(0.4, 0.4, 9.2, 3.3);
@@ -882,28 +772,6 @@ mod tests {
         sc.snap(Grid { x: 1.0, y: 2.0 });
         assert_eq!(sc.items[0].bounds, Rect::new(1.0, 2.0, 10.0, 10.0));
         assert_eq!((sc.width, sc.height), (13.0, 14.0));
-    }
-
-    #[test]
-    fn is_finite() {
-        let mut it = Item::new(Kind::Edge(Edge::default()), "x.edge");
-        it.parts = vec![Part::path(
-            path(|p| p.move_to(0.0, 0.0).line_to(1.0, 1.0)),
-            Painting::StrokeOnly,
-        )];
-        let mut sc = Scene {
-            items: vec![it],
-            ..Scene::default()
-        };
-        assert!(sc.is_finite());
-        sc.items[0].kind = Kind::Edge(Edge {
-            route: vec![Point::new(f64::NAN, 0.0)],
-            ends: [None, None],
-        });
-        assert!(!sc.is_finite());
-        sc.items[0].kind = Kind::Edge(Edge::default());
-        sc.height = f64::INFINITY;
-        assert!(!sc.is_finite());
     }
 
     #[test]

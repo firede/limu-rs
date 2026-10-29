@@ -497,7 +497,7 @@ fn draw(
     }
     for group in [bands_out, bars, labels] {
         for mut it in group {
-            it.move_by(ox, oy);
+            crate::items::move_by(&mut it, ox, oy);
             sc.items.push(it);
         }
     }

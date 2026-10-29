@@ -1025,7 +1025,7 @@ fn draw(db: &ClassDb, config: &Map, o: &Options, turned: bool, tight: bool) -> S
         if route.is_empty() {
             // A self-loop, which the layout gives no route: the corners its curve is drawn
             // about.
-            route = path.path.corners();
+            route = crate::items::corners(&path.path);
         }
         let mut it = Item::new(
             Kind::Edge(Edge {

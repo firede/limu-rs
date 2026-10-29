@@ -62,6 +62,18 @@ neither compiles the parsers nor moves with every release of `limu`. A backend t
 by role and wants the diagrams' role constants depends on `limu` too, or matches the role's
 name.
 
+A few things layout uses stay in `limu-scene` because the scene owns what they describe.
+`MARKER_SIZE` and `MarkerType::trim` say how large the scene's markers are, and layout
+stops an edge short by that much, so moving them into `limu` would copy the markers'
+sizes there. `Scene::snap` is a scene's own operation, and layout calls it when
+`layout::Options::snap` is set, so a host that snaps a scene it got another way can call
+it too. `text::width` measures a span as layout does, and a backend's tests use it to
+check that text is drawn as wide as it was measured. `Look::cascade` gives a role's style
+before its colors are settled, for a host that lists what a role sets. `dash` cuts lines
+into dashes for a backend whose platform has no dashed strokes. What only layout uses and
+the scene has no part in, such as moving an item or checking that a scene's numbers are
+finite, is in `limu`.
+
 `limu` has a feature for each diagram type, all on by default. Text of a type whose feature
 is off is an unsupported diagram, as text of no type is. This takes the place of Pele's
 entries and lazy loading, which split its bundle for the web.

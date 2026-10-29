@@ -362,8 +362,8 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
             };
             let mut subpaths: Vec<(Vec<String>, Vec<f64>)> = Vec::new();
             let mut at = 0;
-            for &op in &path.ops {
-                let a = &path.args[at..at + op.args()];
+            for &op in path.ops() {
+                let a = &path.args()[at..at + op.args()];
                 at += op.args();
                 if op == Op::MoveTo {
                     subpaths.push((Vec::new(), Vec::new()));

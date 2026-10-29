@@ -440,8 +440,8 @@ fn line_text(line: &[Span]) -> String {
 fn subpaths(p: &Path) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     let mut at = 0;
-    for &op in &p.ops {
-        let a = &p.args[at..at + op.args()];
+    for &op in p.ops() {
+        let a = &p.args()[at..at + op.args()];
         at += op.args();
         let mut s = match op {
             Op::MoveTo => "M",

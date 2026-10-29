@@ -222,9 +222,9 @@ fn same_parts(got: &[Part], want: &[Part]) -> bool {
             g.paint == w.paint
                 && match (&g.outline, &w.outline) {
                     (Outline::Path(g), Outline::Path(w)) => {
-                        g.ops == w.ops
-                            && g.args.len() == w.args.len()
-                            && g.args.iter().zip(&w.args).all(|(&a, &b)| near(a, b))
+                        g.ops() == w.ops()
+                            && g.args().len() == w.args().len()
+                            && g.args().iter().zip(w.args()).all(|(&a, &b)| near(a, b))
                     }
                     (
                         Outline::Box {
@@ -320,7 +320,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 };
                 let mut steps = Vec::new();
                 let mut at = 0;
-                for &op in &path.ops {
+                for &op in path.ops() {
                     let mut s = match op {
                         Op::MoveTo => "M",
                         Op::LineTo => "L",
@@ -329,7 +329,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                         Op::Close => "Z",
                     }
                     .to_string();
-                    for xy in path.args[at..at + op.args()].chunks(2) {
+                    for xy in path.args()[at..at + op.args()].chunks(2) {
                         s.push_str(&format!(" {}", pt(xy[0], xy[1])));
                     }
                     at += op.args();

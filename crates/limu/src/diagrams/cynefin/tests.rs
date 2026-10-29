@@ -252,7 +252,7 @@ fn host_icons(name: &str) -> bool {
 fn path_data(p: &Path) -> String {
     let mut out = String::new();
     let mut at = 0;
-    for &op in &p.ops {
+    for &op in p.ops() {
         out.push(match op {
             Op::MoveTo => 'M',
             Op::LineTo => 'L',
@@ -260,7 +260,7 @@ fn path_data(p: &Path) -> String {
             Op::CubeTo => 'C',
             Op::Close => 'Z',
         });
-        let a = &p.args[at..at + op.args()];
+        let a = &p.args()[at..at + op.args()];
         at += op.args();
         for (k, xy) in a.chunks(2).enumerate() {
             if k > 0 {

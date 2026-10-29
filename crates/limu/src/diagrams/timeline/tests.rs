@@ -208,8 +208,8 @@ fn pt(x: f64, y: f64) -> String {
 fn subpaths(p: &Path) -> String {
     let mut out = Vec::new();
     let mut at = 0;
-    for &op in &p.ops {
-        let a = &p.args[at..at + op.args()];
+    for &op in p.ops() {
+        let a = &p.args()[at..at + op.args()];
         at += op.args();
         let mut w = "MLQCZ"[op as usize..op as usize + 1].to_string();
         for xy in a.chunks(2) {
@@ -311,7 +311,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
             )),
             ROLE_DOT => {
                 // The circle, as Path::ellipse draws it: from its right end, four quarters.
-                let a = &path_of(it).args;
+                let a = &path_of(it).args();
                 let (cx, cy) = (a[2 + 4], a[1]);
                 lines.push(format!(
                     "circle {} {} {}",

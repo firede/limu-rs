@@ -601,7 +601,7 @@ fn outline(m: &Marker) -> Vec<MarkerPart> {
         let p = path_of(&part.outline);
         let hollow = part.paint == Painting::Hollow;
         if let Some(back) = ring_back(m.kind)
-            && p.ops.get(1) == Some(&Op::CubeTo)
+            && p.ops().get(1) == Some(&Op::CubeTo)
         {
             let (x, y) = (m.at.x - m.dx * back, m.at.y - m.dy * back);
             let b = p.bounds();

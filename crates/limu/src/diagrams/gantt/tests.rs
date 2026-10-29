@@ -420,8 +420,8 @@ fn paths(lines: &mut Vec<String>, p: &Path, paint: &str) {
         cur.clear();
     };
     let mut at = 0;
-    for &op in &p.ops {
-        let a = &p.args[at..at + op.args()];
+    for &op in p.ops() {
+        let a = &p.args()[at..at + op.args()];
         at += op.args();
         if op == Op::MoveTo {
             flush(&mut cur, lines);

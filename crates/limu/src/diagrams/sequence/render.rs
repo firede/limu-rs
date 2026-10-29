@@ -1866,7 +1866,7 @@ fn draw(db: &SeqDb, config: &Map, o: &Options, tight: bool, hold: f64, by_need: 
     // where it is on the page.
     let (dx, dy) = (pad - min_x, pad - min_y);
     for it in &mut sc.items {
-        it.move_by(dx, dy);
+        crate::items::move_by(it, dx, dy);
     }
     sc
 }

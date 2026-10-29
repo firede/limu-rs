@@ -684,7 +684,7 @@ fn draw(db: &ErDb, config: &Map, o: &Options, turned: bool) -> Scene {
         if route.is_empty() {
             // A self-loop, which the layout gives no route: the corners its curve is drawn
             // about.
-            route = path.corners();
+            route = crate::items::corners(&path);
         }
         // Pele draws the edges in a group that ends their lines round.
         let mut own = Style {

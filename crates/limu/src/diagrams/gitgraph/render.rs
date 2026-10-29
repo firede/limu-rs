@@ -581,7 +581,7 @@ fn draw(model: &GitModel, config: &Map, o: &Options, direction: &str) -> Scene {
     let dy = pad + title_height - min_y;
 
     for it in &mut items {
-        it.move_by(dx, dy);
+        crate::items::move_by(it, dx, dy);
     }
     for t in &turns {
         place(&mut items[t.item], t, dx, dy);
@@ -625,9 +625,10 @@ fn place(it: &mut Item, t: &Turned, dx: f64, dy: f64) {
     let r = t.back.moved(dx, dy);
     let mut path = Path::new();
     path.round_rect(r, 3.0);
-    for xy in path.args.chunks_mut(2) {
-        (xy[0], xy[1]) = turn(xy[0], xy[1]);
-    }
+    path.map_points(|p| {
+        let (x, y) = turn(p.x, p.y);
+        Point::new(x, y)
+    });
     it.bounds = path.bounds();
     it.parts = vec![Part::path(path, Painting::FillOnly)];
 }

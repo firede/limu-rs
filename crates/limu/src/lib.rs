@@ -61,6 +61,7 @@ mod diagrams;
 mod draw;
 mod errors;
 mod graphs;
+mod items;
 mod js;
 pub mod layout;
 mod prepare;

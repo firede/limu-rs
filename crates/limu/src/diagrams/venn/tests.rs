@@ -306,7 +306,7 @@ fn pele_outline(d: &str) -> Path {
 fn path_line(p: &Path) -> String {
     let mut out = Vec::new();
     let mut at = 0;
-    for &op in &p.ops {
+    for &op in p.ops() {
         let mut s = match op {
             Op::MoveTo => "M",
             Op::LineTo => "L",
@@ -315,7 +315,7 @@ fn path_line(p: &Path) -> String {
             Op::Close => "Z",
         }
         .to_string();
-        for &v in &p.args[at..at + op.args()] {
+        for &v in &p.args()[at..at + op.args()] {
             s.push_str(&format!(" {}", n(v)));
         }
         at += op.args();
@@ -559,7 +559,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 // The circle, as Path::ellipse draws it: from its right end, four quarters,
                 // its radius half its box's width.
                 let p = path.expect("a circle");
-                let (cx, cy, r) = (p.args[6], p.args[1], it.bounds.w / 2.0);
+                let (cx, cy, r) = (p.args()[6], p.args()[1], it.bounds.w / 2.0);
                 let mut circle = Path::new();
                 circle.ellipse(cx, cy, r, r);
                 if *p != circle {

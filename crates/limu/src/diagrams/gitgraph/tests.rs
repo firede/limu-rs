@@ -364,14 +364,14 @@ fn shape(lines: &mut Vec<String>, it: &Item, part: &Part) {
         }
         Outline::Path(p) => p,
     };
-    let ops = &p.ops;
+    let ops = p.ops();
     if ops.len() == 6 && ops[0] == Op::MoveTo && ops[1] == Op::CubeTo && ops[5] == Op::Close {
         // The end of the first curve is straight under the middle.
-        let (cx, cy) = (p.args[6], p.args[1]);
+        let (cx, cy) = (p.args()[6], p.args()[1]);
         lines.push(format!(
             "circle {} {} {}",
             pt(cx, cy),
-            pele_num(p.args[0] - cx),
+            pele_num(p.args()[0] - cx),
             paint(it, part)
         ));
         return;
@@ -379,7 +379,7 @@ fn shape(lines: &mut Vec<String>, it: &Item, part: &Part) {
     let mut s = Vec::new();
     let mut at = 0;
     for &op in ops {
-        let a = &p.args[at..at + op.args()];
+        let a = &p.args()[at..at + op.args()];
         at += op.args();
         let mut w = "MLQCZ"[op as usize..op as usize + 1].to_string();
         for xy in a.chunks(2) {

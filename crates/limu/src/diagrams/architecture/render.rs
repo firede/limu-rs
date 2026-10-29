@@ -952,7 +952,7 @@ fn draw(model: &ArchitectureDb, config: &Map, o: &Options, tight: bool) -> Scene
     items.extend(label_items);
     items.extend(node_items);
     for it in &mut items[body..] {
-        it.move_by(ox, oy);
+        crate::items::move_by(it, ox, oy);
     }
     Scene {
         diagram: "architecture".into(),

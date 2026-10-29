@@ -228,8 +228,8 @@ fn pt(x: f64, y: f64) -> String {
 fn subpaths(p: &Path) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     let mut at = 0;
-    for &op in &p.ops {
-        let a = &p.args[at..at + op.args()];
+    for &op in p.ops() {
+        let a = &p.args()[at..at + op.args()];
         at += op.args();
         let mut s = "MLQCZ"[op as usize..op as usize + 1].to_string();
         for xy in a.chunks(2) {
@@ -253,7 +253,7 @@ fn path_of(part: &Part) -> &Path {
 
 /// The ellipse Path::ellipse draws, by its middle and radii.
 fn ellipse(p: &Path) -> String {
-    let a = &p.args;
+    let a = p.args();
     let (cx, cy) = (a[6], a[1]);
     format!("ellipse {} {}", pt(cx, cy), pt(a[0] - cx, a[7] - cy))
 }
@@ -345,7 +345,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                     let end = mouth.last();
                     s = format!(
                         "path M {} A 6,6,0,0,{sweep} {}",
-                        pt(mouth.args[0], mouth.args[1]),
+                        pt(mouth.args()[0], mouth.args()[1]),
                         pt(end.x, end.y)
                     );
                 }

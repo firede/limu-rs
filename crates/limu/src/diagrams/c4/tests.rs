@@ -483,9 +483,9 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 };
                 let mut steps = Vec::new();
                 let mut at = 0;
-                for &op in &p.ops {
+                for &op in p.ops() {
                     let mut s = "MLQCZ"[op as usize..op as usize + 1].to_string();
-                    for xy in p.args[at..at + op.args()].chunks(2) {
+                    for xy in p.args()[at..at + op.args()].chunks(2) {
                         s += &format!(" {}", pt(xy[0], xy[1]));
                     }
                     at += op.args();

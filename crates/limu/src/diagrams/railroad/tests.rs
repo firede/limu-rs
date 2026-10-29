@@ -535,7 +535,7 @@ struct Render {
 fn path_line(p: &Path) -> String {
     let mut out = Vec::new();
     let mut at = 0;
-    for &op in &p.ops {
+    for &op in p.ops() {
         let mut s = match op {
             Op::MoveTo => "M",
             Op::LineTo => "L",
@@ -544,7 +544,7 @@ fn path_line(p: &Path) -> String {
             Op::Close => "Z",
         }
         .to_string();
-        for v in &p.args[at..at + op.args()] {
+        for v in &p.args()[at..at + op.args()] {
             s.push(' ');
             s.push_str(&n(*v));
         }

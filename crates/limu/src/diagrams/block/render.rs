@@ -1359,7 +1359,7 @@ fn draw(db: &BlockDb, config: &Map, o: &Options, tight: bool) -> Result<Scene, E
         if route.is_empty() {
             // A self-loop, which the layout gives no route: the corners its curve is drawn
             // about.
-            route = path.path.corners();
+            route = crate::items::corners(&path.path);
         }
         let mut it = Item::new(ItemKind::Edge(Edge { route, ends: marks }), ROLE_EDGE);
         it.id = id.clone();

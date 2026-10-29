@@ -471,7 +471,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 }
                 if it.parts.len() > 1 {
                     let divider = top + (20.0 + kl.height + name.label.height);
-                    let a = &path_of(it, 1).args;
+                    let a = &path_of(it, 1).args();
                     place(&mut lines, "divider", a[0], a[1], left, divider);
                     place(&mut lines, "divider's end", a[2], a[3], -left, divider);
                     lines.push(format!(
@@ -542,14 +542,14 @@ fn pen(it: &Item, marker: Option<MarkerType>) -> String {
 /// A part of a marker as the oracle reads Pele's: a circle by its middle and radius, a path
 /// by its d.
 fn marker_part(p: &Path) -> String {
-    if p.ops.len() > 1 && p.ops[1] == Op::CubeTo {
+    if p.ops().len() > 1 && p.ops()[1] == Op::CubeTo {
         // An ellipse: it starts at the right of its middle, and its first curve ends below it.
-        let (cx, cy) = (p.args[6], p.args[1]);
+        let (cx, cy) = (p.args()[6], p.args()[1]);
         return format!(
             "o {},{},{}",
             pele_num(cx),
             pele_num(cy),
-            pele_num(p.args[0] - cx)
+            pele_num(p.args()[0] - cx)
         );
     }
     pele_d(p)

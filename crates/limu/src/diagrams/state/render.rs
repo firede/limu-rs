@@ -1108,7 +1108,7 @@ fn draw(db: &StateDb, config: &Map, o: &Options, turned: bool) -> Scene {
         if points.is_empty() {
             // A self-loop, which the layout gives no route: the corners its curve is drawn
             // about.
-            points = path.path.corners();
+            points = crate::items::corners(&path.path);
         }
         if let Kind::Edge(e) = &mut it.kind {
             e.route = points;

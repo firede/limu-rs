@@ -702,11 +702,11 @@ fn subpaths(p: &Path) -> Vec<String> {
         cur.clear();
     };
     let mut at = 0;
-    for &op in &p.ops {
+    for &op in p.ops() {
         if op == Op::MoveTo {
             flush(&mut cur, &mut out);
         }
-        cur.push((op, &p.args[at..at + op.args()]));
+        cur.push((op, &p.args()[at..at + op.args()]));
         at += op.args();
     }
     flush(&mut cur, &mut out);
@@ -972,11 +972,11 @@ fn business_slash_keeps_the_product_apart() {
             }
             let (w, h) = (it.bounds.w, it.bounds.h);
             // The oval starts at its right end, level with its middle.
-            let y = path_of(&it.parts[0]).args[1];
+            let y = path_of(&it.parts[0]).args()[1];
             let q = (w / 2.0 - 15.0) / (w / 2.0);
             let root = (1.0 - q * q).sqrt();
             let want = y + (h / 2.0) * root;
-            let got = path_of(&it.parts[1]).args[1];
+            let got = path_of(&it.parts[1]).args()[1];
             assert_eq!(
                 got.to_bits(),
                 want.to_bits(),

@@ -339,8 +339,8 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
     let path = |lines: &mut Vec<String>, it: &Item, context: &str, p: &Path| {
         let mut subpaths: Vec<String> = Vec::new();
         let mut at = 0;
-        for &op in &p.ops {
-            let a = &p.args[at..at + op.args()];
+        for &op in p.ops() {
+            let a = &p.args()[at..at + op.args()];
             at += op.args();
             let mut s = match op {
                 Op::MoveTo => "M",
@@ -430,11 +430,11 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                     }
                     // The circle, as Path::ellipse draws it: from its right end, four
                     // quarters. Its first quarter ends below the middle.
-                    let (cx, cy) = (p.args[6], p.args[1]);
+                    let (cx, cy) = (p.args()[6], p.args()[1]);
                     lines.push(format!(
                         "circle {} {} {}",
                         pt(cx, cy),
-                        pele_num(p.args[0] - cx),
+                        pele_num(p.args()[0] - cx),
                         paint_name(it.style.fill)
                     ));
                 }

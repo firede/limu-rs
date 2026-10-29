@@ -315,7 +315,7 @@ fn draw(
     let ox = pad + (body_width - (x1 - x0)) / 2.0 - x0;
     let oy = pad + title_height - y0;
     for it in &mut items {
-        it.move_by(ox, oy);
+        crate::items::move_by(it, ox, oy);
     }
 
     let mut sc = Scene {

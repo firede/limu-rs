@@ -121,7 +121,8 @@ fn dist(dx: f64, dy: f64) -> f64 {
 /// number of them, and starts anew with each polyline, offset by offset along it. A dash goes
 /// round the corners it meets. A dash of no length is a polyline of two points that are the
 /// same, which a stroke with round caps draws as a dot. A pattern with a length below zero,
-/// or none above it, leaves the polylines as they are, as SVG draws them solid.
+/// or none above it, leaves the polylines as they are, as SVG draws them solid. It is for a
+/// backend whose platform draws no dashed strokes of its own.
 pub fn dash(lines: &[Polyline], pattern: &[f64], offset: f64) -> Vec<Polyline> {
     let pattern: Vec<f64> = if pattern.len() % 2 == 1 {
         pattern.iter().chain(pattern).copied().collect()

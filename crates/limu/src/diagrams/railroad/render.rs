@@ -397,15 +397,13 @@ impl Pen {
     /// The whole path drawn.
     fn path(&mut self) -> Path {
         let p = std::mem::take(&mut self.p);
-        self.whole.ops.extend(p.ops);
-        self.whole.args.extend(p.args);
+        self.whole.append(&p);
         self.whole.clone()
     }
 
     fn join(&mut self) {
         let p = std::mem::take(&mut self.p);
-        self.whole.ops.extend(p.ops);
-        self.whole.args.extend(p.args);
+        self.whole.append(&p);
     }
 
     fn move_to(&mut self, x: f64, y: f64) {

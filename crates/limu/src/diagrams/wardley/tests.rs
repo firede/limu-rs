@@ -578,8 +578,8 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
             }
             Outline::Path(path) => path,
         };
-        let a = &path.args;
-        if path.ops.len() == 6 && path.ops[1] == Op::CubeTo {
+        let a = path.args();
+        if path.ops().len() == 6 && path.ops()[1] == Op::CubeTo {
             // A circle, as Path::ellipse draws it: from its right end, four quarters about its
             // middle, the first to its bottom.
             lines.push(format!(
@@ -592,7 +592,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
         }
         let mut steps = Vec::new();
         let mut at = 0;
-        for &op in &path.ops {
+        for &op in path.ops() {
             steps.push(match op {
                 Op::MoveTo => format!("M {}", pt(a[at], a[at + 1])),
                 Op::LineTo => format!("L {}", pt(a[at], a[at + 1])),

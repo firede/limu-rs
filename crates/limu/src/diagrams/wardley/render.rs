@@ -956,7 +956,7 @@ fn draw(
         items.push(it);
     }
     for mut it in plot.items {
-        it.move_by(tx, ty);
+        crate::items::move_by(&mut it, tx, ty);
         items.push(it);
     }
     Scene {

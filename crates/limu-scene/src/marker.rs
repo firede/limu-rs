@@ -62,7 +62,7 @@ pub enum MarkerType {
 
 impl MarkerType {
     /// Every type of marker.
-    pub const ALL: [MarkerType; 21] = [
+    pub const ALL: &[MarkerType] = &[
         MarkerType::ArrowPoint,
         MarkerType::ArrowCircle,
         MarkerType::ArrowCross,
@@ -115,7 +115,7 @@ impl MarkerType {
 
     /// The type of a name, if it names one.
     pub fn from_name(name: &str) -> Option<MarkerType> {
-        MarkerType::ALL.into_iter().find(|t| t.name() == name)
+        MarkerType::ALL.iter().copied().find(|t| t.name() == name)
     }
 
     /// How far an edge stops short of its end to leave room for a marker of the type.
@@ -466,7 +466,7 @@ mod tests {
         );
         assert_eq!(MarkerType::ArrowPoint.trim(), 7.0);
         assert_eq!(MarkerType::ErOnlyOne.trim(), 0.0);
-        for t in MarkerType::ALL {
+        for &t in MarkerType::ALL {
             assert_eq!(MarkerType::from_name(t.name()), Some(t));
             assert!(!m(t).outline().is_empty(), "{t:?} has no outline");
         }

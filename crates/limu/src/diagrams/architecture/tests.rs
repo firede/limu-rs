@@ -483,17 +483,17 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
         let Outline::Path(got) = &next.parts[0].outline else {
             panic!("glyph {name} is no path");
         };
-        assert_eq!(got.ops, want.ops, "glyph {name}: steps differ");
+        assert_eq!(got.ops(), want.ops(), "glyph {name}: steps differ");
         assert!(
-            got.args.len() == want.args.len()
+            got.args().len() == want.args().len()
                 && got
-                    .args
+                    .args()
                     .iter()
-                    .zip(&want.args)
+                    .zip(want.args())
                     .all(|(a, b)| (a - b).abs() <= 1e-9),
             "glyph {name}: {:?}, not {:?}",
-            got.args,
-            want.args
+            got.args(),
+            want.args()
         );
         let fill = if next.style.fill == Some(Paint::NONE) {
             "none"
@@ -529,7 +529,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 };
                 let mut steps = Vec::new();
                 let mut at = 0;
-                for &op in &path.ops {
+                for &op in path.ops() {
                     let mut step = match op {
                         Op::MoveTo => "M",
                         Op::LineTo => "L",
@@ -538,7 +538,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                         Op::Close => "Z",
                     }
                     .to_string();
-                    for xy in path.args[at..at + op.args()].chunks(2) {
+                    for xy in path.args()[at..at + op.args()].chunks(2) {
                         step.push_str(&format!(" {}", pt(xy[0], xy[1])));
                     }
                     at += op.args();
@@ -577,7 +577,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 let Outline::Path(path) = &it.parts[0].outline else {
                     panic!("a junction of a box");
                 };
-                let a = &path.args;
+                let a = path.args();
                 let (cx, cy) = (a[6], a[1]);
                 lines.push(format!(
                     "circle {} {} {}",

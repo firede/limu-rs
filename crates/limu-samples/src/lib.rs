@@ -555,7 +555,7 @@ fn markers() -> Scene {
         it
     };
     let mut items = Vec::new();
-    for (i, kind) in MarkerType::ALL.into_iter().enumerate() {
+    for (i, kind) in MarkerType::ALL.iter().copied().enumerate() {
         let x = 24.0 + 110.0 * (i % 3) as f64;
         let y = 24.0 + 30.0 * (i / 3) as f64;
         items.push(edge(

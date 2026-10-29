@@ -24,7 +24,7 @@ pub struct Pen<'a> {
     pub ink: Ink,
     /// The width of the line, which is above zero.
     pub width: f64,
-    /// The lengths of the dashes and gaps in turn. None of them is a solid line.
+    /// The lengths of the dashes and gaps in turn. An empty slice is a solid line.
     pub dash: &'a [f64],
     /// The ends of the line and of its dashes.
     pub cap: Cap,
@@ -202,14 +202,6 @@ pub struct Painter<'a, C: ?Sized> {
 }
 
 impl<'a, C: Canvas + ?Sized> Painter<'a, C> {
-    /// A painter on a canvas, of an item drawn opaque.
-    pub fn new(canvas: &'a mut C) -> Painter<'a, C> {
-        Painter {
-            canvas,
-            opacity: 1.0,
-        }
-    }
-
     /// The canvas, to draw on in one's own way.
     pub fn canvas(&mut self) -> &mut C {
         self.canvas

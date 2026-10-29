@@ -173,7 +173,7 @@ pub(crate) fn with_title(
     let full = max(sc.width, (label.width + 2.0 * pad).ceil());
     let dx = (full - sc.width) / 2.0;
     for it in &mut sc.items {
-        it.move_by(dx, shift);
+        crate::items::move_by(it, dx, shift);
     }
     sc.width = full;
     sc.height = (sc.height + shift).ceil();

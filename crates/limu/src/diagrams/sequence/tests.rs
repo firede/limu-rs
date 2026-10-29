@@ -526,8 +526,8 @@ fn subpaths(p: &Path) -> Vec<String> {
     let mut cur: Vec<String> = Vec::new();
     let mut curve = false;
     let mut at = 0;
-    for &op in &p.ops {
-        let a = &p.args[at..at + op.args()];
+    for &op in p.ops() {
+        let a = &p.args()[at..at + op.args()];
         at += op.args();
         if op == Op::MoveTo && !cur.is_empty() {
             out.push(cur.join(" "));
@@ -570,14 +570,14 @@ fn ellipse(p: &Path) -> Option<String> {
         Op::CubeTo,
         Op::Close,
     ];
-    if p.ops != ops {
+    if p.ops() != ops {
         return None;
     }
-    let (cx, cy) = (p.args[6], p.args[1]);
+    let (cx, cy) = (p.args()[6], p.args()[1]);
     Some(format!(
         "ellipse {} {}",
         pt(cx, cy),
-        pele_num(p.args[0] - cx)
+        pele_num(p.args()[0] - cx)
     ))
 }
 

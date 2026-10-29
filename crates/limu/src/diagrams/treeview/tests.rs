@@ -310,7 +310,7 @@ fn clean(s: &str) -> String {
 fn path_line(p: &Path) -> String {
     let mut out = Vec::new();
     let mut at = 0;
-    for &op in &p.ops {
+    for &op in p.ops() {
         let mut s = match op {
             Op::MoveTo => "M",
             Op::LineTo => "L",
@@ -319,7 +319,7 @@ fn path_line(p: &Path) -> String {
             Op::Close => "Z",
         }
         .to_string();
-        for xy in p.args[at..at + op.args()].chunks(2) {
+        for xy in p.args()[at..at + op.args()].chunks(2) {
             s.push_str(&format!(" {},{}", n(xy[0]), n(xy[1])));
         }
         at += op.args();
