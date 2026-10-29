@@ -5,9 +5,9 @@
      Probe → Sense → Respond               ╎             Sense → Analyse → Respond
        Emergent Practices                  ╎                  Good Practices
    [ Investigate root cause  ]             ╎            [ Analyze performance data ]
-    ╭───────────────────────╮             ┌┘              ╭──────────────────────╮
-    │ Run chaos experiment  │             ╎               │ Expert review needed │
-    ╰───────────────────────╯      ┌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐      ╰──────────────────────╯
+    ╭──────────────────────╮              ┌┘              ╭──────────────────────╮
+    │ Run chaos experiment │              ╎               │ Expert review needed │
+    ╰──────────────────────╯       ┌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐      ╰──────────────────────╯
                               ┌╌╌╌╌┘               └╌╌╌┐
                            ┌╌╌┘                        └╌╌╌┐
                           ┌┘           Confusion           └┐
@@ -22,9 +22,9 @@
              Chaotic                      ┌┘           Sense → Categorise → Respond
       Act → Sense → Respond               │                   Best Practices
          Novel Practices                  │                 ╭──────────────────╮
-  ╭───────────────────────────╮           │                 │ Restart service  │
-  │ Page on-call immediately  │           └┐                ├──────────────────┤
-  ╰───────────────────────────╯            └┐               │ Apply known fix  │
+  ╭──────────────────────────╮            │                 │ Restart service  │
+  │ Page on-call immediately │            └┐                ├──────────────────┤
+  ╰──────────────────────────╯             └┐               │ Apply known fix  │
                                             └┐              ╰──────────────────╯
                                             ┌┘
                                           ┌─┘

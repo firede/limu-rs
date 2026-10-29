@@ -330,6 +330,124 @@ impl Grid {
         }
     }
 
+    /// Draws a box's sides in about what is in it, its top and bottom next to it and its left
+    /// and right a cell from it if they may be drawn in across, given the cells of its
+    /// corners, top left and bottom right. A box whose corners are not its own, as where it
+    /// shares a side with another box, is left as it is.
+    /// Pele gives the room about a node's text in pixels, which is rows and columns in
+    /// cells, and the rows and columns of the scene that a box's room is in may have other
+    /// things in them, so that they can't be cut whole. What is drawn to a side from outside
+    /// is drawn on to where the side is now. A box with nothing in it keeps its size.
+    pub(crate) fn tighten(&mut self, (c0, r0): (i64, i64), (c1, r1): (i64, i64), across: bool) {
+        if c0 < 0 || r0 < 0 || c1 >= self.cols as i64 || r1 >= self.rows as i64 {
+            return;
+        }
+        if c1 - c0 < 2 || r1 - r0 < 2 {
+            return;
+        }
+        let at = |g: &Grid, c: i64, r: i64| g.cells[r as usize * g.cols + c as usize];
+        let plain = |x: Cell, way: u8| x.glyph.is_none() && !x.tail && x.lines == way;
+        let corners = [
+            ((c0, r0), RIGHT | DOWN),
+            ((c1, r0), LEFT | DOWN),
+            ((c0, r1), RIGHT | UP),
+            ((c1, r1), LEFT | UP),
+        ];
+        if !corners
+            .iter()
+            .all(|&((c, r), way)| plain(at(self, c, r), way))
+        {
+            return;
+        }
+        // The columns of what is in the box and of what is drawn to its top and bottom,
+        // which leave the box by its top or bottom and not by its sides.
+        let held = (r0..=r1)
+            .flat_map(|r| (c0 + 1..c1).map(move |c| (c, r)))
+            .filter(|&(c, r)| {
+                let x = at(self, c, r);
+                x != Cell::default() && !plain(x, LEFT | RIGHT)
+            })
+            .map(|(c, _)| c);
+        let (Some(left), Some(right)) = (held.clone().min(), held.max()) else {
+            return;
+        };
+        let (n0, n1) = if across {
+            ((left - 2).max(c0), (right + 2).min(c1))
+        } else {
+            (c0, c1)
+        };
+        for r in r0..=r1 {
+            for (side, to, out, way) in [(c0, n0, -1, LEFT), (c1, n1, 1, RIGHT)] {
+                if to == side {
+                    continue;
+                }
+                let x = at(self, side, r);
+                let fill = self.on(x, (side + out, r), way, LEFT | RIGHT);
+                let (a, b) = (side.min(to), side.max(to));
+                for c in a..=b {
+                    self.cells[r as usize * self.cols + c as usize] = fill;
+                }
+                self.cells[r as usize * self.cols + to as usize] = x;
+            }
+        }
+        let (c0, c1) = (n0, n1);
+        // The rows of what is in the box and of what is drawn to its sides.
+        let held = (r0 + 1..r1)
+            .flat_map(|r| (c0..=c1).map(move |c| (c, r)))
+            .filter(|&(c, r)| {
+                let x = at(self, c, r);
+                x != Cell::default() && !plain(x, UP | DOWN)
+            })
+            .map(|(_, r)| r);
+        let (Some(top), Some(bottom)) = (held.clone().min(), held.max()) else {
+            return;
+        };
+        let (n0, n1) = (top - 1, bottom + 1);
+        for c in c0..=c1 {
+            for (side, to, out, way) in [(r0, n0, -1, UP), (r1, n1, 1, DOWN)] {
+                if to == side {
+                    continue;
+                }
+                let x = at(self, c, side);
+                let fill = self.on(x, (c, side + out), way, UP | DOWN);
+                let (a, b) = (side.min(to), side.max(to));
+                for r in a..=b {
+                    self.cells[r as usize * self.cols + c as usize] = fill;
+                }
+                self.cells[to as usize * self.cols + c as usize] = x;
+            }
+        }
+    }
+
+    /// What is left where a box's side was, beside a cell outside it: a line on to the side
+    /// where one is drawn to it from there, or nothing. A line that stops in the cell outside,
+    /// short of the side, is drawn on from there.
+    fn on(&mut self, side: Cell, outside: (i64, i64), way: u8, line: u8) -> Cell {
+        let back = match way {
+            UP => DOWN,
+            DOWN => UP,
+            LEFT => RIGHT,
+            _ => LEFT,
+        };
+        let Some(x) = self.cell(outside) else {
+            return Cell::default();
+        };
+        if x.glyph.is_none() && x.lines & line != 0 {
+            x.lines |= back;
+        }
+        let x = *x;
+        if x.lines & back != 0 || side.lines & way != 0 {
+            Cell {
+                lines: line,
+                dashed: x.dashed,
+                heavy: x.heavy,
+                ..Cell::default()
+            }
+        } else {
+            Cell::default()
+        }
+    }
+
     /// Keeps a number of cells from one across as a line of text set in the middle of a box,
     /// which [`Grid::center`] sets in the middle of the box's sides again.
     pub(crate) fn middle(&mut self, at: (i64, i64), n: i64) {
@@ -390,8 +508,9 @@ impl Grid {
     /// it. It is how text renderers of diagrams space them, a cell between things. A row
     /// that nothing but the sides of shapes pass through is room inside them, padding Pele
     /// gives in pixels that a border already gives in cells, and goes whole. Columns keep
-    /// theirs, as text set against a side is hard to read.
-    pub(crate) fn squeeze(&mut self) {
+    /// theirs, as text set against a side is hard to read. The cells given are moved to
+    /// where they are after, each to the next kept where it is cut.
+    pub(crate) fn squeeze(&mut self, moved: &mut [(i64, i64)]) {
         let cell = |g: &Grid, c: usize, r: usize| g.cells[r * g.cols + c];
         let blank = |x: Cell| x == Cell::default();
         let through =
@@ -414,6 +533,10 @@ impl Grid {
             (0..self.cols).map(|c| (0..self.rows).all(|r| through(cell(self, c, r), LEFT | RIGHT))),
             (0..self.cols).map(|_| false),
         );
+        for (c, r) in moved.iter_mut() {
+            *c = cols.partition_point(|&k| (k as i64) < *c) as i64;
+            *r = rows.partition_point(|&k| (k as i64) < *r) as i64;
+        }
         let mut cells = Vec::with_capacity(rows.len() * cols.len());
         for &r in &rows {
             for &c in &cols {

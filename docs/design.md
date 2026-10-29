@@ -290,8 +290,14 @@ columns that nothing but straight lines across passes through, is cut to one. Li
 pass through only grow shorter, so nothing comes apart. A row that nothing but the sides of
 shapes pass through is cut away whole. It is padding inside a box, which Pele gives in
 pixels and which the box's border already gives in cells. A row with a connector in it
-keeps one, so connectors between things never vanish. Columns inside boxes stay, because
-text set against a side is hard to read. A host that wants every cell where
+keeps one, so connectors between things never vanish. Then each node's box is drawn in
+about its text, its top and bottom next to it and its sides a cell from it, since the rows
+and columns of its room often have other things in them and can't be cut whole. Lines
+drawn to a side are drawn on to where it is now, and the room between things is cut once
+more. A box whose text is set against a side keeps its width, as a Kanban card does, since
+its width is a column's. So does a node with more than text in it, as a quadrant with its
+points, and a box that shares a side with another. Block diagrams and treemaps keep their
+boxes as they are, because their sizes are columns and values. A host that wants every cell where
 the scene puts it turns this off.
 
 ## Hit testing

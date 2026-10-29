@@ -147,6 +147,10 @@ const UNSUPPORTED: [&str; 8] = [
     "gantt", "gitGraph", "packet", "pie", "radar", "sankey", "treeView", "xychart",
 ];
 
+/// The diagrams whose boxes are as large as the room they are given, as a block's columns or
+/// a treemap's values, and not as their text, which keep their size in cells.
+const SIZED: [&str; 2] = ["block", "treemap"];
+
 /// A diagram that can't be drawn in cells without misleading.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Unsupported {
@@ -184,6 +188,7 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
         labels: Vec::new(),
         dots: HashSet::new(),
         nodes: Vec::new(),
+        boxes: Vec::new(),
     };
     c.nodes = scene
         .items
@@ -197,6 +202,40 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
             )
         })
         .collect();
+    // A line across or down, as a card's priority, which marks a node rather than being in
+    // it.
+    let line = |it: &Item| {
+        (it.bounds.w == 0.0 || it.bounds.h == 0.0)
+            && it.parts.iter().all(|p| match &p.outline {
+                Outline::Path(path) => path
+                    .steps()
+                    .all(|s| matches!(s, Step::MoveTo(_) | Step::LineTo(_))),
+                Outline::Box { .. } => false,
+            })
+    };
+    // The nodes with more than text in them, as a quadrant chart's quadrants with their
+    // points, whose room is not only about text.
+    let crowded: Vec<Rect> = scene
+        .items
+        .iter()
+        .filter(|it| matches!(it.kind, Kind::Node) && !it.bounds.is_empty())
+        .map(|it| it.bounds)
+        .filter(|b| {
+            scene.items.iter().any(|x| {
+                !matches!(x.kind, Kind::Text | Kind::Edge(_) | Kind::Group)
+                    && x.bounds != *b
+                    && !x.parts.is_empty()
+                    && !line(x)
+                    && b.x <= x.bounds.x
+                    && b.y <= x.bounds.y
+                    && x.bounds.x + x.bounds.w <= b.x + b.w
+                    && x.bounds.y + x.bounds.h <= b.y + b.h
+            })
+        })
+        .collect();
+    // A box's room across is about its text where the text is set in its middle. Text set
+    // against a side, as a card's on a Kanban board, is in a box as wide as others.
+    let across = |it: &Item| it.label.as_ref().is_some_and(|l| l.align == Align::Middle);
     limu_scene::draw_with(scene, &look, &mut c, |p, it, s| {
         let c = p.canvas();
         // A shape too small for its label, as a sequence number's circle.
@@ -217,7 +256,13 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
             let b = union(it.bounds, room);
             // The label is set across in the middle of the box's cells, and down where a
             // box too low for its sides has its row.
-            let ((c0, _), (c1, _)) = c.node(b, sides);
+            let ((c0, r0), (c1, r1)) = c.node(b, sides);
+            if !crowded.contains(&it.bounds) {
+                c.boxes.push(Frame {
+                    corners: [(c0, r0), (c1, r1)],
+                    across: across(it),
+                });
+            }
             boxed = Some(Point::new((c0 + c1) as f64 * cw / 2.0, b.center().y));
         } else if c.picture(it) {
             // A picture in a node, as a service's icon or a task's face, is more than cells
@@ -245,6 +290,28 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
             // row off it.
         } else {
             p.parts(it, s);
+            // A node drawn as boxes, as a class's, is drawn in about what is in them.
+            let c = p.canvas();
+            if matches!(it.kind, Kind::Node)
+                && it.label.is_some()
+                && s.stroke.visible()
+                && !crowded.contains(&it.bounds)
+            {
+                for part in &it.parts {
+                    if let Outline::Box { rect, .. } = part.outline
+                        && !c.tiny(rect)
+                    {
+                        let corners = [
+                            c.cell(Point::new(rect.x, rect.y)),
+                            c.cell(Point::new(rect.x + rect.w, rect.y + rect.h)),
+                        ];
+                        c.boxes.push(Frame {
+                            corners,
+                            across: across(it),
+                        });
+                    }
+                }
+            }
         }
         let c = p.canvas();
         if let Kind::Edge(e) = &it.kind {
@@ -359,7 +426,21 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
         c.label(&text);
     }
     if o.compact {
-        c.grid.squeeze();
+        // Boxes are drawn in about their text once the room between things is cut, so that
+        // what was room inside them, and goes, is not left as room between them.
+        let mut boxes = std::mem::take(&mut c.boxes);
+        if SIZED.contains(&scene.diagram.as_str()) {
+            boxes.clear();
+        }
+        let mut corners: Vec<(i64, i64)> = boxes
+            .iter()
+            .flat_map(|f| f.corners.map(|at| c.grid.at(at)))
+            .collect();
+        c.grid.squeeze(&mut corners);
+        for (ab, f) in corners.chunks(2).zip(&boxes) {
+            c.grid.tighten(ab[0], ab[1], f.across);
+        }
+        c.grid.squeeze(&mut []);
     }
     c.grid.center();
     Ok(c.grid.write(o.charset))
@@ -383,6 +464,8 @@ struct TextCanvas<'a> {
     // The cells of the corners of the nodes' boxes, top left and bottom right, which edges
     // go around.
     nodes: Vec<((i64, i64), (i64, i64))>,
+    // The boxes nodes are drawn as.
+    boxes: Vec<Frame>,
 }
 
 impl TextCanvas<'_> {
@@ -1019,6 +1102,15 @@ struct Text {
     own: bool,
     // Whether the text is set in the middle of a box, and kept there.
     middle: bool,
+}
+
+/// The box a node is drawn as, in cells.
+struct Frame {
+    // The cells of its corners, top left and bottom right.
+    corners: [(i64, i64); 2],
+    // Whether its sides may be drawn in across, as they may where its text is set in its
+    // middle.
+    across: bool,
 }
 
 /// A marker at an end of an edge, in cells.

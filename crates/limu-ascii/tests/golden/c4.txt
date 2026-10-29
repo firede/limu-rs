@@ -1,94 +1,92 @@
              Container diagram for Internet Banking System
 
-                ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╮
-                ╎         «external system»         ╎
-                ╎           E-Mail System           ╎
-                ╎  The internal Microsoft Exchange  ╎
-           ┌────▶              system               ╎
-           │    ╰╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┬╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╯
+                 ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╮
+                 ╎        «external system»        ╎
+                 ╎          E-Mail System          ╎
+                 ╎ The internal Microsoft Exchange ╎
+           ┌─────▶             system              ╎
+           │     ╰╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┬╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╯
            │                      │
            │              Sends e-mails to
            │                      │
-           │    ╭─────────────────▼─────────────────╮
-           │    │                                   │
-           │    │             «person»              │
-           │    │             Customer              │
-           │    │                                   │
-           │ ┌──┤   A customer of the bank, with    ├─────┐
-           │┌┼──┤      personal bank accounts       │     │
-           │││  ╰───────────────────────────────────╯     │
+           │      ╭───────────────▼──────────────╮
+           │      │           «person»           │
+           │      │           Customer           │
+           │      │                              │
+           │ ┌────┤ A customer of the bank, with ├────────┐
+           │┌┼────┤    personal bank accounts    │        │
+           │││    ╰──────────────────────────────╯        │
            │││                                            │
-           │││  ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╮     │
-           │││  ╎         «external system»         ╎     │
-           │││  ╎                                   ╎     │
-         Uses│  ╎     Mainframe Banking System      ╎     │
-        [HTTPS] ╎  Stores all of the core banking   ◀─────┼─┐
-           │││  ╎   information about customers,    ╎     │ │
-           │││  ╎   accounts, transactions, etc.    ╎     │ │
-           │││  ╰╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╯     │ │
+           │││   ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╮       │
+           │││   ╎        «external system»       ╎       │
+           │││   ╎                                ╎       │
+         Uses│   ╎    Mainframe Banking System    ╎       │
+        [HTTPS]  ╎ Stores all of the core banking ◀───────┼─┐
+           │││   ╎  information about customers,  ╎       │ │
+           │││   ╎  accounts, transactions, etc.  ╎       │ │
+           │││   ╰╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╯       │ │
            │││                                            │ │
            │││  ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╮ │ │
          Uses│  ╎  Internet Banking                     ╎ │ │
            │││  ╎  [CONTAINER]                          ╎ │ │
            │││  ╎                                       ╎ │ │
-           │││  ╎ ╭───────────────────────────────────╮ ╎ │ │
-           │││  ╎ │            «container»            │ ╎ │ │
-           ││└──┼─▶          Single-Page App          │ ╎ │ │
-           ││   ╎ │       [JavaScript, Angular]       │ ╎ Uses
-           ││   ╎ │     Provides all the Internet     │ ╎[HTTPS]
-           ││  ┌┼─▶     banking functionality to      ├─┼─┼┐│
-           ││  │╎ │  customers via their web browser  │ ╎ │││
-           ││  │╎ ╰───────────────────────────────────╯ ╎ │││
+           │││  ╎  ╭─────────────────────────────────╮  ╎ │ │
+           │││  ╎  │           «container»           │  ╎ │ │
+           ││└──┼──▶         Single-Page App         │  ╎ │ │
+           ││   ╎  │      [JavaScript, Angular]      │  ╎ Uses
+           ││   ╎  │    Provides all the Internet    │  ╎[HTTPS]
+           ││  ┌┼──▶    banking functionality to     ├──┼─┼┐│
+           ││  │╎  │ customers via their web browser │  ╎ │││
+           ││  │╎  ╰─────────────────────────────────╯  ╎ │││
            ││  │╎                                       ╎ │││
 Sends e-mails  │╎                                       ╎ │││
     using  ││  │╎                                       ╎ │││
 [sync, SMTP]│  │╎                                       ╎ │││
            ││  │╎                                       ╎ │││
-           ││  │╎ ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╮ ╎ │││
-           ││  │╎ ╎       «external container»        ╎ ╎ │││
-           │└──┼┼─▶            Mobile App             ╎ ╎ │││
-        Delivers╎ ╎           [C#, Xamarin]           ╎ ╎ │││
-           │   │╎ ╎   Provides a limited subset of    ╎ ╎ │││
-           │   │╎ ╎       the Internet banking        ╎ ╎ │││
-           │  ┌┼┼─┤  functionality to customers via   ╎ ╎ │││
-           │  ││╎ ╎        their mobile device        ╎ ╎ │││
-           │  ││╎ ╰╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╯ ╎ │││
+           ││  │╎  ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╮   ╎ │││
+           ││  │╎  ╎      «external container»      ╎   ╎ │││
+           │└──┼┼──▶           Mobile App           ╎   ╎ │││
+        Delivers╎  ╎          [C#, Xamarin]         ╎   ╎ │││
+           │   │╎  ╎  Provides a limited subset of  ╎   ╎ │││
+           │   │╎  ╎      the Internet banking      ╎   ╎ │││
+           │  ┌┼┼──┤ functionality to customers via ╎   ╎ │││
+           │  ││╎  ╎       their mobile device      ╎   ╎ │││
+           │  ││╎  ╰╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╯   ╎ │││
            │  ││╎                                       ╎ │││
            │  ││╎                                       ╎ │││  Uses
            │  ││╎                                       ╎ │[sync/async,
            │  ││╎                                       ╎ ││XML/HTTPS]
            │  ││╎                                       ╎ │││
-           │  ││╎ ╭───────────────────────────────────╮ ╎ │││
-           │  │└┼─┤            «container»            ◀─┼─┘││
-           │  │ ╎ │        [Java, Spring MVC]         │ ╎  ││
-           │  │ ╎ │          Web Application          │ ╎  ││Uses
-           │  │ ╎ │  Delivers the static content and  │ ╎  │[async,
-           │  │ ╎ │     the Internet banking SPA      │ ╎ JSON/HTTPS]
-           │  │ ╎ ╰───────────────────────────────────╯ ╎  ││
+           │  ││╎  ╭─────────────────────────────────╮  ╎ │││
+           │  │└┼──┤           «container»           ◀──┼─┘││
+           │  │ ╎  │       [Java, Spring MVC]        │  ╎  ││
+           │  │ ╎  │         Web Application         │  ╎  ││Uses
+           │  │ ╎  │ Delivers the static content and │  ╎  │[async,
+           │  │ ╎  │    the Internet banking SPA     │  ╎ JSON/HTTPS]
+           │  │ ╎  ╰─────────────────────────────────╯  ╎  ││
            │  │ ╎                                       ╎  ││
         Uses  │ ╎                                       ╎  ││
        [async,│ ╎                                       ╎  ││
      JSON/HTTPS]╎                                       ╎  ││
-           │  │ ╎ ╭───────────────────────────────────╮ ╎  ││
-           │  │ ╎ │                                   │ ╎  ││
-           │  │ ╎ │          «container db»           │ ╎  ││
-           │  │ ╎ │             Database              │ ╎  ││
-           │  │ ╎ │          [SQL Database]           │ ╎  ││
-           │  │ ╎ │     Stores user registration      │ ╎  ││
-           │  │ ╎ │     information, hashed auth      │ ╎  ││
-           │  │ ╎ │  credentials, access logs, etc.   │ ╎  ││
-           │  │ ╎ ╰─────────────────▲─────────────────╯ ╎  ││
+           │  │ ╎                                       ╎  ││
+           │  │ ╎  ╭────────────────────────────────╮   ╎  ││
+           │  │ ╎  │         «container db»         │   ╎  ││
+           │  │ ╎  │            Database            │   ╎  ││
+           │  │ ╎  │         [SQL Database]         │   ╎  ││
+           │  │ ╎  │    Stores user registration    │   ╎  ││
+           │  │ ╎  │    information, hashed auth    │   ╎  ││
+           │  │ ╎  │ credentials, access logs, etc. │   ╎  ││
+           │  │ ╎  ╰────────────────▲───────────────╯   ╎  ││
            │  │ ╎                   │                   ╎  ││
            │  │ ╎       Reads from and writes to        ╎  ││
            │  │ ╎             [sync, JDBC]              ╎  ││
            │  │ ╎                   │                   ╎  ││
-           │  │ ╎ ╭─────────────────┴─────────────────╮ ╎  ││
-           │  │ ╎ │                                   │ ╎  ││
-           │  └─┼─▶                                   ◀─┼──┘│
-           └────┼─┤      «external container db»      ├─┼───┘
-                ╎ │          API Application          │ ╎
-                ╎ │     [Java, Docker Container]      │ ╎
-                ╎ │     Provides Internet banking     │ ╎
-                ╎ │       functionality via API       │ ╎
-                ╎ ╰───────────────────────────────────╯ ╎
+           │  │ ╎     ╭─────────────┴─────────────╮     ╎  ││
+           │  └─┼─────▶                           ◀─────┼──┘│
+           └────┼─────┤  «external container db»  ├─────┼───┘
+                ╎     │      API Application      │     ╎
+                ╎     │ [Java, Docker Container]  │     ╎
+                ╎     │ Provides Internet banking │     ╎
+                ╎     │   functionality via API   │     ╎
+                ╎     ╰───────────────────────────╯     ╎
                 ╰╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╯
