@@ -14,6 +14,7 @@ rustybuzz = "0.20"
 tiny-skia = "0.12"
 
 [dev-dependencies]
+limu = { path = "../limu" }
 limu-fixtures = { path = "../limu-fixtures" }
 limu-samples = { path = "../limu-samples" }
 

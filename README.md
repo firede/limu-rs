@@ -12,8 +12,7 @@ compare its output with Pele's, number for number. It is the Rust sibling of
 [limu](https://github.com/firede/limu), which does the same in Go.
 
 > [!WARNING]
-> limu-rs is being built and can't lay out a diagram yet. Its API will change in any 0.x
-> release.
+> limu-rs is young, and its API will change in any 0.x release.
 
 ## Crates
 
@@ -28,6 +27,20 @@ compare its output with Pele's, number for number. It is the Rust sibling of
 
 The core crates, `limu` and `limu-scene`, use the standard library alone, with serde behind
 an optional feature.
+
+## Examples
+
+Each reads a Mermaid diagram from standard input.
+
+```sh
+echo 'flowchart LR; a --> b' | cargo run -p limu --example svg > diagram.svg
+echo 'flowchart LR; a --> b' | cargo run -p limu-ascii --example terminal
+echo 'flowchart LR; a --> b' | cargo run -p limu-tiny-skia --example png -- font.ttf diagram.png
+```
+
+`svg` writes SVG, measuring text as Arial. `terminal` lays the diagram out for a terminal's
+cells and draws it in box-drawing characters, or in ASCII with `--ascii`. `png` lays the
+diagram out with a font you give and draws it in that font.
 
 ## Development
 

@@ -213,6 +213,7 @@ dependencies = [
 name = "limu-tiny-skia"
 version = "0.1.0"
 dependencies = [
+ "limu",
  "limu-fixtures",
  "limu-samples",
  "limu-scene",

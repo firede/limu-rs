@@ -12,7 +12,7 @@ Pele 的逐个数值比对。它是 [limu](https://github.com/firede/limu) 的 R
 做同样的事。
 
 > [!WARNING]
-> limu-rs 正在构建中，还不能排布图表。0.x 版本之间 API 随时可能变化。
+> limu-rs 还处在早期，0.x 版本之间 API 随时可能变化。
 
 ## crate
 
@@ -26,6 +26,19 @@ Pele 的逐个数值比对。它是 [limu](https://github.com/firede/limu) 的 R
 | `limu-ascii` | 用制表符把场景画成文字，给终端用。 |
 
 核心的 `limu` 和 `limu-scene` 只用标准库，serde 是可选的 feature。
+
+## 示例
+
+每个示例都从标准输入读取一张 Mermaid 图。
+
+```sh
+echo 'flowchart LR; a --> b' | cargo run -p limu --example svg > diagram.svg
+echo 'flowchart LR; a --> b' | cargo run -p limu-ascii --example terminal
+echo 'flowchart LR; a --> b' | cargo run -p limu-tiny-skia --example png -- font.ttf diagram.png
+```
+
+`svg` 输出 SVG，按 Arial 测量文字。`terminal` 按终端的字符格排布，用制表符绘制，加 `--ascii`
+则只用 ASCII 字符。`png` 用你给的字体排布并绘制。
 
 ## 开发
 
