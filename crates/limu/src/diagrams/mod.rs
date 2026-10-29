@@ -5,6 +5,8 @@
 pub(crate) mod agentflow;
 #[cfg(feature = "architecture")]
 pub(crate) mod architecture;
+#[cfg(feature = "block")]
+pub(crate) mod block;
 #[cfg(feature = "c4")]
 pub(crate) mod c4;
 #[cfg(feature = "class")]
@@ -41,6 +43,8 @@ pub(crate) mod pie;
 pub(crate) mod quadrant;
 #[cfg(feature = "radar")]
 pub(crate) mod radar;
+#[cfg(feature = "railroad")]
+pub(crate) mod railroad;
 #[cfg(feature = "requirement")]
 pub(crate) mod requirement;
 #[cfg(feature = "sankey")]

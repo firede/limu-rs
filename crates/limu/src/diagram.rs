@@ -60,6 +60,10 @@ enum Model {
     GitGraph(diagrams::gitgraph::GitModel),
     #[cfg(feature = "c4")]
     C4(diagrams::c4::C4Db),
+    #[cfg(feature = "block")]
+    Block(diagrams::block::BlockDb),
+    #[cfg(feature = "railroad")]
+    Railroad(diagrams::railroad::RailroadDb),
     #[cfg(feature = "agentflow")]
     AgentFlow(diagrams::agentflow::AgentflowDb),
     #[cfg(feature = "treeview")]
@@ -126,6 +130,10 @@ const TYPES: &[DiagramType] = &[
     DiagramType::GitGraph,
     #[cfg(feature = "c4")]
     DiagramType::C4,
+    #[cfg(feature = "block")]
+    DiagramType::Block,
+    #[cfg(feature = "railroad")]
+    DiagramType::Railroad,
     #[cfg(feature = "agentflow")]
     DiagramType::AgentFlow,
     #[cfg(feature = "treeview")]
@@ -298,6 +306,14 @@ impl Model {
             DiagramType::C4 => p
                 .parse_with(false, |s| diagrams::c4::parse(s, p.title.as_deref()))
                 .map(Model::C4),
+            #[cfg(feature = "block")]
+            DiagramType::Block => p
+                .parse_with(false, |s| diagrams::block::parse(s, p.title.as_deref()))
+                .map(Model::Block),
+            #[cfg(feature = "railroad")]
+            DiagramType::Railroad => p
+                .parse_with(false, |s| diagrams::railroad::parse(s, p.title.as_deref()))
+                .map(Model::Railroad),
             #[cfg(feature = "agentflow")]
             DiagramType::AgentFlow => p
                 .parse_with(true, |s| {
@@ -346,6 +362,9 @@ impl Model {
                     diagrams::swimlane::parse(s, &p.config, p.title.as_deref(), p.max_edges)
                 })
                 .map(Model::Swimlane),
+            // Built with every type of diagram, limu reads them all, and no type is left
+            // for this.
+            #[allow(unreachable_patterns)]
             _ => {
                 let message = format!("Diagram type \"{}\" is not supported yet.", p.found.diagram);
                 Err(Error::new(message, ErrorCode::UnsupportedDiagram).of(p.found))
@@ -404,6 +423,10 @@ impl Model {
             Model::GitGraph(ref m) => diagrams::gitgraph::layout(m, config, o),
             #[cfg(feature = "c4")]
             Model::C4(ref m) => diagrams::c4::layout(m, config, o)?,
+            #[cfg(feature = "block")]
+            Model::Block(ref m) => diagrams::block::layout(m, config, o)?,
+            #[cfg(feature = "railroad")]
+            Model::Railroad(ref m) => diagrams::railroad::layout(m, config, o),
             #[cfg(feature = "agentflow")]
             Model::AgentFlow(ref m) => diagrams::agentflow::layout(m, config, o),
             #[cfg(feature = "treeview")]

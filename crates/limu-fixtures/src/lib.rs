@@ -67,7 +67,14 @@ fn try_load<T: DeserializeOwned>(name: &str) -> Result<T, String> {
     GzDecoder::new(file)
         .read_to_string(&mut json)
         .map_err(|e| format!("{}: {e}", path.display()))?;
-    serde_json::from_str(&lone_surrogates_replaced(&json))
+    // The syntax trees of some cases nest some thousands deep, as JSON.stringify writes
+    // them, deeper than serde_json reads by default. A test that loads them runs on a stack
+    // that takes them.
+    let json = lone_surrogates_replaced(&json);
+    let mut d = serde_json::Deserializer::from_str(&json);
+    d.disable_recursion_limit();
+    T::deserialize(&mut d)
+        .and_then(|v| d.end().map(|()| v))
         .map_err(|e| format!("{}: {e}", path.display()))
 }
 
