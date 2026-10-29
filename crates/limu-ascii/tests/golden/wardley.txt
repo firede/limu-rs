@@ -27,7 +27,7 @@ Visibility │         ╎                ╎   ┌─────────�
            │         ╎                ╎           │ Power
            │         ╎                ╎           │○╌╌┼╌╌╌╌╌╌╌▶ ○
            │         ╎                ╎               ╎
-           │ Genesis ╎ Custom Built   ╎    Product    ╎    Commodity
            └─────────┴────────────────┴───────────────┴─────────────────
+             Genesis   Custom Built        Product         Commodity
 
                                   Evolution

@@ -15,7 +15,7 @@ use std::fmt;
 
 use crate::geom::{Point, Rect};
 use crate::marker::Marker;
-use crate::path::{Op, Path};
+use crate::path::{Op, Path, Step};
 use crate::style::Style;
 use crate::text::Label;
 
@@ -512,13 +512,16 @@ impl Scene {
     /// backend that draws on whole pixels or cells, after layout. A box's sides are snapped
     /// each on its own, so boxes that touch go on touching. The scene's size is rounded up.
     ///
-    /// A path of an edge, a node, a group or a text item with straight lines in it has each
-    /// point it passes through snapped, so that its lines meet the boxes and markers they
-    /// lead to, and each control point of a curve moved with the point it leans on, so that a
-    /// rounded corner still turns from one line into the next. A path of curves alone, such
-    /// as a circle, or one of a mark, such as an icon, is moved as a whole, by what puts its
-    /// first point on the grid, so that it keeps its shape, as rounding each of its points
-    /// would not. A grid whose spacing is not above zero leaves the scene as it is.
+    /// A path with straight lines in it has each point it passes through snapped, so that its
+    /// lines meet the boxes, markers and lines they lead to, and each control point of a
+    /// curve moved with the point it leans on, so that a rounded corner still turns from one
+    /// line into the next. A path of curves alone, such as a circle, or one of a mark, such
+    /// as an icon or an arrowhead, is moved as a whole, by what puts its first point on the
+    /// grid, so that it keeps its shape, as rounding each of its points would not. A mark
+    /// with no shape of its own whose lines all run straight across or down, such as an
+    /// axis or a divider, keeps its shape with each point snapped, as a box does, and is
+    /// snapped so, so that its corners are on the grid as the boxes about it are. A grid
+    /// whose spacing is not above zero leaves the scene as it is.
     pub fn snap(&mut self, grid: Grid) {
         if !(grid.x > 0.0 && grid.y > 0.0) {
             return;
@@ -535,11 +538,13 @@ impl Scene {
         for it in &mut self.items {
             it.bounds = rect(it.bounds);
             let mark = matches!(it.kind, Kind::Mark);
+            let shaped = it.shape.is_some();
             for part in &mut it.parts {
                 match &mut part.outline {
                     Outline::Box { rect: r, .. } => *r = rect(*r),
                     Outline::Path(p) => {
-                        let through = !mark && p.ops.contains(&Op::LineTo);
+                        let through =
+                            p.ops.contains(&Op::LineTo) && (!mark || !shaped && square(p));
                         snap_path(p, through, &ax, &ay);
                     }
                 }
@@ -558,6 +563,25 @@ impl Scene {
             }
         }
     }
+}
+
+/// Whether a path is of lines alone, each running straight across or down.
+fn square(p: &Path) -> bool {
+    let mut at = Point::default();
+    let mut start = at;
+    p.steps().all(|step| {
+        let (from, to) = match step {
+            Step::MoveTo(q) => {
+                (at, start) = (q, q);
+                return true;
+            }
+            Step::LineTo(q) => (at, q),
+            Step::Close => (at, start),
+            Step::QuadTo(..) | Step::CubeTo(..) => return false,
+        };
+        at = to;
+        from.x == to.x || from.y == to.y
+    })
 }
 
 /// Puts a path on the grid ax and ay give, as [`Scene::snap`] says: through its points, when
@@ -793,7 +817,9 @@ mod tests {
         }
 
         // An edge's lines land on the grid, and a rounded corner's control points stay on the
-        // lines it joins. A mark's path of the same steps moves as a whole.
+        // lines it joins. A mark's path of the same steps moves as a whole, but one of lines
+        // across and down alone has its points snapped, unless it has a shape of its own, as
+        // an icon.
         let corner = path(|p| {
             p.move_to(0.4, 0.6)
                 .line_to(10.3, 0.6)
@@ -805,8 +831,14 @@ mod tests {
         edge.parts = vec![Part::path(corner.clone(), Painting::StrokeOnly)];
         let mut mark = Item::new(Kind::Mark, "x.mark");
         mark.parts = vec![Part::path(corner, Painting::StrokeOnly)];
+        let square = path(|p| p.move_to(0.4, 0.6).line_to(0.4, 20.2).line_to(15.7, 20.2));
+        let mut axis = Item::new(Kind::Mark, "x.axis");
+        axis.parts = vec![Part::path(square.clone(), Painting::StrokeOnly)];
+        let mut icon = Item::new(Kind::Mark, "x.icon");
+        icon.shape = Some(Shape::new("icon"));
+        icon.parts = vec![Part::path(square, Painting::StrokeOnly)];
         let mut sc = Scene {
-            items: vec![edge, mark],
+            items: vec![edge, mark, axis, icon],
             ..Scene::default()
         };
         sc.snap(Grid::square(1.0));
@@ -819,6 +851,16 @@ mod tests {
             23.0,
         ];
         assert_eq!(args(0), want, "an edge's corner");
+        assert_eq!(
+            args(2),
+            [0.0, 1.0, 0.0, 20.0, 16.0, 20.0],
+            "an axis's corner"
+        );
+        let icon = args(3);
+        assert!(
+            icon[0] == 0.0 && icon[1] == 1.0 && (icon[3] - 20.6).abs() < 1e-9,
+            "an icon's path moved to {icon:?}"
+        );
         let a = args(1);
         assert!(
             a[0] == 0.0

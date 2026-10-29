@@ -150,10 +150,13 @@ Every number in a scene that `limu` gives is finite. Where Pele would draw NaN, 
 an error instead.
 
 `Scene::snap` moves everything onto a grid, which may differ across and down, as the cells
-of a terminal do. In the path of an edge, a node, a group or a text item, each control point
-of a curve moves with the point it leans on, so a rounded corner still turns from one line
-into the next. A path of curves alone, such as a circle, and the path of a mark, such as an
-icon, move as a whole.
+of a terminal do. In a path with straight lines, each point it passes through lands on the
+grid, and each control point of a curve moves with the point it leans on, so a rounded
+corner still turns from one line into the next. A path of curves alone, such as a circle,
+and the path of a mark, such as an icon or an arrowhead, move as a whole so that they keep
+their shape. A mark with no shape of its own whose lines all run straight across or down,
+such as an axis or a divider, keeps its shape when each point is snapped, as a box does. It
+is snapped so, and its corners land on the grid as the boxes about it do.
 
 A backend with a look of its own draws an item from its role, shape, bounds and, for an
 edge, its route, and ignores its parts.
@@ -448,6 +451,10 @@ change is listed here with its reason.
 - The SVG writer writes each run of a label as a `<text>` of its own, where limu writes
   one `<text>` for the whole label. A browser places them alike.
 - A grid to snap to may differ across and down.
+- Snapping puts each point of a mark of lines across and down alone, such as an axis, on
+  the grid, unless the mark has a shape of its own. limu moves every mark as a whole, and
+  an axis's corner, moved by its far end, then falls between the rows of a terminal's
+  cells, where the labels below the axis come to share its row.
 - The diagrams' models are private.
 - The time zone is a trait with UTC by default, as the standard library knows no zones,
   where limu reads the machine's.
