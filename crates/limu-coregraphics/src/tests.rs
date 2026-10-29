@@ -13,15 +13,14 @@ use tiny_skia::{IntSize, Pixmap};
 use super::*;
 
 fn fonts() -> Fonts {
-    let font = |name| font_from_data(&limu_fixtures::font(name)).unwrap();
-    let mut f = Fonts::new(font("LiberationSans-Regular.ttf"));
+    let mut f = Fonts::from_data(&limu_fixtures::font("LiberationSans-Regular.ttf")).unwrap();
     for (face, name) in [
         (Face::BOLD, "LiberationSans-Bold.ttf"),
         (Face::ITALIC, "LiberationSans-Italic.ttf"),
         (Face::BOLD | Face::ITALIC, "LiberationSans-BoldItalic.ttf"),
         (Face::MONO, "LiberationMono-Regular.ttf"),
     ] {
-        f.set(face, font(name));
+        f.set_data(face, &limu_fixtures::font(name)).unwrap();
     }
     f
 }

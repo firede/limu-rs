@@ -126,6 +126,12 @@ fn refuses_what_would_mislead() {
         .filter_map(|s| render(&s.scene, &Options::default()).err())
         .map(|e| e.diagram)
         .collect();
+    for s in all_diagrams() {
+        assert_eq!(
+            supports(&s.scene.diagram),
+            !refused.contains(&s.scene.diagram)
+        );
+    }
     let mut want = UNSUPPORTED.map(String::from).to_vec();
     want.sort();
     let mut got = refused.clone();

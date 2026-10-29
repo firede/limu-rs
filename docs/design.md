@@ -236,6 +236,14 @@ boxes into paths where a canvas has no box of its own, and draws markers from th
 outlines in the color of the edge's line. Every backend draws the same scene the same way,
 as far as its canvas lets it, and the differences that remain belong to the canvas.
 
+A host meets every backend in the same shape. Each takes its options with a look, the fonts
+it draws in and the icons and images it can draw, and the icons are given in one form,
+`limu_scene::Icons`, so a host writes its icon set once for all of them. A backend that
+draws an image of a size takes its scale as `f64`, as the scene's numbers are. limu-gpui
+paints into a window it is given rather than an image it makes, so it names its entry point
+`paint`. limu-ascii says through `supports` which diagrams it draws, so a host can ask before
+it lays a diagram out for cells.
+
 GPUI's canvas lets it least. GPUI paints a glyph only upright and only filled, as Zed's
 GPUI does, and the charts of GPUI Kit keep their text upright. limu-gpui
 writes a turned run and a halo as SVG text instead, which GPUI's SVG renderer draws as a

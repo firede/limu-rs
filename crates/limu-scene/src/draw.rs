@@ -9,13 +9,19 @@
 
 use crate::geom::{Point, Rect};
 use crate::path::Path;
-use crate::scene::{Align, Item, Kind, Outline, Painting, PictureSource, Scene};
+use crate::scene::{Align, Item, Kind, Outline, Painting, Part, PictureSource, Scene};
 use crate::style::{Cap, Ink, Join, Look, Resolved};
 use crate::text::Span;
 
 /// How far a stroke's corners may reach out, in widths of the stroke, before they are
 /// bevelled: SVG's initial stroke-miterlimit.
 pub const MITER_LIMIT: f64 = 4.0;
+
+/// Gives the parts of an icon by its name, on a box of 24 by 24, or none for an icon it does
+/// not have. A part filled is filled in the color of the item's text, and one stroked is
+/// stroked in it 2 wide with round ends and corners, as the SVG writer's icons are. Every
+/// backend that draws icons takes them in this form.
+pub type Icons<'a> = Box<dyn Fn(&str) -> Option<Vec<Part>> + 'a>;
 
 /// How a path or a box is stroked.
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -13,7 +13,7 @@
 use limu_scene::style::{Cap, Ink, Join, Look, Resolved};
 use limu_scene::text::{Face, Measurer};
 use limu_scene::{
-    Align, Canvas, Item, Outline, Painter, Painting, Part, Pen, Point, Rect, Run, Scene, TextPaint,
+    Align, Canvas, Icons, Item, Outline, Painter, Painting, Pen, Point, Rect, Run, Scene, TextPaint,
 };
 use rustybuzz::ttf_parser::{self, GlyphId, OutlineBuilder};
 use tiny_skia::{
@@ -117,11 +117,6 @@ impl Measurer for Fonts {
     }
 }
 
-/// Gives the parts of an icon by its name, on a box of 24 by 24, or none for an icon it does
-/// not have. A part filled is filled in the color of the item's text, and one stroked is
-/// stroked in it 2 wide with round ends and corners, as the SVG writer's icons are.
-pub type Icons<'a> = Box<dyn Fn(&str) -> Option<Vec<Part>> + 'a>;
-
 /// Gives an image by its address, or none for one it can't load.
 pub type Images<'a> = Box<dyn Fn(&str) -> Option<Pixmap> + 'a>;
 
@@ -133,7 +128,7 @@ pub struct Options<'a> {
     /// The fonts text is drawn in. Without them, text is left out.
     pub fonts: Option<&'a Fonts>,
     /// How many pixels a unit of the scene takes in [`render`]. Zero or less is 1.
-    pub scale: f32,
+    pub scale: f64,
     /// The icons. Without them, icons are left out.
     pub icons: Option<Icons<'a>>,
     /// The images. Without them, images are left out.
@@ -144,14 +139,19 @@ pub struct Options<'a> {
 /// It is none for a scene too small or too large for a pixmap.
 pub fn render(scene: &Scene, o: &Options<'_>) -> Option<Pixmap> {
     let k = if o.scale > 0.0 { o.scale } else { 1.0 };
-    let w = (scene.width as f32 * k).ceil();
-    let h = (scene.height as f32 * k).ceil();
+    let w = (scene.width * k).ceil();
+    let h = (scene.height * k).ceil();
     if !(w >= 1.0 && h >= 1.0) {
         return None;
     }
     let mut pixmap = Pixmap::new(w as u32, h as u32)?;
     pixmap.fill(color(o.look.theme.bg));
-    draw(scene, o, &mut pixmap.as_mut(), Transform::from_scale(k, k));
+    draw(
+        scene,
+        o,
+        &mut pixmap.as_mut(),
+        Transform::from_scale(k as f32, k as f32),
+    );
     Some(pixmap)
 }
 

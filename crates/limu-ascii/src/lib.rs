@@ -41,7 +41,8 @@
 //! Some diagrams say what they say in where things are and how large they are, as a pie's
 //! slices, a chart's bars and a Gantt chart's tasks do, or in lines too close together for
 //! cells to tell apart, as a git graph's branches. Drawn in cells, they would mislead, and
-//! [`render`] gives [`Unsupported`] for them rather than draw them.
+//! [`render`] gives [`Unsupported`] for them rather than draw them. [`supports`] tells which
+//! they are.
 
 mod grid;
 #[cfg(test)]
@@ -166,10 +167,16 @@ impl std::fmt::Display for Unsupported {
 
 impl std::error::Error for Unsupported {}
 
+/// Whether a diagram can be drawn as text, by the name its scene gives it, which is the name
+/// of its type in limu. A host can ask before it lays the diagram out for cells.
+pub fn supports(diagram: &str) -> bool {
+    !UNSUPPORTED.contains(&diagram)
+}
+
 /// A scene as text, a line for each row of cells, with no spaces at the ends of lines, or
 /// [`Unsupported`] for a diagram that can't be drawn in cells without misleading.
 pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
-    if UNSUPPORTED.contains(&scene.diagram.as_str()) {
+    if !supports(&scene.diagram) {
         return Err(Unsupported {
             diagram: scene.diagram.clone(),
         });

@@ -37,7 +37,7 @@ use gpui::{
 use limu_scene::style::{Cap, Ink, Join, Look, Resolved};
 use limu_scene::text::{Face, Measurer};
 use limu_scene::{
-    Align, Canvas, Item, Outline, Painter, Painting, Part, Pen, Point, Rect, Run, Scene, Step,
+    Align, Canvas, Icons, Item, Outline, Painter, Painting, Pen, Point, Rect, Run, Scene, Step,
     TextPaint,
 };
 
@@ -113,11 +113,6 @@ impl Measurer for TextMeasurer {
     }
 }
 
-/// Gives the parts of an icon by its name, on a box of 24 by 24, or none for an icon it does
-/// not have. A part filled is filled in the color of the item's text, and one stroked is
-/// stroked in it 2 wide with round ends and corners, as the SVG writer's icons are.
-pub type Icons<'a> = Box<dyn Fn(&str) -> Option<Vec<Part>> + 'a>;
-
 /// Gives an image by its address, or none for one it can't load.
 pub type Images<'a> = Box<dyn Fn(&str) -> Option<Arc<RenderImage>> + 'a>;
 
@@ -191,11 +186,12 @@ pub struct GpuiCanvas<'a> {
 
 impl GpuiCanvas<'_> {
     /// The window painted in, and the app, for a hook that paints on its own.
-    pub fn window(&mut self) -> Option<(&mut Window, &mut App)> {
+    pub fn window(&mut self) -> (&mut Window, &mut App) {
         match &mut self.out {
-            Out::Window { window, cx } => Some((&mut **window, &mut **cx)),
+            Out::Window { window, cx } => (&mut **window, &mut **cx),
+            // The tests record what a canvas paints, and no hook of theirs paints on its own.
             #[cfg(test)]
-            Out::Record(_) => None,
+            Out::Record(_) => unreachable!("a recording canvas has no window"),
         }
     }
 

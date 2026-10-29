@@ -18,7 +18,7 @@ pub mod style;
 pub mod svg;
 pub mod text;
 
-pub use draw::{Canvas, MITER_LIMIT, Painter, Pen, Run, TextPaint, draw, draw_with};
+pub use draw::{Canvas, Icons, MITER_LIMIT, Painter, Pen, Run, TextPaint, draw, draw_with};
 pub use flatten::{Polyline, dash};
 pub use geom::{Point, Rect};
 pub use marker::{MARKER_SIZE, Marker, MarkerType};

@@ -19,7 +19,7 @@ fn fonts() -> Fonts {
     f
 }
 
-fn options(fonts: &Fonts, scale: f32) -> Options<'_> {
+fn options(fonts: &Fonts, scale: f64) -> Options<'_> {
     Options {
         fonts: Some(fonts),
         scale,
@@ -77,7 +77,7 @@ fn golden(name: &str, got: &tiny_skia::Pixmap) -> Result<(), String> {
 
 /// Draws samples at a scale in a look and compares each with its golden image, named by the
 /// sample and a suffix.
-fn compare(samples: Vec<limu_samples::Sample>, scale: f32, look: Look, suffix: &str) {
+fn compare(samples: Vec<limu_samples::Sample>, scale: f64, look: Look, suffix: &str) {
     let fonts = fonts();
     let o = Options {
         look,

@@ -20,7 +20,7 @@ mod tests;
 use limu_scene::style::{Cap, Ink, Join, Look, Resolved};
 use limu_scene::text::{Face, Measurer};
 use limu_scene::{
-    Align, Canvas, Item, Outline, Painter, Painting, Part, Pen, Point, Rect, Run, Scene, Step,
+    Align, Canvas, Icons, Item, Outline, Painter, Painting, Pen, Point, Rect, Run, Scene, Step,
     TextPaint,
 };
 use objc2_core_foundation::{CFRetained, CGAffineTransform, CGPoint, CGRect, CGSize};
@@ -40,12 +40,6 @@ impl std::fmt::Display for FontError {
 }
 
 impl std::error::Error for FontError {}
-
-/// A font from the data of a TrueType or OpenType file, for a host that carries its fonts
-/// rather than taking the system's.
-pub fn font_from_data(data: &[u8]) -> Result<CFRetained<CTFont>, FontError> {
-    sys::font_from_data(data).ok_or(FontError)
-}
 
 /// The fonts text is set and drawn in: a regular one, and one for each face of
 /// [`BOLD`](Face::BOLD), [`ITALIC`](Face::ITALIC) and [`MONO`](Face::MONO), or a mix of them,
@@ -68,10 +62,22 @@ impl Fonts {
         f
     }
 
+    /// Fonts of one regular font, from the data of a TrueType or OpenType file, for a host
+    /// that carries its fonts rather than taking the system's.
+    pub fn from_data(regular: &[u8]) -> Result<Fonts, FontError> {
+        Ok(Fonts::new(sys::font_from_data(regular).ok_or(FontError)?))
+    }
+
     /// Sets the font of a face of bold, italic and mono. The face's other bits are ignored.
     pub fn set(&mut self, face: Face, font: CFRetained<CTFont>) -> &mut Fonts {
         self.fonts[slot(face)] = Some(font);
         self
+    }
+
+    /// Sets the font of a face of bold, italic and mono, from the data of a TrueType or
+    /// OpenType file. The face's other bits are ignored.
+    pub fn set_data(&mut self, face: Face, data: &[u8]) -> Result<&mut Fonts, FontError> {
+        Ok(self.set(face, sys::font_from_data(data).ok_or(FontError)?))
     }
 
     /// The font text in a face is set in, at a size.
@@ -100,11 +106,6 @@ impl Measurer for Fonts {
         sys::advance(&sys::line(s, &self.font(f, size)))
     }
 }
-
-/// Gives the parts of an icon by its name, on a box of 24 by 24, or none for an icon it does
-/// not have. A part filled is filled in the color of the item's text, and one stroked is
-/// stroked in it 2 wide with round ends and corners, as the SVG writer's icons are.
-pub type Icons<'a> = Box<dyn Fn(&str) -> Option<Vec<Part>> + 'a>;
 
 /// Gives an image by its address, or none for one it can't load.
 pub type Images<'a> = Box<dyn Fn(&str) -> Option<CFRetained<CGImage>> + 'a>;
