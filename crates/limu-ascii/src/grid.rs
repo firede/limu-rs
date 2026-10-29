@@ -324,19 +324,32 @@ impl Grid {
     /// nothing but straight lines down passes through, and of columns that nothing but
     /// straight lines across passes through, to one. Nothing comes apart, as lines that
     /// only pass through such a row or column are shortened by it, and nothing else is in
-    /// it. It is how text renderers of diagrams space them, a cell between things.
+    /// it. It is how text renderers of diagrams space them, a cell between things. A row
+    /// that nothing but the sides of shapes pass through is room inside them, padding Pele
+    /// gives in pixels that a border already gives in cells, and goes whole. Columns keep
+    /// theirs, as text set against a side is hard to read.
     pub(crate) fn squeeze(&mut self) {
         let cell = |g: &Grid, c: usize, r: usize| g.cells[r * g.cols + c];
         let blank = |x: Cell| x == Cell::default();
         let through =
             |x: Cell, way: u8| x.glyph.is_none() && !x.tail && (x.lines == 0 || x.lines == way);
+        // Room inside shapes: a row that nothing but their sides pass through, down.
+        let room = |r: usize| {
+            let row = (0..self.cols).map(|c| cell(self, c, r));
+            row.clone().any(|x| x.lines != 0)
+                && row
+                    .clone()
+                    .all(|x| through(x, UP | DOWN) && x.outline == x.lines)
+        };
         let rows: Vec<usize> = keep(
             (0..self.rows).map(|r| (0..self.cols).all(|c| blank(cell(self, c, r)))),
             (0..self.rows).map(|r| (0..self.cols).all(|c| through(cell(self, c, r), UP | DOWN))),
+            (0..self.rows).map(room),
         );
         let cols: Vec<usize> = keep(
             (0..self.cols).map(|c| (0..self.rows).all(|r| blank(cell(self, c, r)))),
             (0..self.cols).map(|c| (0..self.rows).all(|r| through(cell(self, c, r), LEFT | RIGHT))),
+            (0..self.cols).map(|_| false),
         );
         let mut cells = Vec::with_capacity(rows.len() * cols.len());
         for &r in &rows {
@@ -374,17 +387,22 @@ impl Grid {
     }
 }
 
-/// The rows or columns kept of a grid's: none of those that are blank at either end, and
-/// the first of each run of those that may go.
-fn keep(blank: impl Iterator<Item = bool>, may_go: impl Iterator<Item = bool>) -> Vec<usize> {
+/// The rows or columns kept of a grid's: none of those that are blank at either end, the
+/// first of each run of those that may go, and none of those that are room inside shapes.
+fn keep(
+    blank: impl Iterator<Item = bool>,
+    may_go: impl Iterator<Item = bool>,
+    room: impl Iterator<Item = bool>,
+) -> Vec<usize> {
     let blank: Vec<bool> = blank.collect();
     let may_go: Vec<bool> = may_go.collect();
+    let room: Vec<bool> = room.collect();
     let Some(start) = blank.iter().position(|&b| !b) else {
         return Vec::new();
     };
     let end = blank.iter().rposition(|&b| !b).map_or(start, |e| e + 1);
     (start..end)
-        .filter(|&i| !(may_go[i] && i > start && may_go[i - 1]))
+        .filter(|&i| !room[i] && !(may_go[i] && i > start && may_go[i - 1]))
         .collect()
 }
 

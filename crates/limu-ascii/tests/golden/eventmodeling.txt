@@ -6,7 +6,6 @@
                        │
   Command/Read Model   │
 ╭──────────────────────▼────╮
-│                           │
 │  AddItem               02 │
 │ description: 'john'       │
 │ image: 'avatar_john'      │
@@ -33,7 +32,6 @@
   Events               │
 ╭──────────────────────▼────╮
 │  ItemAdded             05 │
-│                           │
 │ description: string       │
 │ image: string             │
 │ price: number             │

@@ -283,7 +283,11 @@ The room Pele leaves between things is several rows and columns in cells, where 
 renderers of diagrams leave one. limu-ascii cuts it after drawing, rather than changing the
 layout. Each run of rows that nothing but straight lines down passes through, and of
 columns that nothing but straight lines across passes through, is cut to one. Lines that
-pass through only grow shorter, so nothing comes apart. A host that wants every cell where
+pass through only grow shorter, so nothing comes apart. A row that nothing but the sides of
+shapes pass through is cut away whole. It is padding inside a box, which Pele gives in
+pixels and which the box's border already gives in cells. A row with a connector in it
+keeps one, so connectors between things never vanish. Columns inside boxes stay, because
+text set against a side is hard to read. A host that wants every cell where
 the scene puts it turns this off.
 
 ## Hit testing

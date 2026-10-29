@@ -2,7 +2,6 @@
    │      CUSTOMER        │
    ├──────────────────────┤
    │ string   name        │
-   │                      │
    │ string   custNumber  │
    │ string   sector      │
    ╰──────────┬───────────╯
@@ -15,7 +14,6 @@
 │           ORDER           │
 ├───────────────────────────┤
 │ int      orderNumber      │
-│                           │
 │ string   deliveryAddress  │
 ╰─────────────┬─────────────╯
               │1
@@ -25,10 +23,8 @@
               │1..*
   ╭───────────┴────────────╮
   │       LINE-ITEM        │
-  │                        │
   ├────────────────────────┤
   │ string   productCode   │
   │ int      quantity      │
-  │                        │
   │ float    pricePerUnit  │
   ╰────────────────────────╯

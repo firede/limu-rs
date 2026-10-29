@@ -90,6 +90,5 @@ Sends e-mails  │╎                                       ╎ │││
                 ╎ │     [Java, Docker Container]      │ ╎
                 ╎ │     Provides Internet banking     │ ╎
                 ╎ │       functionality via API       │ ╎
-                ╎ │                                   │ ╎
                 ╎ ╰───────────────────────────────────╯ ╎
                 ╰╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╯
