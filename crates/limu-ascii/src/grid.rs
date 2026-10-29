@@ -38,6 +38,8 @@ struct Cell {
     glyph: Option<char>,
     // Whether the cell is the second of a character two cells wide.
     tail: bool,
+    // Whether the cell is of a line of text set in the middle of a box.
+    middle: bool,
 }
 
 /// A grid of cells, by column and row from the top left.
@@ -317,6 +319,67 @@ impl Grid {
         let mut c = at.0;
         for ch in s.chars() {
             c += self.put((c, at.1), ch);
+        }
+    }
+
+    /// Draws a character as a shape's side down, as a diamond's point or a bracket.
+    pub(crate) fn side(&mut self, at: (i64, i64), ch: char) {
+        self.put(at, ch);
+        if let Some(cell) = self.cell(at) {
+            cell.outline = UP | DOWN;
+        }
+    }
+
+    /// Keeps a number of cells from one across as a line of text set in the middle of a box,
+    /// which [`Grid::center`] sets in the middle of the box's sides again.
+    pub(crate) fn middle(&mut self, at: (i64, i64), n: i64) {
+        for c in at.0..at.0 + n {
+            if let Some(cell) = self.cell((c, at.1))
+                && (cell.glyph.is_some() || cell.tail)
+            {
+                cell.middle = true;
+            }
+        }
+    }
+
+    /// Sets each line of text kept as set in the middle of a box in the middle of the sides
+    /// either side of it, where there is nothing else between them. Cells round the text
+    /// and its box apart, and squeezing them cuts the room either side of it apart, by what
+    /// else is drawn in the columns there.
+    pub(crate) fn center(&mut self) {
+        let side = |x: Cell| x.outline & (UP | DOWN) == UP | DOWN;
+        for r in 0..self.rows {
+            let row = r * self.cols;
+            let mut c = 0;
+            while c < self.cols {
+                if !self.cells[row + c].middle {
+                    c += 1;
+                    continue;
+                }
+                let (a, mut b) = (c, c);
+                while b < self.cols && self.cells[row + b].middle {
+                    b += 1;
+                }
+                c = b;
+                let blank = |x: &Cell| *x == Cell::default();
+                let Some(l) = (0..a).rev().find(|&i| !blank(&self.cells[row + i])) else {
+                    continue;
+                };
+                let Some(rt) = (b..self.cols).find(|&i| !blank(&self.cells[row + i])) else {
+                    continue;
+                };
+                if !side(self.cells[row + l]) || !side(self.cells[row + rt]) {
+                    continue;
+                }
+                let n = b - a;
+                let to = l + 1 + (rt - l - 1 - n) / 2;
+                if to == a {
+                    continue;
+                }
+                let text: Vec<Cell> = self.cells[row + a..row + b].to_vec();
+                self.cells[row + a..row + b].fill(Cell::default());
+                self.cells[row + to..row + to + n].copy_from_slice(&text);
+            }
         }
     }
 

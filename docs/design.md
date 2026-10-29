@@ -262,8 +262,12 @@ down but not a line across or other text, so it moves a row up or down where it 
 stays inside the box it is in. Where there is no such room, a row is put in by the label,
 where it lets the label fit and splits no text set already, and lines down through that row
 are drawn on through it. Rows are put in where the layout, laid out in pixels, gives text
-less than a row, as a class's members are, at seven eighths of the size of the rest. Text can't be turned, so a label turned 30 degrees or more, as an
-axis's title, is set across, running out from the diagram.
+less than a row, as a class's members are, at seven eighths of the size of the rest. Text
+can't be turned, so a label turned 30 degrees or more, as an axis's title, is set across,
+running out from the diagram. A label in the middle of a box is set in the middle of its
+sides again once the grid is done. Rounding to cells moves the text and the box apart by a
+cell, and cutting the room between things cuts the columns either side of the text unevenly,
+as other things drawn in those columns keep some of them.
 
 Some diagrams are left to other forms. A pie chart, an XY chart, a radar chart, a Sankey
 diagram, a Gantt chart and a packet diagram say what they say in sizes and places finer

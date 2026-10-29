@@ -313,17 +313,17 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
                 None if matches!(it.kind, Kind::Node) && !b.is_empty() => about(b),
                 None => None,
             };
-            let at = match middle {
-                Some(mid) if placed.align == Align::Middle && placed.rotate == 0.0 => mid,
-                _ => placed.at,
-            };
+            let middle = middle.filter(|_| placed.align == Align::Middle && placed.rotate == 0.0);
             c.labels.push(Text {
                 lines,
-                at,
+                at: middle.unwrap_or(placed.at),
                 align: placed.align,
                 rotate: placed.rotate,
                 within: inside.then_some(b),
                 own: small,
+                // Text kept in the middle of a box drawn about it, which a shape too small to
+                // draw, or one without an outline, has none of.
+                middle: middle.is_some() && (boxed.is_some() || inside && !small),
             });
         }
     });
@@ -361,6 +361,7 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
     if o.compact {
         c.grid.squeeze();
     }
+    c.grid.center();
     Ok(c.grid.write(o.charset))
 }
 
@@ -547,10 +548,10 @@ impl TextCanvas<'_> {
         let (c1, r1) = self.cell(Point::new(b.x + b.w, b.y + b.h));
         let r = middle((r0 + r1) as f64 / 2.0, 1.0);
         if sides.left && r > r0 && r < r1 {
-            self.grid.put((c0, r), '<');
+            self.grid.side((c0, r), '<');
         }
         if sides.right && r > r0 && r < r1 {
-            self.grid.put((c1, r), '>');
+            self.grid.side((c1, r), '>');
         }
         ((c0, r0), (c1, r1))
     }
@@ -750,6 +751,7 @@ impl TextCanvas<'_> {
             rotate: 0.0,
             within: None,
             own: false,
+            middle: false,
         });
     }
 
@@ -806,6 +808,9 @@ impl TextCanvas<'_> {
                 let r = g.at((0, first)).1 + shift + i as i64;
                 let at = g.fit((g.at((c, 0)).0, r), n);
                 g.text(at, line);
+                if text.middle {
+                    g.middle(at, n);
+                }
             }
             let top = g.at((0, first)).1 + shift;
             g.block(top, top + m - 1);
@@ -949,8 +954,8 @@ impl Canvas for TextCanvas<'_> {
                 }
             }
             if pen.is_some() && c1 > c0 {
-                self.grid.put((c0, r), '[');
-                self.grid.put((c1, r), ']');
+                self.grid.side((c0, r), '[');
+                self.grid.side((c1, r), ']');
             }
             return;
         }
@@ -1012,6 +1017,8 @@ struct Text {
     within: Option<Rect>,
     // Whether the text stands for a shape too small to draw.
     own: bool,
+    // Whether the text is set in the middle of a box, and kept there.
+    middle: bool,
 }
 
 /// A marker at an end of an edge, in cells.
