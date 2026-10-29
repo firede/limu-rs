@@ -4,8 +4,8 @@ use std::sync::OnceLock;
 
 use crate::common::tokens::{
     ACC_DESCR, ACC_TITLE, DIRECTIVE, END, NEWLINE, Pattern, Reader, SINGLE_LINE_COMMENT, STRING,
-    Table, TokenType, WHITESPACE, YAML, acc_descr_value, acc_title_value, keyword, match_title,
-    string_value, title_value, token, tokenize,
+    Table, TokenType, WHITESPACE, YAML, acc_descr_value, acc_title_value, int, keyword,
+    match_title, string_value, title_value, token, tokenize,
 };
 use crate::detect::DiagramType;
 use crate::errors::Error;
@@ -103,25 +103,6 @@ fn acc_descr_opener(s: &str, at: usize) -> bool {
     }
     let i = space_run(s, i + "accDescr".len());
     b.get(i) == Some(&b'{')
-}
-
-/// Pele's INT, /0|[1-9][0-9]*(?!\.)/y: a lone 0, or digits not followed by a dot, which give
-/// back the last digit rather than fail where they are.
-fn int(s: &str, at: usize) -> Option<usize> {
-    let b = s.as_bytes();
-    match b[at] {
-        b'0' => return Some(at + 1),
-        b'1'..=b'9' => {}
-        _ => return None,
-    }
-    let mut end = at + 1;
-    while end < b.len() && b[end].is_ascii_digit() {
-        end += 1;
-    }
-    if b.get(end) == Some(&b'.') {
-        return (end - 1 > at).then_some(end - 1);
-    }
-    Some(end)
 }
 
 /// Pele's word: the text, which a reference that goes on longer takes over, so that `commits`

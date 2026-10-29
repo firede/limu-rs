@@ -4,7 +4,7 @@ use std::sync::OnceLock;
 
 use crate::common::tokens::{
     ACC_DESCR, ACC_TITLE, DIRECTIVE, END, NEWLINE, Pattern, Reader, SINGLE_LINE_COMMENT, STRING,
-    TITLE, Table, TokenType, WHITESPACE, YAML, acc_descr_value, acc_title_value, keyword,
+    TITLE, Table, TokenType, WHITESPACE, YAML, acc_descr_value, acc_title_value, int, keyword,
     string_value, title_value, token, tokenize,
 };
 use crate::detect::DiagramType;
@@ -24,25 +24,6 @@ const T_INT: usize = 8;
 const T_STRING: usize = 9;
 const T_NEWLINE: usize = 10;
 const T_YAML: usize = 12;
-
-/// Pele's INT, /0|[1-9][0-9]*(?!\.)/y: a lone 0, or digits not followed by a dot, which give
-/// back the last digit rather than fail where they are.
-fn int(s: &str, at: usize) -> Option<usize> {
-    let b = s.as_bytes();
-    match b[at] {
-        b'0' => return Some(at + 1),
-        b'1'..=b'9' => {}
-        _ => return None,
-    }
-    let mut end = at + 1;
-    while end < b.len() && b[end].is_ascii_digit() {
-        end += 1;
-    }
-    if b.get(end) == Some(&b'.') {
-        return (end - 1 > at).then_some(end - 1);
-    }
-    Some(end)
-}
 
 /// Pele's PACKET_TOKENS.
 pub(crate) const PACKET_TOKENS: &[TokenType] = &[

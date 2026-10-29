@@ -66,6 +66,10 @@ enum Model {
     TreeView(diagrams::treeview::TreeViewModel),
     #[cfg(feature = "cynefin")]
     Cynefin(diagrams::cynefin::CynefinModel),
+    #[cfg(feature = "wardley")]
+    Wardley(diagrams::wardley::WardleyModel),
+    #[cfg(feature = "eventmodeling")]
+    EventModeling(diagrams::eventmodeling::EventModelingModel),
     #[cfg(feature = "usecase")]
     UseCase(diagrams::usecase::UsecaseModel),
     #[cfg(feature = "venn")]
@@ -128,6 +132,10 @@ const TYPES: &[DiagramType] = &[
     DiagramType::TreeView,
     #[cfg(feature = "cynefin")]
     DiagramType::Cynefin,
+    #[cfg(feature = "wardley")]
+    DiagramType::Wardley,
+    #[cfg(feature = "eventmodeling")]
+    DiagramType::EventModeling,
     #[cfg(feature = "usecase")]
     DiagramType::UseCase,
     #[cfg(feature = "venn")]
@@ -310,6 +318,16 @@ impl Model {
             DiagramType::Cynefin => p
                 .parse_with(false, |s| diagrams::cynefin::parse(s, p.title.as_deref()))
                 .map(Model::Cynefin),
+            #[cfg(feature = "wardley")]
+            DiagramType::Wardley => p
+                .parse_with(false, |s| diagrams::wardley::parse(s, p.title.as_deref()))
+                .map(Model::Wardley),
+            #[cfg(feature = "eventmodeling")]
+            DiagramType::EventModeling => p
+                .parse_with(true, |s| {
+                    diagrams::eventmodeling::parse(s, p.title.as_deref())
+                })
+                .map(Model::EventModeling),
             #[cfg(feature = "usecase")]
             DiagramType::UseCase => p
                 .parse_with(false, |s| diagrams::usecase::parse(s, p.title.as_deref()))
@@ -392,6 +410,10 @@ impl Model {
             Model::TreeView(ref m) => diagrams::treeview::layout(m, config, o),
             #[cfg(feature = "cynefin")]
             Model::Cynefin(ref m) => diagrams::cynefin::layout(m, config, o),
+            #[cfg(feature = "wardley")]
+            Model::Wardley(ref m) => diagrams::wardley::layout(m, config, o),
+            #[cfg(feature = "eventmodeling")]
+            Model::EventModeling(ref m) => diagrams::eventmodeling::layout(m, config, o),
             #[cfg(feature = "usecase")]
             Model::UseCase(ref m) => diagrams::usecase::layout(m, config, o),
             #[cfg(feature = "venn")]

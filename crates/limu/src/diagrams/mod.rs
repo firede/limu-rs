@@ -13,6 +13,8 @@ pub(crate) mod class;
 pub(crate) mod cynefin;
 #[cfg(feature = "er")]
 pub(crate) mod er;
+#[cfg(feature = "eventmodeling")]
+pub(crate) mod eventmodeling;
 // A swimlane diagram is a flowchart laid out its own way, and is read and drawn by the
 // flowchart's code. An agent flow draws its nodes in the flowchart's shapes.
 #[cfg(any(feature = "agentflow", feature = "flowchart", feature = "swimlane"))]
@@ -59,5 +61,7 @@ pub(crate) mod treeview;
 pub(crate) mod usecase;
 #[cfg(feature = "venn")]
 pub(crate) mod venn;
+#[cfg(feature = "wardley")]
+pub(crate) mod wardley;
 #[cfg(feature = "xychart")]
 pub(crate) mod xychart;

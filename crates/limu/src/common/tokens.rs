@@ -381,6 +381,26 @@ fn string(s: &str, at: usize) -> Option<usize> {
     None
 }
 
+/// The INT that Pele's packet, git and Wardley diagrams each define alike,
+/// /0|[1-9][0-9]*(?!\.)/y: a lone 0, or digits not followed by a dot, which give back the last
+/// digit rather than fail where they are.
+pub(crate) fn int(s: &str, at: usize) -> Option<usize> {
+    let b = s.as_bytes();
+    match b[at] {
+        b'0' => return Some(at + 1),
+        b'1'..=b'9' => {}
+        _ => return None,
+    }
+    let mut end = at + 1;
+    while end < b.len() && b[end].is_ascii_digit() {
+        end += 1;
+    }
+    if b.get(end) == Some(&b'.') {
+        return (end - 1 > at).then_some(end - 1);
+    }
+    Some(end)
+}
+
 /// Pele's NEWLINE, /\r?\n/y.
 pub(crate) const NEWLINE: TokenType = TokenType {
     first: Some("\r\n"),
