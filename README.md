@@ -24,7 +24,7 @@ compare its output with Pele's, number for number. It is the Rust sibling of
 | `limu-tiny-skia` | Draws a scene into a bitmap. |
 | `limu-coregraphics` | Draws a scene with Core Graphics, and measures text with Core Text. |
 | `limu-gpui` | Draws a scene in a GPUI window, and measures text with GPUI's text system. |
-| `limu-ascii` | Draws a scene as text, for terminals. |
+| `limu-ascii` | Draws a scene as text in box-drawing characters, for terminals. |
 
 The core crates, `limu` and `limu-scene`, use the standard library alone, with serde behind
 an optional feature.

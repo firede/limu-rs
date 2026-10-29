@@ -117,12 +117,17 @@ const SOURCES: [(&str, &str); 33] = sources!(
 
 /// One diagram of each type, laid out by limu with its default options.
 pub fn diagrams() -> Vec<Sample> {
-    let o = limu::layout::Options::default();
+    diagrams_with(&limu::layout::Options::default())
+}
+
+/// One diagram of each type, laid out by limu with options, as a backend that measures text
+/// its own way lays them out.
+pub fn diagrams_with(o: &limu::layout::Options<'_>) -> Vec<Sample> {
     SOURCES
         .iter()
         .map(|&(name, src)| Sample {
             name,
-            scene: limu::layout(src, &o).unwrap_or_else(|e| panic!("{name}: {e}")),
+            scene: limu::layout(src, o).unwrap_or_else(|e| panic!("{name}: {e}")),
         })
         .collect()
 }

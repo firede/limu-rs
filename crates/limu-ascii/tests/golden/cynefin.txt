@@ -1,0 +1,40 @@
+
+                                               Incident Response
+
+                                                       ╎
+                                                       ╎
+                                                       ╎
+                                                       ╎
+                                                       ╎
+                                                       ╎
+                         Complex                       ╎                    Complicated
+                 Probe → Sense → Respond               ╎             Sense → Analyse → Respond
+                   Emergent Practices                  ╎                  Good Practices
+                                                       ╎
+               [ Investigate root cause  ]             ╎            [Analyze performance data  ]
+                ╭───────────────────────╮             ┌┘              ╭──────────────────────╮
+                │ Run chaos experiment  │             ╎               │Expert review needed  │
+                ╰───────────────────────╯      ┌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐      ╰──────────────────────╯
+                                          ┌╌╌╌╌┘               └╌╌╌┐
+                                       ┌╌╌┘                        └╌╌╌┐
+                                      ┌┘           Confusion           └┐
+ ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┬┘            Disorder             └┐
+                                     ╎                                   ┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+                                     └┐      Unknown failure mode       ┌┘
+                                      └┐   [                      ]   ┌╌┘
+                                       └╌╌┐                        ┌╌╌┘
+                                          └╌╌╌┐                ┌╌╌╌┘
+                                              └╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┘
+                                                       │                       Clear
+                         Chaotic                      ┌┘           Sense → Categorise → Respond
+                  Act → Sense → Respond               │                   Best Practices
+                     Novel Practices                  │                 ╭──────────────────╮
+              ╭───────────────────────────╮           │                 │ Restart service  │
+              │ Page on-call immediately  │           └┐                ├──────────────────┤
+              ╰───────────────────────────╯            └┐               │ Apply known fix  │
+                                                        └┐              ╰──────────────────╯
+                                                        ┌┘
+                                                      ┌─┘
+                                                      └┐
+                                                       │
+                                                       │

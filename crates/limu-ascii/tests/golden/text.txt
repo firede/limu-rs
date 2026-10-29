@@ -1,0 +1,20 @@
+
+                                         │
+   Regular                               │Start
+   Bold                                  │
+                                       Middle
+   Italic                                │
+                                       End
+   Bold italic                           │
+   Mono 0O1lI                       Three lines
+                                    cente●ed on
+   Underlined                  T     one Toint
+   H2O and x2                  u         u
+                               r         r
+   Mixed bold and mono         n         n
+                               ●         ●       Upsid● down
+   Small 10                    d         d
+
+   Large 24                    -         4
+                               9         5
+   ━━━Halo over a line━━━━     0 A color of its own

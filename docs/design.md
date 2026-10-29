@@ -37,7 +37,7 @@ never moves anything.
 | `limu-tiny-skia` | Draws a scene into a tiny-skia pixmap, for PNGs and for the golden images of the default drawing, and measures with the fonts it draws in. | `limu-scene`, tiny-skia, rustybuzz |
 | `limu-coregraphics` | Draws a scene into a `CGContext` the host gives, and measures with CoreText. | `limu-scene`, objc2's Core Graphics and Core Text |
 | `limu-gpui` | Draws a scene in a GPUI window, and measures with GPUI's text system. | `limu-scene`, gpui-fast |
-| `limu-ascii` | Draws a scene as text in a grid of cells, for terminals and TUIs, and measures in cells. | `limu-scene` |
+| `limu-ascii` | Draws a scene as text in a grid of cells, for terminals and TUIs, and measures in cells. | `limu-scene`, unicode-width |
 
 `limu-scene` and `limu` use the standard library alone. A backend that needs another crate
 is a crate of its own.
@@ -234,10 +234,21 @@ draws inside the item and inside the layer of its opacity, so the style it is gi
 always opaque. The SVG writer is a canvas like any other, and its hook writes markup of
 its own through the writer.
 
-`limu-ascii` is the other kind of backend. A grid of cells can't fill a curve, so it draws
-from roles, shapes, bounds and routes, in box-drawing characters, and lays the diagram out
-with a measurer that counts cells. What the scene and layout must give it for that, such as
-the height of a line in cells, is settled when it is built.
+`limu-ascii` draws on a canvas too, but a grid of cells can't fill a curve or turn a
+letter. It keeps each cell's lines as the sides of the cell they leave by, so lines that
+meet in a cell are written as one box-drawing character that joins them. Curves are drawn
+in steps across and down. Where cells serve a diagram badly, it draws from the scene's
+kinds, labels and bounds instead of the parts. A node with a label whose outline curves or
+slants, as a stadium or a diamond, is drawn as the box it lies in. A shape too small to
+outline is a dot, and a marker is a character such as an arrow, drawn last so that nothing
+hides it. A label is set a line to a row, and one turned 30 degrees or more is set down.
+
+The layout needs nothing of its own for cells. Text is measured by the cells it takes, and
+laid out at the size whose lines are a row high, so that the room Pele gives in pixels about
+text and between the parts of a shape is about a row. Cells are 6 by 12, half as wide as
+high, and text is set at 8. The scene is snapped to the cells' grid. A terminal's width is
+the layout's `max_width`, with no breakpoint for turning, so that a diagram that can draw
+itself narrower does. Some diagrams can't, and their text is as wide as they are.
 
 ## Hit testing
 

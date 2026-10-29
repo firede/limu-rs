@@ -152,6 +152,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "limu-ascii"
+version = "0.1.0"
+dependencies = [
+ "limu",
+ "limu-samples",
+ "limu-scene",
+ "unicode-width",
+]
+
+[[package]]
 name = "limu-coregraphics"
 version = "0.1.0"
 dependencies = [
@@ -472,6 +482,12 @@ name = "unicode-script"
 version = "0.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "383ad40bb927465ec0ce7720e033cb4ca06912855fc35db31b5755d0de75b1ee"
+
+[[package]]
+name = "unicode-width"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca718471876992059f251e33aafc334346ada08042b7661dd1fe313a9bced557"
 
 [[package]]
 name = "version_check"

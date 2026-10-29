@@ -23,7 +23,7 @@ Pele 的逐个数值比对。它是 [limu](https://github.com/firede/limu) 的 R
 | `limu-tiny-skia` | 把场景画成位图。 |
 | `limu-coregraphics` | 用 Core Graphics 绘制场景，用 Core Text 测量文字。 |
 | `limu-gpui` | 在 GPUI 窗口里绘制场景，用 GPUI 的文字系统测量文字。 |
-| `limu-ascii` | 把场景画成文字，给终端用。 |
+| `limu-ascii` | 用制表符把场景画成文字，给终端用。 |
 
 核心的 `limu` 和 `limu-scene` 只用标准库，serde 是可选的 feature。
 

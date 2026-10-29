@@ -1,0 +1,21 @@
+[package]
+name = "limu-ascii"
+description = "Draws limu's scenes as text in a grid of cells, for terminals."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+limu-scene = { workspace = true }
+# How many cells a character takes in a terminal.
+unicode-width = "0.2"
+
+[dev-dependencies]
+limu = { path = "../limu" }
+limu-samples = { path = "../limu-samples" }
+
+[lints]
+workspace = true

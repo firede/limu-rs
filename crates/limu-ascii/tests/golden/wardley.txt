@@ -1,0 +1,38 @@
+
+                             Tea Shop Value Chain
+
+     │                ╎                ╎               ╎
+     │                ╎                ╎   Business    ╎
+     │                ╎                ╎       │       ╎
+     │                ╎                ╎       │       ╎
+     │                ╎                ╎      ┌┘       ╎
+     │                ╎                ╎      │Cup of Tea
+     │                ╎                ╎      ○        ╎
+     │                ╎                ╎      ─┬─┐     ╎
+     │                ╎                ╎       └─┼──┐  ╎
+     │                ╎                ╎         └┐ └──┤
+  V  │                ╎                ╎          └─┐  ├──┐  Tea
+  i  │                ╎                ╎            └─┐╎  └○
+  s  │                ╎                ╎              └┤
+  i  │                ╎                ╎               ├─┐
+  b  │                ╎                ╎               ╎ └─ Hot Water
+  i  │                ╎                ╎             ┌─┼───○
+  l  │                ╎                ╎   ┌─────────┘ ╎
+  i  │                ╎       Kettle───┼───┘           ╎
+  t  │                ╎     ○╌┬╌╌╌┴╌╌╌╌┼╌╌╌╌╌▶ ○       ╎
+  y  │                ╎       └─┐      ╎               ╎
+     │                ╎         └──┐   ╎               ╎
+     │                ╎            └─┐Standardising power allows Kettles to
+     │                ╎              └evolve faster    ╎
+     │                ╎                ├─┐             ╎
+     │                ╎                ╎ └─┐           ╎
+     │                ╎                ╎   └──┐        ╎
+     │                ╎                ╎      └─┐      ╎
+     │                ╎                ╎        └─┐  Power
+     │                ╎                ╎          └─○╌╌┼╌╌╌╌╌╌╌▶ ○
+     │                ╎                ╎               ╎
+     │                ╎                ╎               ╎
+     │                ╎                ╎               ╎
+     └────Genesis─────┴─Custom Built───┴────Product────┴────Commodity────
+
+                                   Evolution
