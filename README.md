@@ -14,6 +14,24 @@ compare its output with Pele's, number for number. It is the Rust sibling of
 > [!WARNING]
 > limu-rs is young, and its API will change in any 0.x release.
 
+## Using it
+
+limu-rs needs Rust 1.95 or later. Add `limu`, and the backend you draw with.
+
+```sh
+cargo add limu
+cargo add limu-tiny-skia
+```
+
+```rust
+let scene = limu::layout("flowchart LR; a --> b", &Default::default())?;
+let svg = limu::scene::svg::render(&scene, &Default::default());
+```
+
+[limu.firede.com](https://limu.firede.com) has the guides, the examples of every type and a
+playground, for limu in Go and for limu-rs in Rust. [docs.rs](https://docs.rs/limu)
+documents every name.
+
 ## Crates
 
 | Crate | What it does |

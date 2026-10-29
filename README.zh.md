@@ -14,6 +14,23 @@ Pele 的逐个数值比对。它是 [limu](https://github.com/firede/limu) 的 R
 > [!WARNING]
 > limu-rs 还处在早期，0.x 版本之间 API 随时可能变化。
 
+## 使用
+
+limu-rs 需要 Rust 1.95 或更新的版本。添加 `limu`，以及要用来绘制的后端。
+
+```sh
+cargo add limu
+cargo add limu-tiny-skia
+```
+
+```rust
+let scene = limu::layout("flowchart LR; a --> b", &Default::default())?;
+let svg = limu::scene::svg::render(&scene, &Default::default());
+```
+
+[limu.firede.com](https://limu.firede.com) 有指南、每种图的示例和 playground，Go 的 limu 和
+Rust 的 limu-rs 都有。[docs.rs](https://docs.rs/limu) 有每个名字的文档。
+
 ## crate
 
 | crate | 作用 |

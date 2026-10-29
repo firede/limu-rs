@@ -7,6 +7,17 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords = ["mermaid", "diagram", "core-graphics", "macos", "ios"]
+categories = ["visualization", "rendering", "os::macos-apis"]
+# The golden images are the tests', which a host never runs.
+exclude = ["tests/golden"]
+
+# It draws on Apple's platforms alone, and is empty on others.
+[package.metadata.docs.rs]
+default-target = "aarch64-apple-darwin"
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "aarch64-apple-ios"]
 
 [dependencies]
 limu-scene = { workspace = true }

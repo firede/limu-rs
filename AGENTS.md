@@ -43,12 +43,13 @@ layout.
 
 ## Releasing
 
-- limu-rs is released as a tag `v…` with a release on GitHub. It isn't on crates.io yet, and
-  publishing it there waits on its owner.
+- limu-rs is released as a tag `v…` with a release on GitHub, and its crates are published
+  to crates.io at the same version. `cargo publish --workspace` publishes the root
+  workspace's, leaving out those marked `publish = false`, and limu-gpui, a workspace of its
+  own, is published from its directory after them. Ask the owner before publishing.
 - The website, [firede/limu-website](https://github.com/firede/limu-website), shows limu-rs
-  beside limu. Its `limu-rs.json` names the commit its Rust playground is built from until
-  the first release, and the release's tag after. After a release, follow it there, as its
-  README says, and change its documents for what the release changed. Every Rust example
+  beside limu. Its `limu-rs.json` names the tag its Rust playground is built from. After a
+  release, follow it there, as its README says, and change its documents for what the release changed. Every Rust example
   there compiles against the release. Its daily check fails until the site follows the
   latest release.
 - A release's notes list what changed that the site describes, such as the API, the

@@ -7,6 +7,12 @@ rust-version = "1.95"
 license = "MIT"
 repository = "https://github.com/firede/limu-rs"
 authors = ["Firede <firede@firede.com>"]
+homepage = "https://limu.firede.com"
+readme = "../../README.md"
+keywords = ["mermaid", "diagram", "gpui"]
+categories = ["visualization", "gui"]
+# The golden images are the tests', which a host never runs.
+exclude = ["tests/golden"]
 
 # A workspace of its own: GPUI takes long to build, and the root workspace's checks leave it
 # out. CI builds it in a job of its own.

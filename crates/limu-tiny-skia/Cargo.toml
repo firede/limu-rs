@@ -7,6 +7,12 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords = ["mermaid", "diagram", "tiny-skia", "png"]
+categories = ["visualization", "rendering"]
+# The golden images are the tests', which a host never runs.
+exclude = ["tests/golden"]
 
 [dependencies]
 limu-scene = { workspace = true }

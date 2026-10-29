@@ -10,6 +10,8 @@ edition = "2024"
 rust-version = "1.95"
 license = "MIT"
 repository = "https://github.com/firede/limu-rs"
+homepage = "https://limu.firede.com"
+readme = "README.md"
 authors = ["Firede <firede@firede.com>"]
 
 [workspace.dependencies]

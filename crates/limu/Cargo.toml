@@ -7,6 +7,10 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords = ["mermaid", "diagram", "layout", "flowchart", "graph"]
+categories = ["visualization", "graphics"]
 
 [features]
 default = ["agentflow", "architecture", "block", "c4", "class", "cynefin", "er", "eventmodeling", "flowchart", "gantt", "gitgraph", "info", "ishikawa", "journey", "kanban", "mindmap", "packet", "pie", "quadrant", "radar", "railroad", "requirement", "sankey", "sequence", "state", "swimlane", "timeline", "treemap", "treeview", "usecase", "venn", "wardley", "xychart"]
