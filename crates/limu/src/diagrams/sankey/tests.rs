@@ -224,7 +224,7 @@ fn author_line(line: &str) -> String {
 /// A paint as Pele's SVG names it, "-" for the text's own color, which Pele leaves to the
 /// root, and a paint at an opacity other than factor "?".
 fn paint_name(p: Option<Paint>, factor: f32) -> String {
-    let Some(p) = p.filter(|p| p.factor() == factor) else {
+    let Some(p) = p.filter(|p| p.opacity() == factor) else {
         return "?".into();
     };
     if p == Paint::FG {

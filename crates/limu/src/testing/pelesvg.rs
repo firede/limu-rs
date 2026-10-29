@@ -61,7 +61,7 @@ pub(crate) fn tags_last(tags: &'static [&'static str]) -> impl Fn(&str) -> Strin
 pub(crate) fn own_fill(it: &Item) -> Option<Paint> {
     it.style
         .fill
-        .map(|p| p.alpha(it.style.fill_opacity.unwrap_or(1.0)))
+        .map(|p| p.with_opacity(it.style.fill_opacity.unwrap_or(1.0)))
 }
 
 /// The color Pele's ink gives what lies on a fill a style sets, by the theme's paint that

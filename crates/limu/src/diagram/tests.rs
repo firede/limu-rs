@@ -103,10 +103,18 @@ fn text_items_have_bounds() {
         let sc = crate::layout(src, &Options::default()).expect("a diagram");
         for it in sc.items.iter().filter(|it| matches!(it.kind, Kind::Text)) {
             assert!(
-                !it.bounds.is_empty(),
+                !it.bounds.is_unset(),
                 "{src:?}: {} has no bounds",
                 it.role.as_str()
             );
         }
     }
+}
+
+#[test]
+fn names_read_back() {
+    for &t in TYPES {
+        assert_eq!(crate::DiagramType::from_name(t.name()), Some(t));
+    }
+    assert_eq!(crate::DiagramType::from_name("nothing"), None);
 }

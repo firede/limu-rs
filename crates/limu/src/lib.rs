@@ -66,7 +66,7 @@ mod js;
 pub mod layout;
 mod prepare;
 mod preprocess;
-pub mod text;
+mod text;
 mod url;
 mod value;
 mod yaml;

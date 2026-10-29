@@ -5,7 +5,7 @@ use std::time::SystemTime;
 
 use crate::scene::Grid;
 use crate::scene::text::Measurer;
-use crate::text::Arial;
+pub use crate::text::Arial;
 
 static ARIAL: Arial = Arial;
 static UTC: Utc = Utc;

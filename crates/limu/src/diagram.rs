@@ -484,7 +484,7 @@ impl Diagram {
         // A text item the layout gives no box of its own takes the box its label is drawn
         // in, so that a host hit-tests and clips every text by its bounds.
         for it in &mut sc.items {
-            if matches!(it.kind, Kind::Text) && it.bounds.is_empty() {
+            if matches!(it.kind, Kind::Text) && it.bounds.is_unset() {
                 it.bounds = it.label_bounds();
             }
         }

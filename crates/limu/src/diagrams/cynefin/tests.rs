@@ -309,7 +309,7 @@ fn paint_name(p: Option<Paint>) -> String {
     }
     for k in 0..8 {
         for a in [1.0, 0.14, 0.18] {
-            if p == Paint::series(k).alpha(a) {
+            if p == Paint::series(k).with_opacity(a) {
                 let mut s = format!("series-{}", k + 1);
                 if a != 1.0 {
                     s.push_str(&format!("@{}", n(a)));

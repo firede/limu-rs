@@ -96,7 +96,7 @@ impl Paint {
     }
 
     /// The paint at a part of its opacity. At no opacity or less, it draws nothing.
-    pub fn alpha(self, a: f64) -> Paint {
+    pub fn with_opacity(self, a: f64) -> Paint {
         if a <= 0.0 {
             return Paint::NONE;
         }
@@ -143,7 +143,7 @@ impl Paint {
     }
 
     /// The part of its opacity the paint is drawn at.
-    pub fn factor(&self) -> f32 {
+    pub fn opacity(&self) -> f32 {
         self.alpha
     }
 
@@ -403,7 +403,7 @@ impl Look {
         // stripes at an opacity of 0.6 when its style sets a fill.
         let (mut shade, _) = self.shade(author);
         if author.fill.is_some() {
-            shade = shade.alpha(0.6);
+            shade = shade.with_opacity(0.6);
         }
         Resolved {
             fill: ink(s.fill, s.fill_opacity),
@@ -715,8 +715,19 @@ mod tests {
         let th = Theme::default();
         assert!(!Paint::NONE.visible());
         assert_eq!(Paint::series(9).color(&th), th.series[1], "series wrap");
-        assert_eq!(Paint::SURFACE.alpha(0.5).alpha(0.5).color(&th).a, 64);
-        assert_eq!(Paint::SURFACE.alpha(0.0), Paint::NONE, "alpha 0 is none");
+        assert_eq!(
+            Paint::SURFACE
+                .with_opacity(0.5)
+                .with_opacity(0.5)
+                .color(&th)
+                .a,
+            64
+        );
+        assert_eq!(
+            Paint::SURFACE.with_opacity(0.0),
+            Paint::NONE,
+            "alpha 0 is none"
+        );
         assert_eq!(
             Paint::series(2).as_token().map(Token::name),
             Some("series-3")
@@ -734,7 +745,10 @@ mod tests {
     fn over() {
         let mut th = Theme::default();
         (th.surface_alt, th.bg) = (Color::hex("#000"), Color::hex("#fff"));
-        let c = Paint::SURFACE_ALT.alpha(0.75).over(Token::Bg).color(&th);
+        let c = Paint::SURFACE_ALT
+            .with_opacity(0.75)
+            .over(Token::Bg)
+            .color(&th);
         assert_eq!(c, Color::new(64, 64, 64, 255));
         assert_eq!(
             Paint::NONE.over(Token::Bg),

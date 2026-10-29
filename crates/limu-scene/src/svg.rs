@@ -110,7 +110,7 @@ impl Writer<'_> {
             self.b.push_str("color-mix(in srgb,");
             self.variable(t);
             self.b.push(' ');
-            self.num(100.0 * f64::from(p.factor()) * f64::from(self.theme().color(t).a) / 255.0);
+            self.num(100.0 * f64::from(p.opacity()) * f64::from(self.theme().color(t).a) / 255.0);
             self.b.push_str("%,");
             self.variable(base);
             self.b.push(')');
@@ -130,7 +130,7 @@ impl Writer<'_> {
             Source::Own(c) => c,
             Source::Theme(t) => self.theme().color(t),
         };
-        f64::from(p.factor()) * f64::from(c.a) / 255.0
+        f64::from(p.opacity()) * f64::from(c.a) / 255.0
     }
 
     /// Writes a token of the theme as a CSS variable, its color in the theme the fallback.

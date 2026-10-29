@@ -558,7 +558,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
             Painting::FillOnly => stroke = "-".into(),
             _ => {}
         }
-        let factor = fill.map_or(1.0, |f| f.factor());
+        let factor = fill.map_or(1.0, |f| f.opacity());
         let opacity = if factor < 1.0 {
             factor.to_string()
         } else {

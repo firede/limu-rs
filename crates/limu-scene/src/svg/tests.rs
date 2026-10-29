@@ -49,7 +49,7 @@ fn sample() -> Scene {
         Point::new(120.0, 24.0),
     ));
     group.style = Style {
-        fill: Some(Paint::SURFACE_ALT.alpha(0.5)),
+        fill: Some(Paint::SURFACE_ALT.with_opacity(0.5)),
         stroke: Some(Paint::BORDER),
         text: Some(Paint::MUTED),
         ..Style::default()
@@ -434,7 +434,7 @@ fn label_icon_color() {
         Point::new(50.0, 20.0),
     ));
     it.style = Style {
-        text: Some(Paint::MUTED.alpha(0.5)),
+        text: Some(Paint::MUTED.with_opacity(0.5)),
         ..Style::default()
     };
     it.picture = Some(Picture {

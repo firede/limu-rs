@@ -77,7 +77,13 @@ pub enum DiagramType {
 }
 
 impl DiagramType {
-    /// The type as Pele names it, as "gitGraph".
+    /// The type a name names, as [`name`](DiagramType::name) gives it, as a scene's
+    /// diagram is. Only a type limu reads is found.
+    pub fn from_name(name: &str) -> Option<DiagramType> {
+        crate::types().iter().copied().find(|t| t.name() == name)
+    }
+
+    /// The type as Pele names it, as "gitGraph", which is a scene's diagram.
     pub fn name(self) -> &'static str {
         use DiagramType::*;
         match self {

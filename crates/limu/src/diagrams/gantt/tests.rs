@@ -377,10 +377,10 @@ fn paint_name(p: Option<Paint>) -> String {
         (Paint::SURFACE_ALT, "var(--_a)"),
         (Paint::BORDER, "var(--_b)"),
         (Paint::ACCENT, "var(--_c)"),
-        (Paint::ACCENT.alpha(0.25), "var(--_c)/0.25"),
+        (Paint::ACCENT.with_opacity(0.25), "var(--_c)/0.25"),
         (Paint::CRITICAL, "var(--pele-critical,#e45756)"),
         (
-            Paint::CRITICAL.alpha(0.25),
+            Paint::CRITICAL.with_opacity(0.25),
             "var(--pele-critical,#e45756)/0.25",
         ),
         (Paint::NONE, "none"),

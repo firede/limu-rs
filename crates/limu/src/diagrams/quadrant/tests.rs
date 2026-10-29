@@ -253,7 +253,7 @@ fn paint_name(p: Option<Paint>) -> String {
         return (*name).into();
     }
     match p.source() {
-        Source::Own(c) if c.a == 255 && p.factor() == 1.0 && p.base().is_none() => {
+        Source::Own(c) if c.a == 255 && p.opacity() == 1.0 && p.base().is_none() => {
             format!("#{:02x}{:02x}{:02x}", c.r, c.g, c.b)
         }
         _ => "?".into(),

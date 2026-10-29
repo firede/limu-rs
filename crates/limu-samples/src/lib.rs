@@ -10,7 +10,7 @@
 //! Text is measured as Arial, as limu measures it by default. Liberation Sans is as wide, so
 //! a backend that draws in it fills the room laid out for its text.
 
-use limu::text::Arial;
+use limu::layout::Arial;
 use limu_scene::style::{Cap, Color, Join, Paint, Style};
 use limu_scene::text::{self, Face, Label, Span};
 use limu_scene::{
@@ -302,7 +302,7 @@ fn sample() -> Scene {
         Point::new(120.0, 24.0),
     ));
     group.style = Style {
-        fill: Some(Paint::SURFACE_ALT.alpha(0.5)),
+        fill: Some(Paint::SURFACE_ALT.with_opacity(0.5)),
         stroke: Some(Paint::BORDER),
         text: Some(Paint::MUTED),
         ..Style::default()

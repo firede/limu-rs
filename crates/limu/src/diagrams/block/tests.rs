@@ -278,7 +278,7 @@ fn paint_name(p: Option<Paint>) -> String {
     .into_iter()
     .find(|(q, _)| q.as_token().is_some() && q.as_token() == p.as_token() && p.base().is_none())
     .map(|(_, name)| name);
-    match (name, p.factor()) {
+    match (name, p.opacity()) {
         (None, _) => "?".into(),
         (Some(name), 1.0) => name.into(),
         (Some(name), f) => format!("{name}/{f}"),
@@ -292,12 +292,12 @@ fn part_paint(it: &Item, part: &Part) -> String {
     let stroke = paint_name(
         it.style
             .stroke
-            .map(|p| p.alpha(s.stroke_opacity.unwrap_or(1.0))),
+            .map(|p| p.with_opacity(s.stroke_opacity.unwrap_or(1.0))),
     );
     let fill = paint_name(
         it.style
             .fill
-            .map(|p| p.alpha(s.fill_opacity.unwrap_or(1.0))),
+            .map(|p| p.with_opacity(s.fill_opacity.unwrap_or(1.0))),
     );
     match part.paint {
         crate::scene::Painting::StrokeOnly => format!("none {stroke}"),

@@ -47,9 +47,9 @@ impl Rect {
         p.x >= self.x && p.x <= self.x + self.w && p.y >= self.y && p.y <= self.y + self.h
     }
 
-    /// Whether the box is empty: no wider and no higher than nothing, at the origin, as a
-    /// box nothing was set in is.
-    pub fn is_empty(&self) -> bool {
+    /// Whether the box is unset: no wider and no higher than nothing, at the origin, as a
+    /// box nothing was set in is. A box of no size elsewhere is set.
+    pub fn is_unset(&self) -> bool {
         *self == Rect::default()
     }
 

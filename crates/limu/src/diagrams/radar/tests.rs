@@ -291,7 +291,7 @@ fn paint_name(p: Option<Paint>) -> (String, String) {
     };
     for k in 0..8 {
         for a in [1.0, 0.2, 0.4] {
-            if p == Paint::series(k).alpha(a) {
+            if p == Paint::series(k).with_opacity(a) {
                 let opacity = if a == 1.0 { "-".into() } else { n(a) };
                 let name = format!("var(--pele-series-{},{})", k + 1, Theme::PELE.series[k]);
                 return (name, opacity);

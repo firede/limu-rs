@@ -882,7 +882,7 @@ fn draw(db: &ClassDb, config: &Map, o: &Options, turned: bool, tight: bool) -> S
                         text: Some(Paint::MUTED),
                         halo: Some(
                             Paint::SURFACE_ALT
-                                .alpha(struck_tint(depth) / 100.0)
+                                .with_opacity(struck_tint(depth) / 100.0)
                                 .over(Token::Bg),
                         ),
                         halo_width: Some(STRUCK_HALO),

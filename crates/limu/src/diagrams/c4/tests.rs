@@ -315,7 +315,7 @@ fn colors(fill: Option<Paint>, stroke: Option<Paint>) -> String {
                 Source::Theme(t) => t.name().to_string(),
                 Source::None => "none".to_string(),
             };
-            format!("{c}/{}", p.factor())
+            format!("{c}/{}", p.opacity())
         }
     };
     format!("fill={} stroke={}", paint(fill), paint(stroke))

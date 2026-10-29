@@ -166,8 +166,8 @@ fn paint_name(p: Option<Paint>) -> String {
             name = format!("var(--pele-series-{},{})", k + 1, Theme::PELE.series[k]);
         }
     }
-    if p.factor() != 1.0 {
-        name += &format!("/{}", pele_num(f64::from(p.factor())));
+    if p.opacity() != 1.0 {
+        name += &format!("/{}", pele_num(f64::from(p.opacity())));
     }
     name
 }

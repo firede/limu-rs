@@ -203,7 +203,7 @@ fn paint_name(p: Option<Paint>) -> String {
         if p == Paint::series(k) {
             return format!("var(--pele-series-{},{color})", k + 1);
         }
-        if p == Paint::series(k).alpha(TINT) {
+        if p == Paint::series(k).with_opacity(TINT) {
             return format!("var(--pele-series-{},{color})/{}", k + 1, n(TINT));
         }
     }

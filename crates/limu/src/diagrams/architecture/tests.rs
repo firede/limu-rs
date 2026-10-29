@@ -362,7 +362,7 @@ fn paint_name(p: Option<Paint>) -> String {
         (Paint::MUTED, "var(--_m)"),
         (Paint::LINE, "var(--_l)"),
         (Paint::SURFACE, "var(--_s)"),
-        (Paint::SURFACE_ALT.alpha(0.5), "var(--_a)/0.5"),
+        (Paint::SURFACE_ALT.with_opacity(0.5), "var(--_a)/0.5"),
         (Paint::BORDER, "var(--_b)"),
     ];
     named

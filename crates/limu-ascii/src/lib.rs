@@ -193,7 +193,7 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
     c.nodes = scene
         .items
         .iter()
-        .filter(|it| matches!(it.kind, Kind::Node) && !it.bounds.is_empty())
+        .filter(|it| matches!(it.kind, Kind::Node) && !it.bounds.is_unset())
         .map(|it| {
             let b = it.bounds;
             (
@@ -218,7 +218,7 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
     let crowded: Vec<Rect> = scene
         .items
         .iter()
-        .filter(|it| matches!(it.kind, Kind::Node) && !it.bounds.is_empty())
+        .filter(|it| matches!(it.kind, Kind::Node) && !it.bounds.is_unset())
         .map(|it| it.bounds)
         .filter(|b| {
             scene.items.iter().any(|x| {
@@ -350,7 +350,7 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
             let b = it.bounds;
             let inside = matches!(it.kind, Kind::Node | Kind::Group)
                 && s.stroke.visible()
-                && !b.is_empty()
+                && !b.is_unset()
                 && (b.x..=b.x + b.w).contains(&placed.at.x)
                 && (b.y..=b.y + b.h).contains(&placed.at.y);
             let lines = placed
@@ -377,7 +377,7 @@ pub fn render(scene: &Scene, o: &Options) -> Result<String, Unsupported> {
             };
             let middle = match boxed {
                 Some(mid) => Some(mid),
-                None if matches!(it.kind, Kind::Node) && !b.is_empty() => about(b),
+                None if matches!(it.kind, Kind::Node) && !b.is_unset() => about(b),
                 None => None,
             };
             let middle = middle.filter(|_| placed.align == Align::Middle && placed.rotate == 0.0);
@@ -1294,7 +1294,7 @@ fn stretches(pts: &[Point]) -> Vec<&[Point]> {
 
 /// The box two boxes lie in, where the second is not empty.
 fn union(a: Rect, b: Rect) -> Rect {
-    if b.is_empty() {
+    if b.is_unset() {
         return a;
     }
     let (x0, y0) = (a.x.min(b.x), a.y.min(b.y));

@@ -24,7 +24,8 @@ use crate::text::Label;
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Scene {
-    /// The kind of diagram: "flowchart", "sequence"…
+    /// The kind of diagram: "flowchart", "sequence"… A scene `limu` lays out names it as
+    /// its `DiagramType::name` does, which `DiagramType::from_name` reads back.
     pub diagram: String,
     /// How wide the diagram is.
     pub width: f64,

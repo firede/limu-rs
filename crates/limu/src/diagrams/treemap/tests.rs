@@ -365,7 +365,7 @@ fn fill_name(p: Option<Paint>) -> String {
                 if p == Paint::series(k) {
                     return format!("{name} -");
                 }
-                if p == Paint::series(k).alpha(0.12) {
+                if p == Paint::series(k).with_opacity(0.12) {
                     return format!("{name} 0.12");
                 }
             }

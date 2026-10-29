@@ -13,6 +13,7 @@ use crate::preprocess::{cleanup_comments, encode_entities, normalize_line_breaks
 use crate::value::Map;
 
 /// The most UTF-16 code units a diagram's text may have by default, Mermaid's maxTextSize.
+/// It is how long the text may be, counted as JavaScript counts a string's length.
 pub const DEFAULT_LIMIT: usize = 50_000;
 
 /// The most edges a flowchart or an agent flow may have by default. Mermaid stops at 500.
@@ -23,8 +24,9 @@ pub const DEFAULT_MAX_EDGES: usize = 5_000;
 /// What a diagram's text is read with, as Pele's ParseOptions has it.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ParseOptions {
-    /// The most UTF-16 code units the text may have, [`DEFAULT_LIMIT`] by default, or no
-    /// limit where it is none.
+    /// How long the text may be, in UTF-16 code units as JavaScript counts a string's
+    /// length: [`DEFAULT_LIMIT`] by default, or no limit where it is none. It is named as
+    /// Pele's option is.
     pub limit: Option<usize>,
     /// The most edges a flowchart or an agent flow may have, [`DEFAULT_MAX_EDGES`] by
     /// default, or no limit where it is none.
