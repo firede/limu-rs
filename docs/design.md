@@ -258,7 +258,8 @@ Some diagrams are left to other forms. A pie chart, an XY chart, a radar chart, 
 diagram, a Gantt chart and a packet diagram say what they say in sizes and places finer
 than a cell. A git graph's branches and a tree view's lines are too close together for
 cells to tell apart. limu-ascii gives an error for these rather than draw them, as a
-drawing that misleads is worse than none.
+drawing that misleads is worse than none. It doesn't write them in forms of its own, as
+tables or lists, because a backend draws the scene it is given and nothing else.
 
 The layout needs nothing of its own for cells. Text is measured by the cells it takes, and
 laid out at the size whose lines are a row high, so that the room Pele gives in pixels about
