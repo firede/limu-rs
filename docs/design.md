@@ -36,7 +36,7 @@ never moves anything.
 | `limu` | Parsing and layout of every diagram type, and what they share. It re-exports `limu-scene`. | `limu-scene` |
 | `limu-tiny-skia` | Draws a scene into a tiny-skia pixmap, for PNGs and for the golden images of the default drawing, and measures with the fonts it draws in. | `limu-scene`, tiny-skia, rustybuzz |
 | `limu-coregraphics` | Draws a scene into a `CGContext` the host gives, and measures with CoreText. | `limu-scene`, objc2's Core Graphics and Core Text |
-| `limu-gpui` | Draws a scene in a GPUI window, and measures with GPUI's text system. | `limu-scene`, gpui-fast |
+| `limu-gpui` | Draws a scene in a GPUI window, and measures with GPUI's text system. | `limu-scene`, gpui-pre |
 | `limu-ascii` | Draws a scene as text in a grid of cells, for terminals and TUIs, and measures in cells. | `limu-scene`, unicode-width |
 
 `limu-scene` and `limu` use the standard library alone. A backend that needs another crate

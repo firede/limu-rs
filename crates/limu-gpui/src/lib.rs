@@ -19,7 +19,7 @@
 //! colors, as the default drawing does for a canvas without layers, and an image is drawn
 //! opaque, as GPUI draws images.
 //!
-//! On macOS, GPUI sets text only with the `font-kit` feature of gpui-fast-platform. Without
+//! On macOS, GPUI sets text only with the `font-kit` feature of gpui-pre-platform. Without
 //! it every glyph is missing.
 
 mod svg;
