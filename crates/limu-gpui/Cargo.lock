@@ -2498,14 +2498,14 @@ dependencies = [
 
 [[package]]
 name = "limu"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "limu-scene",
 ]
 
 [[package]]
 name = "limu-gpui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "gpui-pre",
  "gpui-pre-platform",
@@ -2517,7 +2517,7 @@ dependencies = [
 
 [[package]]
 name = "limu-samples"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "limu",
  "limu-scene",
@@ -2525,7 +2525,7 @@ dependencies = [
 
 [[package]]
 name = "limu-scene"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "linebender_resource_handle"
