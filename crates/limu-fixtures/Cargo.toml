@@ -16,7 +16,7 @@ serde = { workspace = true }
 # deeper than serde_json reads by default.
 serde_json = { version = "1", features = ["float_roundtrip", "unbounded_depth"] }
 # The oracle writes a digest of the lines of a drawing past its first cases.
-sha2 = "0.10"
+sha2 = "0.11"
 
 [lints]
 workspace = true

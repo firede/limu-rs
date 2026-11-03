@@ -20,7 +20,7 @@ serde = { workspace = true, optional = true }
 
 [dev-dependencies]
 limu-fixtures = { path = "../limu-fixtures" }
-roxmltree = "0.20"
+roxmltree = "0.21"
 serde = { workspace = true }
 
 [lints]
