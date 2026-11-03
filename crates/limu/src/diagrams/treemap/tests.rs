@@ -10,7 +10,7 @@ use super::parse;
 use super::parser::{RowAst, TREEMAP_TOKENS, TreemapAst, parse_treemap, table};
 use super::render::{ROLE_LEAF, ROLE_SECTION, ROLE_TITLE, ROLE_VALUE, layout};
 use crate::common::tokens::tokenize;
-use crate::css::declarations;
+use crate::css::{declarations, opaque, resolve_style};
 use crate::detect::DiagramType;
 use crate::errors::ErrorCode;
 use crate::js::math::round;
@@ -335,7 +335,9 @@ fn unescape(s: &str) -> Option<String> {
 
 /// A line of the fixture with the style Pele writes, "css=", read as limu reads declarations,
 /// "author=": on a shape as it is, and on a text with its fill, which is the color the author
-/// gave, read as that color.
+/// gave, read as that color. A section whose author sets a fill, which Pele writes with no
+/// fill-opacity of its own, is read as limu lays it out: in its tint, and the full opacity in
+/// the author's style, as `css::opaque` gives it.
 fn author_line(line: &str) -> String {
     let Some(at) = line.find(" css=") else {
         return line.to_string();
@@ -345,8 +347,17 @@ fn author_line(line: &str) -> String {
         return line.to_string();
     };
     let mut decls: Vec<String> = written.split(';').map(str::to_string).collect();
+    let mut head = line[..at].to_string();
     let field = if line.starts_with("section ") || line.starts_with("leaf ") {
-        author(shape_view, &declarations(&decls).style)
+        let filled = line.starts_with("section ") && resolve_style(&decls).fill_declared();
+        if filled
+            && let Some(fill) = head.find(" var(--pele-series-")
+            && let Some(dash) = head[fill..].find(") - ")
+        {
+            let opacity = fill + dash + ") ".len();
+            head.replace_range(opacity..opacity + 1, "0.12");
+        }
+        author(shape_view, &opaque(declarations(&decls).style, filled))
     } else {
         for d in &mut decls {
             if let Some(rest) = d.strip_prefix("fill:") {
@@ -355,7 +366,7 @@ fn author_line(line: &str) -> String {
         }
         author(text_view, &declarations(&decls).style)
     };
-    format!("{} {field}{}", &line[..at], &line[end..])
+    format!("{head} {field}{}", &line[end..])
 }
 
 /// How a box is filled, as the oracle reads Pele's fill and fill-opacity.

@@ -3,7 +3,7 @@
 use super::graph::{UsecaseGraphNode, build_usecase_graph};
 use super::types::{LabelType, UsecaseModel};
 use crate::common::{class_names, routing_curve, runs_across, setting, title_label, turn_to_fit};
-use crate::css::{Author, declarations, resolve_style};
+use crate::css::{Author, declarations, opaque, resolve_style};
 use crate::draw::{
     Crossings, Curve, EdgePath, Fill, Tip, casing, label_patch, label_patch_box, mark_crossings,
     marker_trim, on_fills, own_reach, route_path,
@@ -727,14 +727,10 @@ fn draw(m: &UsecaseModel, config: &Map, o: &Options, turned: bool) -> Scene {
                 on_fill: inks,
                 // A boundary is drawn at half its opacity, unless its author sets a fill, as
                 // Pele's setsFill tests.
-                fill_opacity: if resolved.fill_declared() {
-                    None
-                } else {
-                    Some(0.5)
-                },
+                fill_opacity: Some(0.5),
                 ..Style::default()
             };
-            it.author = v.author.style.clone();
+            it.author = opaque(v.author.style.clone(), resolved.fill_declared());
             let at = if n.boundary_type == Some("package") {
                 it.shape = Some(Shape::new("package"));
                 let tab_w = min(v.label.width + 2.0 * TAB_PAD + 8.0, c.w);

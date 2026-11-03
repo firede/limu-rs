@@ -235,6 +235,18 @@ fn values_at<'a>(css: &'a str, prop: &'a str) -> impl Iterator<Item = usize> + '
         .map(move |i| i + prop.len() + 1)
 }
 
+/// The style an author gave a part that the diagram draws in a translucent fill of its own
+/// unless its author sets a fill, as Pele's setsFill leaves out the part's fill-opacity: where
+/// filled, the style is drawn at full opacity unless it sets an opacity for its fill. The full
+/// opacity is the author's, and the part's own style keeps its translucency, so that a look
+/// that leaves out the author's style draws the part as if its author had set no fill.
+pub(crate) fn opaque(mut author: Style, filled: bool) -> Style {
+    if filled && author.fill_opacity.is_none() {
+        author.fill_opacity = Some(1.0);
+    }
+    author
+}
+
 /// Whether a style Pele writes declares prop, as /[";]prop:/ tests it.
 pub(crate) fn declares(css: &str, prop: &str) -> bool {
     values_at(css, prop).next().is_some()

@@ -7,7 +7,7 @@ use crate::common::{
     class_names, clickable, routing_curve, runs_across, setting, tighten, title_label, title_room,
     turn_to_fit,
 };
-use crate::css::{Author, Resolved, declarations, resolve_style};
+use crate::css::{Author, Resolved, declarations, opaque, resolve_style};
 use crate::draw::{
     Crossings, Curve, Fill, Node, STRUCK_HALO, SideReach, casing, cluster_title_x, draw_shape,
     end_side, inset_route, label_patch, label_patch_box, loop_path, mark_crossings, marker_trim,
@@ -496,17 +496,13 @@ fn draw(
             cluster.style = Style {
                 fill: Some(Paint::SURFACE_ALT),
                 // A fill the author sets is drawn at full opacity, as Pele's setsFill leaves
-                // out the group's own fill-opacity.
-                fill_opacity: if view.style.fill_declared() {
-                    None
-                } else {
-                    Some(0.5)
-                },
+                // out the group's own fill-opacity, and opaque makes the author's style.
+                fill_opacity: Some(0.5),
                 stroke: Some(Paint::BORDER),
                 text: Some(Paint::MUTED),
                 ..Style::default()
             };
-            cluster.author = author.style.clone();
+            cluster.author = opaque(author.style.clone(), view.style.fill_declared());
             if !view.label.is_empty() {
                 let at = Point::new(title_x, title_y);
                 if title_crossed(&node_of(c), view.label.width, title_x, &crossings) {

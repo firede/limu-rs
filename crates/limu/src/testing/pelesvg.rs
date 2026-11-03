@@ -65,6 +65,27 @@ pub(crate) fn own_fill(it: &Item) -> Option<Paint> {
         .map(|p| p.with_opacity(it.style.fill_opacity.unwrap_or(1.0)))
 }
 
+/// [`own_fill`] for a part the diagram draws in a translucent fill of its own unless its
+/// author sets a fill: at full opacity where [`opaque`], as Pele then writes no fill-opacity.
+pub(crate) fn tint_fill(it: &Item) -> Option<Paint> {
+    if opaque(it) {
+        return it.style.fill;
+    }
+    own_fill(it)
+}
+
+/// Whether Pele leaves out the fill-opacity of a part the diagram draws in a translucent fill
+/// of its own, as it does where the part's author sets a fill. limu keeps the part's own
+/// opacity and gives the author's style a full one (`css::opaque`), so this reads that style:
+/// true where it sets a fill opacity along with a fill, or a full one. Where the author writes
+/// a fill opacity and limu reads no fill beside it, it can differ from Pele's attribute, but
+/// not in what is drawn, as the author's opacity covers the part's own.
+pub(crate) fn opaque(it: &Item) -> bool {
+    it.author
+        .fill_opacity
+        .is_some_and(|o| o == 1.0 || it.author.fill.is_some())
+}
+
 /// The color Pele's ink gives what lies on a fill a style sets, by the theme's paint that
 /// stands for each: ON_LIGHT is the theme's foreground, and ON_DARK its background.
 fn ink_of(p: Option<Paint>) -> &'static str {
@@ -296,7 +317,7 @@ pub(crate) fn flow_lines(sc: &Scene) -> Vec<String> {
                     "cluster {id} [{classes}] {}",
                     boxed(it.bounds, 0.0, 0.0)
                 ));
-                if it.style.fill_opacity.is_none() {
+                if opaque(it) {
                     lines.push("opaque".into());
                 }
                 label(&mut lines, 0.0, 0.0);

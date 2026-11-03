@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use super::db::StateDb;
 use super::graph::{StateEdge, StateNode};
 use crate::common::{class_names, routing_curve, runs_across, setting, turn_to_fit, with_title};
-use crate::css::{Resolved, declarations, resolve_style};
+use crate::css::{Resolved, declarations, opaque, resolve_style};
 use crate::draw::{
     Crossings, Curve, EdgePath, Fill, Node, SideReach, Tip, casing, end_side, label_patch,
     label_patch_box, marker_trim, on_fills, route_path,
@@ -721,18 +721,16 @@ fn draw(db: &StateDb, config: &Map, o: &Options, turned: bool) -> Scene {
                 }
                 it.style = Style {
                     fill: Some(Paint::SURFACE_ALT),
-                    // A fill its author sets is drawn at full opacity.
-                    fill_opacity: if style.fill_declared() {
-                        None
-                    } else {
-                        Some(0.5)
-                    },
+                    // A fill its author sets is drawn at full opacity, as opaque makes the
+                    // author's style.
+                    fill_opacity: Some(0.5),
                     stroke: Some(Paint::BORDER),
                     text: Some(Paint::FG),
                     radius: Some(CORNER),
                     on_fill: inks,
                     ..Style::default()
                 };
+                it.author = opaque(it.author, style.fill_declared());
                 if view.title_h > 0.0 {
                     let mut rule = Path::new();
                     rule.move_to(left, top + view.title_h)

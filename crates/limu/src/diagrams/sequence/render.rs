@@ -26,7 +26,7 @@ use super::db::{
     STICK_BOTTOM, STICK_TOP, SeqActor, SeqDb, SeqMessage,
 };
 use crate::common::{break_label, class_names, setting, tighten, title_label, title_room};
-use crate::css::{declarations, resolve_style};
+use crate::css::{declarations, opaque, resolve_style};
 use crate::js::math::{max, min, round};
 use crate::js::number::to_string;
 use crate::layout::{Monospace, Options};
@@ -296,22 +296,22 @@ fn trim(kind: Head) -> f64 {
 }
 
 /// How a box or a shaded block is painted, by the fill its author gave it, where Pele writes
-/// one: in the theme's alternate surface, at half its opacity where no fill is written, and
-/// the author's fill over it. It gives the diagram's style and the author's.
+/// one: in the theme's alternate surface at half its opacity, and, where a fill is written,
+/// the author's fill over it at full opacity, as [`opaque`] makes it. It gives the diagram's
+/// style and the author's.
 fn fill_style(fill: &str, written: bool) -> (Style, Style) {
-    if !written {
-        let own = Style {
-            fill: Some(Paint::SURFACE_ALT),
-            fill_opacity: Some(0.5),
-            ..Style::default()
-        };
-        return (own, Style::default());
-    }
     let own = Style {
         fill: Some(Paint::SURFACE_ALT),
+        fill_opacity: Some(0.5),
         ..Style::default()
     };
-    (own, declarations(&[format!("fill:{fill}")]).style)
+    if !written {
+        return (own, Style::default());
+    }
+    (
+        own,
+        opaque(declarations(&[format!("fill:{fill}")]).style, true),
+    )
 }
 
 /// Whether Pele writes a fill an author gave: whether its resolveStyle keeps it.

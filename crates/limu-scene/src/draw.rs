@@ -164,14 +164,15 @@ pub fn draw<C: Canvas + ?Sized>(scene: &Scene, look: &Look, canvas: &mut C) {
 /// leaves to the default with the painter's methods. It draws inside the item, between
 /// [`Canvas::begin_item`] and [`Canvas::end_item`], and inside the layer of the item's
 /// opacity, or, on a canvas with no layers, with the opacity laid on the colors it is given.
-/// Either way the style it is given is opaque.
+/// Either way the style it is given is opaque. It passes over the items of the roles the
+/// look does not draw, as [`Look::draws`] says.
 pub fn draw_with<C, F>(scene: &Scene, look: &Look, canvas: &mut C, mut hook: F)
 where
     C: Canvas + ?Sized,
     F: FnMut(&mut Painter<'_, C>, &Item, &Resolved),
 {
     canvas.begin_scene(scene);
-    for it in &scene.items {
+    for it in scene.items.iter().filter(|it| look.draws(it.role.as_str())) {
         let mut s = look.resolve(it.role.as_str(), &it.style, &it.author);
         canvas.begin_item(it);
         let k = s.opacity.clamp(0.0, 1.0);

@@ -5,7 +5,7 @@ use super::layout::{Insets, layout_treemap};
 use super::model::TreemapModel;
 use crate::common::{cap_width, class_names, fit_text, line, setting, title_room};
 use crate::css::palette::palette;
-use crate::css::{declarations, resolve_style};
+use crate::css::{declarations, opaque, resolve_style};
 use crate::detect::DiagramType;
 use crate::js::chars::trim;
 use crate::js::math::{log10, max, min, round};
@@ -238,9 +238,8 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
             it.style.text = Some(Paint::FG);
             it.style.on_fill = on_fill;
             it.style.text_ground = series_ground;
-            if !resolved.fill_declared() {
-                it.style.fill_opacity = Some(0.12);
-            }
+            it.style.fill_opacity = Some(0.12);
+            it.author = opaque(it.author, resolved.fill_declared());
             let short = b.header < HEADER;
             let label_size = fixed.unwrap_or(if short { tiny } else { small });
             let value_size = fixed.unwrap_or(tiny);
