@@ -93,7 +93,8 @@ browser.
 - **Followed in meaning.** How Pele writes SVG (`src/svg/builder.ts`, `root.ts`) matters
   only in what it draws, which the scene and the default drawing must keep. The tokens of
   its theme and its choice of a color on a fill (`theme.ts`, `ink.ts`) are followed in
-  `style`.
+  `style`. The colors a diagram's theme variables give its series (`palette.ts`) are read
+  in `limu` and written into the author's style of what the diagram draws in each series.
 - **Not ported.** Mounting in a page and zooming (`mount.ts`, `zoom.ts`) are a host's. What
   they solve has a native form: a host that lays a diagram out again when its width changes
   sets `max_width`, and one whose fonts change lays it out again with the new measurer.
@@ -108,7 +109,7 @@ title and description for the platform's accessibility, and drawing without SVG.
 ## The scene
 
 A `Scene` is a list of items in the order they are drawn, with the diagram's type, its
-size, the font size of text with no size of its own, and its title and description for
+size, the font size of text with no size of its own, its title and description for
 assistive technology.
 
 An `Item` holds what every item has, and its `kind` says what sort of thing it is. Only an
@@ -128,7 +129,7 @@ pub struct Item {
     pub label: Option<Placed>,
     pub picture: Option<Picture>,
     pub style: Style,            // the diagram's own
-    pub author: Style,           // what classDef and style lines set
+    pub author: Style,           // what classDef and style lines and a palette set
     pub link: Option<String>,
     pub tooltip: Option<String>,
 }
@@ -193,15 +194,71 @@ Style has three levels, from the least a host does to the most.
    default.
 
 A part's style cascades from the theme's measures, through the diagram's own style for the
-part and the overrides for its role, to what the author set in the diagram's text. Each
-field of a `Style` is an `Option`, and `None` takes what is under it. The fill and stroke
-opacities cascade apart from the paints, as CSS cascades fill-opacity apart from fill.
+part and the overrides for its role, to the author's style, what the author set in the
+diagram's text with style and `classDef` lines and a palette. The author's style is on top,
+so its colors win over a host's overrides. Each field of a `Style` is an `Option`, and
+`None` takes what is under it. The fill and stroke opacities cascade apart from the paints,
+as CSS cascades fill-opacity apart from fill. So a fill the author sets on a part the
+diagram draws at some opacity is drawn at that opacity. Where Pele draws a group in a
+translucent fill of its own unless the author fills it, as a flowchart's subgraph, a
+treemap's section or a sequence diagram's box, the group's own style keeps the translucency
+and the author's style gets the full opacity (`css::opaque`), so the decision is the
+author's.
 
 A fill the author sets can be dark, and text and lines drawn in the theme's colors would be
 lost on it. Pele picks a color for what lies on such a fill, the theme's foreground or
 background, whichever stands out more, and limu-rs keeps that choice in style, since it
 changes no position. A diagram says only what lies on which fill, and the style picks the
 color when the scene is drawn.
+
+A diagram's own theme variables can give its series their colors, as Pele 1.13 reads
+Mermaid's palette variables. They are `pie1` to `pie8` for pie charts, `git0` to `git7` for
+git graphs, `cScale0` to `cScale7` for timelines, radar charts and treemaps, `cScale1` to
+`cScale8` for mindmaps, `venn1` to `venn8` for venn diagrams, which repeat the ones set, and
+`xyChart.plotColorPalette` for XY charts, a list that repeats. In six of those diagrams a
+palette is the only way the text sets a color, and in treemaps and venn diagrams it sits
+beside their style lines, so limu-rs takes it as the author's color like any other. A
+diagram writes the palette's color into the author's style of each item it draws in a series
+the palette sets, in the fill, the stroke or the text the item takes the series in, and at
+the opacity the diagram draws the series at. The item's own style keeps the series, so its
+role in the theme doesn't change. Where the author's own style lines set the same field,
+they win, as Pele's inline style wins over its series variable. Since the author's style is
+on top of the cascade, a palette's colors win over a host's overrides, as all the author's
+colors do.
+
+A palette's color can be dark too. Where Pele gives a label on a series the color its ink
+picks on the palette's color, as for a pie's percentages, a git graph's branch names, a
+timeline's sections and periods and a treemap's labels, limu-rs sets the palette's color as
+the label's text ground, and the style picks the foreground or the background on it.
+
+Pele takes a color only where it can't load a resource, end its declaration or read the
+page's own variables, and limu-rs refuses what Pele refuses. Of what Pele takes, limu-rs
+reads hex codes, named colors, rgb(), rgba(), hsl() and hsla(), transparent as a paint that
+draws nothing, and currentColor as the theme's foreground, since Pele's root sets its color
+to that. A browser evaluates the rest, as `var(--pele-accent)`, color-mix(), light-dark()
+and the newer functions of CSS such as oklch(). limu-rs can't, so such a color sets nothing
+in the author's style, the series keeps the theme's color, and the tests leave it out of the
+comparison.
+
+A host whose look is restricted to its design tokens can't have the author's colors win
+over them. It sets `Look::theme_only`, and the cascade leaves the author's style out: its
+paints, opacities, widths, dashes, caps, joins and radius, the palette's colors among them.
+It also leaves out what a diagram set only because the author filled something, the ground
+and text ground picked on that fill and the darker or lighter shade of its stripes, and the
+backends don't draw the casings laid under edges that cross such a fill, since `draw_with`
+passes over the roles `Look::draws` says it doesn't draw. `on_fill` still picks the color of
+text on a fill an override sets, since overrides are the host's. The switch moves nothing,
+so the weight, slant and size of text the author set stay, as layout measured them. The SVG
+writer still writes the classes the author named, which a page's own CSS may style.
+
+The switch can't undo what the author's text decided in layout.
+
+- What the author set that changes a size stays, since layout placed things by it. A
+  quadrant chart's point keeps the radius its author gave it, and its label keeps the room
+  it left for the width of the point's stroke, though the stroke isn't drawn.
+- Where a diagram sets `on_fill` because the author's fill is one ink picks a color on, it
+  stays set, so a part the author filled picks the color of its text on a fill an override
+  sets, where the same part with no fill of the author's keeps the theme's text color.
 
 `Look::resolve` settles a part's style into what a backend draws with. Each color it gives
 is an `Ink`, the color settled and the paint it came from. A native backend draws the
@@ -438,7 +495,24 @@ of each case after them, and a test compares the digest of the lines it writes f
 scene. Numbers are compared exactly. A difference in the last bit is a difference in the
 port.
 
-The port follows Pele 1.12.0, commit `8aff183`. Each fixture records the version and commit
+A test may read Pele's lines through limu-rs's own code before comparing, as the treemap's
+reads the style Pele writes as limu-rs reads declarations. The suite keeps in full each line
+the reading changes, and the reading must change no other line. A reading may drop a kept
+line where the test writes nothing in its place.
+
+The tests of the eight diagrams with a palette check that the scene carries exactly the
+palette Pele set. Each reads Pele's `series` lines as limu-rs reads a palette's color, and
+lays the diagram out twice, with its configuration and without its theme variables. The two
+scenes may differ only in the authors' styles and in a label's text ground. Each fill,
+stroke or text an item draws in a series has the color Pele's palette gives that series in
+its author's style, at the series' opacity, where the palette sets the series and the
+author's own style sets nothing there. The test writes a line for each item that differs,
+writes its other lines from the scene with the authors' own styles, and drops Pele's
+`series` lines. The switch is checked in `crates/limu/tests/theme_only.rs`, which draws
+diagrams with style lines, classes, casings and palettes in a `theme_only` look and compares
+the SVG with the same diagrams without those lines.
+
+The port follows Pele 1.13.0, commit `3a2f075`. Each fixture records the version and commit
 it was written from, and the tests fail on a fixture of another. To follow a newer Pele,
 pele-oracle writes the fixtures anew from it, limu-rs pins the new release, and what Pele's
 diff changed is ported.

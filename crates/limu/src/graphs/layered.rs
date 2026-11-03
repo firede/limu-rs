@@ -214,9 +214,13 @@ const LEVEL_TOUCH: f64 = 4.0;
 const CROSSED_SLOPE: f64 = 0.5;
 // How far out of line two points may be and still count as in line.
 const IN_LINE: f64 = 0.5;
+// How far apart two edges may be at both ends and still count as twins.
+const TWIN: f64 = 1.0;
 // A node, with whatever it is already in line with, moves this far at most to bring one more
 // of its edges into line.
 const SNAP: f64 = 12.0;
+// Bends with no node in line with them move this far at most to bring an edge into line.
+const BEND_SNAP: f64 = 24.0;
 // An end that cannot be brought into line leans towards where its edge goes, but keeps this
 // far from the ends of the part of its side that edges spread along. On a narrow node that
 // leaves it in the middle.
@@ -785,6 +789,8 @@ pub(crate) fn layered(
         }
     }
 
+    align_ports(&g, &mut xs, empty.as_deref());
+
     // A rank that holds nothing but the bends of edges is only there because some other edge
     // has a label or a twin. Its bends move onto the straight line between the ends of their
     // edges, and one that gets there is left out of the route, so that the edge is drawn as a
@@ -1293,6 +1299,12 @@ pub(crate) fn rank(nodes: &mut [LNode], edges: &[LEdge], step: usize) {
     }
 
     let mut r = vec![0i32; n];
+    // Start ports go above every node later, so they don't push their targets down a rank.
+    for i in 0..n {
+        if nodes[i].kind == Kind::StartPort {
+            r[i] = -(step as i32);
+        }
+    }
     let mut indeg: Vec<usize> = (0..n).map(|i| in_start[i + 1] - in_start[i]).collect();
     let mut topo = vec![0usize; n];
     let mut count = 0;
@@ -1493,6 +1505,50 @@ fn follow(g: &Graph, empty: Option<&[bool]>, mut e: usize, side: usize) -> usize
         };
     }
     e
+}
+
+/// Aligns border ports with the ends on their nodes so edges run straight across the gap, as
+/// Pele's alignPorts does. Ports are kept `edge_sep` apart while placed, more than ends on a
+/// short side get, so without this an edge turns outside the border and again in the gap. A
+/// rank is left alone unless every port can move without passing or meeting its neighbors.
+fn align_ports(g: &Graph, xs: &mut [f64], empty: Option<&[bool]>) {
+    for (r, kind) in [(0, Kind::StartPort), (g.max_rank, Kind::EndPort)] {
+        let s = g.layer_start[r];
+        let end = g.layer_start[r + 1];
+        let start = kind == Kind::StartPort;
+        let mut to: Vec<f64> = Vec::new();
+        for i in s..end {
+            let v = g.order[i];
+            let degree = if start {
+                g.succ_start[v + 1] - g.succ_start[v]
+            } else {
+                g.pred_start[v + 1] - g.pred_start[v]
+            };
+            if g.kind[v] != kind || degree != 1 {
+                break;
+            }
+            let e = if start {
+                follow(g, empty, g.succ_e[g.succ_start[v]], 1)
+            } else {
+                follow(g, empty, g.pred_e[g.pred_start[v]], 0)
+            };
+            let at = if start {
+                xs[g.et[e]] + g.etd[e]
+            } else {
+                xs[g.ef[e]] + g.efd[e]
+            };
+            if to.last().is_some_and(|&last| at < last + TWIN) {
+                break;
+            }
+            to.push(at);
+        }
+        if to.is_empty() || to.len() != end - s {
+            continue;
+        }
+        for i in s..end {
+            xs[g.order[i]] = to[i - s];
+        }
+    }
 }
 
 /// How many ends that may move along it each node has on the side its edges arrive at, and on
@@ -1890,8 +1946,8 @@ fn join(block: &mut [usize], members: &mut [Vec<usize>], x: usize, y: usize) {
     members[keep].extend(moved);
 }
 
-/// Brings edges that are nearly straight into line, by moving a node a little across the flow
-/// along with everything it is in line with already, where the nodes beside them leave room,
+/// Brings edges that are nearly straight into line, by moving a node or bend a little across the
+/// flow along with everything it is in line with already, where the nodes beside them leave room,
 /// as Pele's snap does. What is in line stays in line, so each move leaves one more edge
 /// straight.
 fn snap(g: &Graph, xs: &mut [f64], empty: Option<&[bool]>, opt: &LayeredOptions) {
@@ -1934,7 +1990,7 @@ fn snap(g: &Graph, xs: &mut [f64], empty: Option<&[bool]>, opt: &LayeredOptions)
         let d = off(xs, k).abs();
         if d < 0.01 {
             join(&mut block, &mut members, a[k], b[k]);
-        } else if d <= SNAP {
+        } else if d <= BEND_SNAP {
             near.push(k);
         }
     }
@@ -1970,7 +2026,7 @@ fn snap(g: &Graph, xs: &mut [f64], empty: Option<&[bool]>, opt: &LayeredOptions)
             join(&mut block, &mut members, a[k], b[k]);
             continue;
         }
-        if d.abs() > SNAP || block[a[k]] == block[b[k]] {
+        if d.abs() > BEND_SNAP || block[a[k]] == block[b[k]] {
             continue;
         }
         // The smaller of the two blocks moves, if it can, and else the other.
@@ -1983,6 +2039,9 @@ fn snap(g: &Graph, xs: &mut [f64], empty: Option<&[bool]>, opt: &LayeredOptions)
         };
         for id in [first, if first == upper { lower } else { upper }] {
             let shift = if id == upper { d } else { -d };
+            if d.abs() > SNAP && !members[id].iter().all(|&v| kind[v] == Kind::Dummy) {
+                continue;
+            }
             if !free(xs, &block, &members, id, shift) {
                 continue;
             }
@@ -2455,8 +2514,8 @@ fn straighten(
             twins.clear();
             let mut j = i;
             while j < row.len()
-                && (from[row[j]] - from[row[i]]).abs() < 1.0
-                && (to[row[j]] - to[row[i]]).abs() < 1.0
+                && (from[row[j]] - from[row[i]]).abs() < TWIN
+                && (to[row[j]] - to[row[i]]).abs() < TWIN
             {
                 twins.push(row[j]);
                 j += 1;

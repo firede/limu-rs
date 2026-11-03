@@ -17,7 +17,9 @@ use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Paint, Theme};
 use crate::scene::{Align, Item, Outline, Painting, Part, Path, Scene};
-use crate::testing::pelesvg::{id, own_fill};
+use crate::testing::pelesvg::{
+    id, own_fill, palette_checked, pele_palette, read_series, text_ink, without_theme_variables,
+};
 use crate::testing::{Enc, Failures, PeleError, pele_num, same, sorted};
 use crate::value::{Map, Value};
 
@@ -221,15 +223,21 @@ fn subpaths(p: &Path) -> String {
 }
 
 /// Where Pele's text puts the first line of a label centered on its point, its paint, its
-/// size, and the text of its lines.
+/// size, and the text of its lines. A label on a series the palette sets is in the color
+/// Pele's ink picks on it.
 fn text_at(it: &Item) -> String {
     let p = it.label.as_ref().expect("a label");
     let l = &p.label;
     let y = p.at.y - l.height / 2.0 + l.line_height / 2.0 + l.size * 0.35;
+    let ink = text_ink(it);
     let mut s = format!(
         "t {} {} {}",
         pt(p.at.x, y),
-        paint_name(it.style.text),
+        if ink.is_empty() {
+            paint_name(it.style.text)
+        } else {
+            ink.to_string()
+        },
         pele_num(l.size)
     );
     if p.align != Align::Middle {
@@ -343,8 +351,13 @@ fn renders_match_pele() {
             font_size: c.font_size.unwrap_or(16.0),
             ..Options::default()
         };
-        let got = scene_lines(&layout(&m, &p.config, &o));
-        let diff = drawings.diff(k, &c.drawing, &got, None);
+        let line = |i: usize| c.drawing.line(i).to_string();
+        let bare = layout(&m, &without_theme_variables(&p.config), &o);
+        let (sc, problems) =
+            palette_checked(layout(&m, &p.config, &o), &bare, &pele_palette(&line));
+        let mut got = scene_lines(&sc);
+        got.extend(problems);
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read_series);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}: {}",

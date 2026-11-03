@@ -2,6 +2,8 @@
 
 use super::TimelineDb;
 use crate::common::{fit_label, plain_label, setting, turn_to_fit};
+use crate::css::palette::palette;
+use crate::detect::DiagramType;
 use crate::js::chars::trim;
 use crate::js::math::{max, min, round};
 use crate::layout::Options;
@@ -133,6 +135,7 @@ fn draw(db: &TimelineDb, config: &Map, o: &Options, vertical: bool) -> Scene {
     let small = round(size * 0.875);
     let set = setting(o);
     let pad = o.pad();
+    let pal = palette(DiagramType::Timeline, config);
     let multicolor = config
         .get("timeline")
         .and_then(Value::as_object)
@@ -231,15 +234,22 @@ fn draw(db: &TimelineDb, config: &Map, o: &Options, vertical: bool) -> Scene {
     let event_w = event_text_w(text_w) + 2.0 * PAD_X;
     let chip_height = |label: &Label| max(label.height, line_height) + 2.0 * PAD_Y;
     let event_height = |label: &Label| max(label.height, event_line_height) + 2.0 * PAD_Y;
-    let color_of = |g: &Group, period: usize| {
+    // The series a period's box is drawn in, as Pele's seriesOf gives it, or none for the
+    // muted boxes of periods before the first section.
+    let series_of = |g: &Group, period: usize| {
         if g.section >= 0 {
-            Paint::series(g.section as usize)
+            Some(g.section as usize)
         } else if has_sections {
-            Paint::MUTED
+            None
         } else {
-            Paint::series(if multicolor { period } else { 0 })
+            Some(if multicolor { period } else { 0 })
         }
     };
+    let color_of =
+        |g: &Group, period: usize| series_of(g, period).map_or(Paint::MUTED, Paint::series);
+    // The ground of a label on a series, where the palette sets its color, as Pele's onColor
+    // gives the label seriesInkFill's fill in place of ON_COLOR.
+    let on_color = |series: Option<usize>| series.and_then(|k| pal.ground(k));
 
     let has_events = event_labels.iter().any(|labels| !labels.is_empty());
     let mut slots = 0;
@@ -288,23 +298,26 @@ fn draw(db: &TimelineDb, config: &Map, o: &Options, vertical: bool) -> Scene {
         let style = Style {
             fill: Some(Paint::series(g.section as usize)),
             text: Some(Paint::BG),
+            text_ground: on_color(Some(g.section as usize)),
             ..Style::default()
         };
         let mut it = rounded_box(Kind::Group, ROLE_SECTION, r, label, style);
         it.id = Some(trim(&db.sections[g.section as usize]).to_string());
         items.push(it);
     };
-    let period = |items: &mut Vec<Item>, i: usize, color: Paint, x: f64, y: f64, h: f64| {
-        let style = Style {
-            fill: Some(color),
-            text: Some(Paint::BG),
-            ..Style::default()
+    let period =
+        |items: &mut Vec<Item>, i: usize, g: &Group, color: Paint, x: f64, y: f64, h: f64| {
+            let style = Style {
+                fill: Some(color),
+                text: Some(Paint::BG),
+                text_ground: on_color(series_of(g, i)),
+                ..Style::default()
+            };
+            let r = Rect::new(x, y, col_w, h);
+            let mut it = rounded_box(Kind::Node, ROLE_PERIOD, r, period_labels[i].clone(), style);
+            it.id = Some(trim(&periods[i].text).to_string());
+            items.push(it);
         };
-        let r = Rect::new(x, y, col_w, h);
-        let mut it = rounded_box(Kind::Node, ROLE_PERIOD, r, period_labels[i].clone(), style);
-        it.id = Some(trim(&periods[i].text).to_string());
-        items.push(it);
-    };
     let event = |label: &Label, color: Paint, x: f64, y: f64, h: f64| {
         let style = Style {
             fill: Some(color),
@@ -354,7 +367,7 @@ fn draw(db: &TimelineDb, config: &Map, o: &Options, vertical: bool) -> Scene {
                         .line_to(spine_x, cy)
                         .line_to(spine_x, last);
                 }
-                period(&mut items, i, color, left, cy - h / 2.0, h);
+                period(&mut items, i, g, color, left, cy - h / 2.0, h);
                 items.push(connector(d));
                 items.push(dot(axis_x, cy, color));
                 items.extend(cards);
@@ -429,7 +442,7 @@ fn draw(db: &TimelineDb, config: &Map, o: &Options, vertical: bool) -> Scene {
                     ey += eh + EVENT_GAP;
                 }
                 bottom = max(bottom, ey - EVENT_GAP);
-                period(&mut items, i, color, x, periods_y, chip_h);
+                period(&mut items, i, g, color, x, periods_y, chip_h);
                 items.push(connector(d));
                 items.push(dot(cx, axis_y, color));
                 items.extend(cards);
@@ -451,6 +464,8 @@ fn draw(db: &TimelineDb, config: &Map, o: &Options, vertical: bool) -> Scene {
         it.style.text = Some(Paint::FG);
         items.insert(0, it);
     }
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    pal.apply(&mut items);
     Scene {
         diagram: "timeline".into(),
         width: total_width,

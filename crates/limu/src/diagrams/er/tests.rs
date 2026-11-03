@@ -17,7 +17,7 @@ use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Cap, Join, Look, Paint, Style};
 use crate::scene::text::{Face, Label};
 use crate::scene::{Align, Item, Marker, MarkerType, Op, Outline, Painting, Rect, Scene};
-use crate::testing::pelesvg::{id, stroke_ink, text_ink};
+use crate::testing::pelesvg::{id, opaque, stroke_ink, text_ink};
 use crate::testing::{Enc, Failures, PeleError, pele_d, pele_num, same};
 use crate::value::{Map, Value};
 
@@ -392,11 +392,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 lines.push(format!("title {}", text_at(&p.label, p.at.x, p.at.y)));
             }
             ROLE_CLUSTER => {
-                let opaque = if it.style.fill_opacity.is_none() {
-                    " opaque"
-                } else {
-                    ""
-                };
+                let opaque = if opaque(it) { " opaque" } else { "" };
                 lines.push(format!(
                     "cluster {id} [{classes}] {} {}{opaque}",
                     boxed(it.bounds),

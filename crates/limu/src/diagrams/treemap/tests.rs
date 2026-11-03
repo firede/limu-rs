@@ -10,7 +10,7 @@ use super::parse;
 use super::parser::{RowAst, TREEMAP_TOKENS, TreemapAst, parse_treemap, table};
 use super::render::{ROLE_LEAF, ROLE_SECTION, ROLE_TITLE, ROLE_VALUE, layout};
 use crate::common::tokens::tokenize;
-use crate::css::declarations;
+use crate::css::{declarations, opaque, resolve_style};
 use crate::detect::DiagramType;
 use crate::errors::ErrorCode;
 use crate::js::math::round;
@@ -19,7 +19,10 @@ use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Paint, Style, Theme};
 use crate::scene::{Align, Item, Outline, Scene};
-use crate::testing::pelesvg::{cap_join, id, own_fill, text_ink};
+use crate::testing::pelesvg::{
+    cap_join, id, own_fill, palette_checked, pele_palette, read_series, text_ink,
+    without_theme_variables,
+};
 use crate::testing::{Enc, Failures, PeleError, same, sorted};
 use crate::value::{Map, Value};
 
@@ -332,7 +335,9 @@ fn unescape(s: &str) -> Option<String> {
 
 /// A line of the fixture with the style Pele writes, "css=", read as limu reads declarations,
 /// "author=": on a shape as it is, and on a text with its fill, which is the color the author
-/// gave, read as that color.
+/// gave, read as that color. A section whose author sets a fill, which Pele writes with no
+/// fill-opacity of its own, is read as limu lays it out: in its tint, and the full opacity in
+/// the author's style, as `css::opaque` gives it.
 fn author_line(line: &str) -> String {
     let Some(at) = line.find(" css=") else {
         return line.to_string();
@@ -342,8 +347,17 @@ fn author_line(line: &str) -> String {
         return line.to_string();
     };
     let mut decls: Vec<String> = written.split(';').map(str::to_string).collect();
+    let mut head = line[..at].to_string();
     let field = if line.starts_with("section ") || line.starts_with("leaf ") {
-        author(shape_view, &declarations(&decls).style)
+        let filled = line.starts_with("section ") && resolve_style(&decls).fill_declared();
+        if filled
+            && let Some(fill) = head.find(" var(--pele-series-")
+            && let Some(dash) = head[fill..].find(") - ")
+        {
+            let opacity = fill + dash + ") ".len();
+            head.replace_range(opacity..opacity + 1, "0.12");
+        }
+        author(shape_view, &opaque(declarations(&decls).style, filled))
     } else {
         for d in &mut decls {
             if let Some(rest) = d.strip_prefix("fill:") {
@@ -352,7 +366,7 @@ fn author_line(line: &str) -> String {
         }
         author(text_view, &declarations(&decls).style)
     };
-    format!("{} {field}{}", &line[..at], &line[end..])
+    format!("{head} {field}{}", &line[end..])
 }
 
 /// How a box is filled, as the oracle reads Pele's fill and fill-opacity.
@@ -385,9 +399,16 @@ fn stroke_name(p: Option<Paint>) -> String {
 }
 
 /// The fill the oracle reads of an item's text: the color the default look picks on a fill,
-/// where it picks one, and the diagram's own otherwise.
+/// or on the color a palette gives the series it lies on, where it picks one, and the
+/// diagram's own otherwise.
 fn text_paint(it: &Item) -> &'static str {
-    match text_ink(it) {
+    // Pele writes the color it picks on a series as the text's fill whether or not the
+    // author's style sets a color, which wins over it, so it is found without that color.
+    let mut bare = it.clone();
+    if it.style.text_ground.is_some() {
+        bare.author.text = None;
+    }
+    match text_ink(&bare) {
         "" => match it.style.text {
             Some(p) if p == Paint::FG => "var(--_fg)",
             Some(p) if p == Paint::MUTED => "var(--_m)",
@@ -536,8 +557,14 @@ fn renders_match_pele() {
             padding: c.padding,
             ..Options::default()
         };
-        let got = scene_lines(&layout(&m, &p.config, &o));
-        let diff = drawings.diff(k, &c.drawing, &got, Some(&author_line));
+        let line = |i: usize| c.drawing.line(i).to_string();
+        let bare = layout(&m, &without_theme_variables(&p.config), &o);
+        let (sc, problems) =
+            palette_checked(layout(&m, &p.config, &o), &bare, &pele_palette(&line));
+        let mut got = scene_lines(&sc);
+        got.extend(problems);
+        let read = |line: &str| read_series(line).map(|l| author_line(&l));
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}, padding {:?}: {}",

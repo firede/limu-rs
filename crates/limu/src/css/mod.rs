@@ -7,6 +7,7 @@
 //! and [`declarations`] reads them as a browser would into a [`Style`], with the weight, slant
 //! and size of the text, which layout takes.
 
+pub(crate) mod palette;
 #[cfg(test)]
 mod tests;
 
@@ -232,6 +233,18 @@ fn values_at<'a>(css: &'a str, prop: &'a str) -> impl Iterator<Item = usize> + '
         .chain(css.match_indices(';').map(|(i, _)| i + 1))
         .filter(move |&i| css[i..].starts_with(prop) && css[i + prop.len()..].starts_with(':'))
         .map(move |i| i + prop.len() + 1)
+}
+
+/// The style an author gave a part that the diagram draws in a translucent fill of its own
+/// unless its author sets a fill, as Pele's setsFill leaves out the part's fill-opacity: where
+/// filled, the style is drawn at full opacity unless it sets an opacity for its fill. The full
+/// opacity is the author's, and the part's own style keeps its translucency, so that a look
+/// that leaves out the author's style draws the part as if its author had set no fill.
+pub(crate) fn opaque(mut author: Style, filled: bool) -> Style {
+    if filled && author.fill_opacity.is_none() {
+        author.fill_opacity = Some(1.0);
+    }
+    author
 }
 
 /// Whether a style Pele writes declares prop, as /[";]prop:/ tests it.

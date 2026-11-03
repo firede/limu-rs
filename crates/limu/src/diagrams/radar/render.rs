@@ -4,6 +4,8 @@ use std::f64::consts::PI;
 
 use super::RadarModel;
 use crate::common::{fit_width, setting, title_room};
+use crate::css::palette::palette;
+use crate::detect::DiagramType;
 use crate::js::math::{cos, max, min, round, sin};
 use crate::layout::Options;
 use crate::scene::style::{Join, Paint, Style};
@@ -335,5 +337,7 @@ fn draw(
         sc.items.push(it);
     }
     sc.items.extend(items);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    palette(DiagramType::Radar, config).apply(&mut sc.items);
     sc
 }

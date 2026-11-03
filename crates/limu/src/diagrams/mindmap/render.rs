@@ -4,6 +4,8 @@ use super::db::{MindmapDb, MindmapNode};
 use crate::common::{
     class_names, has_icon, icon_svg, setting, title_label, title_room, turn_to_fit,
 };
+use crate::css::palette::palette;
+use crate::detect::DiagramType;
 use crate::draw::{draw_shape, shape_inset, shape_size};
 use crate::js::math::{max, min, round};
 use crate::layout::Options;
@@ -495,5 +497,7 @@ fn draw(m: &MindmapDb, config: &Map, o: &Options, down: bool) -> Scene {
         sc.items.push(it);
     }
     sc.items.append(&mut items);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    palette(DiagramType::Mindmap, config).apply(&mut sc.items);
     sc
 }

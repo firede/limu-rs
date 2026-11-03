@@ -4,6 +4,8 @@ use std::f64::consts::PI;
 
 use super::PieModel;
 use crate::common::{fit_width, line, setting, title_room};
+use crate::css::palette::palette;
+use crate::detect::DiagramType;
 use crate::js::math::{cos, max, round, sin};
 use crate::js::number::{to_fixed, to_string};
 use crate::layout::Options;
@@ -111,6 +113,7 @@ fn draw(model: &PieModel, config: &Map, o: &Options, radius: f64, tight: bool) -
     let small = round(size * 0.875);
     let set = setting(o);
     let pad = o.pad();
+    let pal = palette(DiagramType::Pie, config);
 
     let text_position = match option(config, "textPosition") {
         Some(&Value::Number(v)) if (0.0..=1.0).contains(&v) => v,
@@ -292,6 +295,9 @@ fn draw(model: &PieModel, config: &Map, o: &Options, radius: f64, tight: bool) -
             );
             it.label = Some(Placed::new(l, Point::new(cx + x, cy + y)));
             it.style.text = Some(Paint::BG);
+            // A percentage on a slice whose color the palette sets stands out on it, as
+            // Pele's seriesInkFill gives it a fill.
+            it.style.text_ground = pal.ground(index);
             labels.push(it);
         }
         angle = end;
@@ -369,5 +375,7 @@ fn draw(model: &PieModel, config: &Map, o: &Options, radius: f64, tight: bool) -
     sc.items.extend(labels);
     sc.items.extend(outsides);
     sc.items.extend(legend_items);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    pal.apply(&mut sc.items);
     sc
 }

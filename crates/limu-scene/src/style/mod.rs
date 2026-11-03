@@ -312,6 +312,14 @@ pub struct Look {
     pub theme: Theme,
     /// The styles laid over the diagram's own for parts of a role.
     pub overrides: Overrides,
+    /// Draws a scene with the theme and the overrides alone, leaving out all that the
+    /// diagram's author set for painting: the style the author gave each part, a palette's
+    /// colors among it, the colors picked for what lies on a fill the author set, and the
+    /// casings drawn about the lines inside such a fill. A host sets it to keep a look its
+    /// design tokens restrict. It moves nothing: the size, weight and slant of text the
+    /// author set stay, as the layout measured them.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub theme_only: bool,
 }
 
 impl Look {
@@ -320,15 +328,37 @@ impl Look {
         Look {
             theme,
             overrides: Overrides::new(),
+            theme_only: false,
         }
+    }
+
+    /// Whether a backend draws the parts of a role: all but the casings, the roles ending in
+    /// ".casing", where the look is [`theme_only`](Look::theme_only), since a diagram draws a
+    /// casing only about a line inside a fill the author set.
+    pub fn draws(&self, role: &str) -> bool {
+        !self.theme_only || !role.ends_with(".casing")
     }
 
     /// The style of a part of a role: the theme's measures under the diagram's own style for
     /// the part, under the overrides for its role, under the style its author gave it in the
     /// diagram's text. Text is written in the foreground unless something sets another paint.
+    /// Where the look is [`theme_only`](Look::theme_only), the author's style is left out, and
+    /// so are the part's ground and text ground, which a diagram sets only on a fill the
+    /// author set.
     pub fn cascade(&self, role: &str, own: &Style, author: &Style) -> Style {
         let th = &self.theme;
         let none = Style::default();
+        let bare;
+        let (own, author) = if self.theme_only {
+            bare = Style {
+                ground: None,
+                text_ground: None,
+                ..own.clone()
+            };
+            (&bare, &none)
+        } else {
+            (own, author)
+        };
         let over = self.overrides.get(role).unwrap_or(&none);
         let mut s = author.over(&over.over(own));
         let set = author.over(over);
@@ -376,8 +406,13 @@ impl Look {
     /// the background, the one that stands out less on the fill, as Pele 1.12 keeps an
     /// entity's stripes light on a light fill and dark on a dark one. It says too whether it
     /// was picked on a fill. A fill an override sets leaves the shade the theme's background,
-    /// since a backend lays a shade at an opacity only over a fill the author sets.
+    /// since a backend lays a shade at an opacity only over a fill the author sets. Where the
+    /// look is [`theme_only`](Look::theme_only), the shade is the theme's background, as for a
+    /// part its author set no fill on.
     pub fn shade(&self, author: &Style) -> (Paint, bool) {
+        if self.theme_only {
+            return (Paint::BG, false);
+        }
         match ink(&self.theme, author) {
             None => (Paint::BG, false),
             Some(on) if on == Paint::FG => (Paint::BG, true),
@@ -399,10 +434,10 @@ impl Look {
         };
         let stroke = s.stroke.unwrap_or(Paint::NONE);
         let hollow = s.ground.filter(Paint::visible).unwrap_or(Paint::BG);
-        // Over a fill the author sets, the shade is laid at 60%, as Pele draws an entity's
-        // stripes at an opacity of 0.6 when its style sets a fill.
+        // Over a fill the author sets and the look draws, the shade is laid at 60%, as Pele
+        // draws an entity's stripes at an opacity of 0.6 when its style sets a fill.
         let (mut shade, _) = self.shade(author);
-        if author.fill.is_some() {
+        if !self.theme_only && author.fill.is_some() {
             shade = shade.with_opacity(0.6);
         }
         Resolved {
@@ -925,6 +960,72 @@ mod tests {
 
     // A shade is picked on a fill the author sets, and stays the background under one an
     // override sets, which a backend lays no shade at an opacity over.
+    #[test]
+    fn theme_only() {
+        let navy = own("#000080");
+        let mut look = Look {
+            theme_only: true,
+            ..Look::default()
+        };
+        look.overrides.insert(
+            "x.lit".into(),
+            Style {
+                fill: Some(navy),
+                ..Style::default()
+            },
+        );
+        let mine = Style {
+            fill: Some(Paint::SURFACE_ALT),
+            fill_opacity: Some(0.5),
+            stroke: Some(Paint::BORDER),
+            text: Some(Paint::MUTED),
+            on_fill: true,
+            ground: Some(navy),
+            text_ground: Some(navy),
+            ..Style::default()
+        };
+        let author = Style {
+            fill: Some(own("#ff0")),
+            fill_opacity: Some(1.0),
+            stroke: Some(own("#f00")),
+            stroke_width: Some(4.0),
+            dash: Some(vec![2.0, 2.0]),
+            radius: Some(9.0),
+            opacity: Some(0.5),
+            ..Style::default()
+        };
+        let bare = Style {
+            ground: None,
+            text_ground: None,
+            ..mine.clone()
+        };
+        let plain = Look::default();
+        assert_eq!(
+            look.cascade("x", &mine, &author),
+            plain.cascade("x", &bare, &Style::default()),
+            "the author's style, the ground and the text ground are left out"
+        );
+        assert_eq!(
+            look.resolve("x", &mine, &author),
+            plain.resolve("x", &bare, &Style::default())
+        );
+        let lit = look.cascade("x.lit", &mine, &author);
+        assert_eq!(
+            (lit.fill, lit.text),
+            (Some(navy), Some(Paint::BG)),
+            "text on an override's fill is still inked"
+        );
+        assert_eq!(look.shade(&author), (Paint::BG, false));
+        assert_eq!(
+            look.resolve("x", &Style::default(), &author).shade.paint,
+            Paint::BG,
+            "a shade is not laid at 60% over a fill left out"
+        );
+        assert!(look.draws("flowchart.node"));
+        assert!(!look.draws("flowchart.casing"));
+        assert!(Look::default().draws("flowchart.casing"));
+    }
+
     #[test]
     fn shade_on_author_fill() {
         let navy = own("#000080");

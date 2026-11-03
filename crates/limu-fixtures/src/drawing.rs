@@ -72,30 +72,42 @@ impl Drawing {
         self.kept.get(&i).map_or("", String::as_str)
     }
 
+    /// Pele's lines as got, the lines limu-rs wrote, would make them, with the lines kept in
+    /// full in their places: each that read drops put back where it was, and each other one
+    /// in place of the line of got that holds it as read reads it. It is the index of the
+    /// first kept line that got does not hold where got does not.
+    fn restore(&self, got: &[String], read: &Read<'_>) -> Result<Vec<String>, usize> {
+        let mut kept: Vec<(&usize, &String)> = self.kept.iter().collect();
+        kept.sort_unstable();
+        let mut lines = got.to_vec();
+        for (&k, line) in kept {
+            match read(line) {
+                None if k <= lines.len() => lines.insert(k, line.clone()),
+                Some(r) if k < lines.len() && lines[k] == r => lines[k] = line.clone(),
+                _ => return Err(k),
+            }
+        }
+        Ok(lines)
+    }
+
     /// Whether got, the lines limu-rs wrote, are the lines of the digest, read with read:
     /// the lines kept in full read as got holds them, and the lines in their places and the
     /// rest of got together those of the digest.
-    fn matches(&self, got: &[String], read: &dyn Fn(&str) -> String) -> bool {
-        let mut lines = got.to_vec();
-        for (&k, line) in &self.kept {
-            if k >= got.len() || got[k] != read(line) {
-                return false;
-            }
-            lines[k] = line.clone();
-        }
-        digest(&lines) == self.digest
+    fn matches(&self, got: &[String], read: &Read<'_>) -> bool {
+        self.restore(got, read)
+            .is_ok_and(|lines| digest(&lines) == self.digest)
     }
 
     /// The first of the lines kept in full that got does not hold as read reads it, or none
     /// where it holds them all.
-    fn first_kept(&self, got: &[String], read: &dyn Fn(&str) -> String) -> Option<usize> {
-        self.kept
-            .iter()
-            .filter(|&(&k, line)| k >= got.len() || got[k] != read(line))
-            .map(|(&k, _)| k)
-            .min()
+    fn first_kept(&self, got: &[String], read: &Read<'_>) -> Option<usize> {
+        self.restore(got, read).err()
     }
 }
+
+/// How a test reads a line of Pele's before it compares it: the line limu-rs writes in its
+/// place, or none where limu-rs writes nothing in its place.
+type Read<'a> = dyn Fn(&str) -> Option<String> + 'a;
 
 /// The cases of a file of full lines.
 #[derive(Deserialize)]
@@ -159,8 +171,22 @@ impl Drawings {
         got: &[String],
         read: Option<&dyn Fn(&str) -> String>,
     ) -> Option<String> {
-        let same = |line: &str| line.to_string();
-        let read = read.unwrap_or(&same);
+        match read {
+            Some(read) => self.diff_reading(i, d, got, &|line| Some(read(line))),
+            None => self.diff_reading(i, d, got, &|line| Some(line.to_string())),
+        }
+    }
+
+    /// How got differs from d, as [`diff`](Drawings::diff) says, where read may drop a line
+    /// of Pele's, by giving none, which limu-rs then writes nothing in the place of, as a
+    /// color limu-rs reads no value of. The suite keeps in full each line read drops.
+    pub fn diff_reading(
+        &self,
+        i: usize,
+        d: &Drawing,
+        got: &[String],
+        read: &Read<'_>,
+    ) -> Option<String> {
         if d.digest.is_empty() {
             return line_diff(got, &read_all(&d.lines, read), "");
         }
@@ -184,7 +210,7 @@ impl Drawings {
                         msg,
                         ". Of the lines it holds, this one differs: line {k}\n got {}\nPele {}",
                         at(got, k),
-                        read(&d.kept[&k])
+                        read(&d.kept[&k]).as_deref().unwrap_or("(dropped)")
                     );
                 }
                 return Some(msg);
@@ -214,9 +240,9 @@ impl Drawings {
     }
 }
 
-/// lines, each read with read.
-fn read_all(lines: &[String], read: &dyn Fn(&str) -> String) -> Vec<String> {
-    lines.iter().map(|l| read(l)).collect()
+/// lines, each read with read, but those it drops.
+fn read_all(lines: &[String], read: &Read<'_>) -> Vec<String> {
+    lines.iter().filter_map(|l| read(l)).collect()
 }
 
 /// Names the first line where got and want differ, with both, and note after them, or none
@@ -338,6 +364,35 @@ mod tests {
         let changes = |line: &str| read(&line.replace("M0,0", "M1,1"));
         let msg = f.diff(1, &digested, &other, Some(&changes)).unwrap();
         assert!(msg.contains("read changes a line"), "{msg:?}");
+
+        // read drops a line limu-rs writes nothing in the place of, as a series whose color
+        // it does not read, and the suite keeps it in full.
+        let series = s(&["size 10,10", "series 1 var(--x)", "series 2 red", "slice a"]);
+        let read_got = s(&["size 10,10", "series 2 #ff0000", "slice a"]);
+        let drop = |line: &str| match line {
+            "series 1 var(--x)" => None,
+            "series 2 red" => Some("series 2 #ff0000".to_string()),
+            _ => Some(line.to_string()),
+        };
+        let dropping = Drawing {
+            digest: digest(&series),
+            kept: HashMap::from([(1, series[1].clone()), (2, series[2].clone())]),
+            ..Drawing::default()
+        };
+        let whole = Drawing {
+            lines: series.clone(),
+            ..Drawing::default()
+        };
+        assert_eq!(f.diff_reading(0, &dropping, &read_got, &drop), None);
+        assert_eq!(f.diff_reading(0, &whole, &read_got, &drop), None);
+        let more = s(&[
+            "size 10,10",
+            "series 1 #000000",
+            "series 2 #ff0000",
+            "slice a",
+        ]);
+        assert!(f.diff_reading(0, &dropping, &more, &drop).is_some());
+        assert!(f.diff_reading(0, &whole, &more, &drop).is_some());
 
         // A full file that holds other lines is stale.
         let short = Drawing {

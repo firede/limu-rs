@@ -53,6 +53,15 @@ fn length(config: &Map, key: &str, fallback: f64, most: f64) -> f64 {
     }
 }
 
+/// A font size of Mermaid's quadrantChart keys, as Pele's textSize reads it: a finite number,
+/// kept from 4 to 72, or fallback. Without the keys the sizes follow the font size.
+fn text_size(config: &Map, key: &str, fallback: f64) -> f64 {
+    match setting(config, key) {
+        Some(&Value::Number(v)) if v.is_finite() => min(72.0, max(4.0, v)),
+        _ => fallback,
+    }
+}
+
 /// A hex code with its #, as Pele's hex writes it.
 fn hex(color: &str) -> String {
     if color.starts_with('#') {
@@ -67,8 +76,11 @@ fn hex(color: &str) -> String {
 /// label below it, or above, right or left of it where that is free.
 pub(crate) fn layout(model: &QuadrantDb, config: &Map, o: &Options) -> Scene {
     let size = o.font_size;
-    let axis_size = round(size * 0.875);
-    let point_size = round(size * 0.75);
+    let title_size = text_size(config, "titleFontSize", size);
+    let quadrant_size = text_size(config, "quadrantLabelFontSize", size);
+    let x_axis_size = text_size(config, "xAxisLabelFontSize", round(size * 0.875));
+    let y_axis_size = text_size(config, "yAxisLabelFontSize", round(size * 0.875));
+    let point_size = text_size(config, "pointLabelFontSize", round(size * 0.75));
     let set = text_setting(o);
     let natural = round(max(100.0, length(config, "chartWidth", 500.0, 4000.0)));
     let width = round(cap_width(o, natural, 280.0, 0.0));
@@ -93,7 +105,7 @@ pub(crate) fn layout(model: &QuadrantDb, config: &Map, o: &Options) -> Scene {
         model.title.as_deref().unwrap_or(""),
         false,
         &set,
-        size,
+        title_size,
         max(width - 2.0 * outer, 40.0),
         Face::BOLD,
     );
@@ -118,8 +130,8 @@ pub(crate) fn layout(model: &QuadrantDb, config: &Map, o: &Options) -> Scene {
     } else {
         side
     };
-    let x_left = label(model.x_axis_left.as_ref(), axis_size, room);
-    let x_right = label(model.x_axis_right.as_ref(), axis_size, side / 2.0 - 16.0);
+    let x_left = label(model.x_axis_left.as_ref(), x_axis_size, room);
+    let x_right = label(model.x_axis_right.as_ref(), x_axis_size, side / 2.0 - 16.0);
     let x_height = max(x_left.height, x_right.height);
     let x_space = if has_x { x_height + x_pad } else { 0.0 };
     let tall = height - 2.0 * outer - title_space - x_space;
@@ -128,8 +140,8 @@ pub(crate) fn layout(model: &QuadrantDb, config: &Map, o: &Options) -> Scene {
     } else {
         tall
     };
-    let y_bottom = label(model.y_axis_bottom.as_ref(), axis_size, room);
-    let y_top = label(model.y_axis_top.as_ref(), axis_size, tall / 2.0 - 16.0);
+    let y_bottom = label(model.y_axis_bottom.as_ref(), y_axis_size, room);
+    let y_top = label(model.y_axis_top.as_ref(), y_axis_size, tall / 2.0 - 16.0);
     let y_height = max(y_bottom.height, y_top.height);
     let y_space = if has_y { y_height + y_pad } else { 0.0 };
 
@@ -180,7 +192,7 @@ pub(crate) fn layout(model: &QuadrantDb, config: &Map, o: &Options) -> Scene {
             left
         };
         let y = if k < 2 { top } else { top + h - tile_h };
-        let text = label(q.as_ref(), size, tile_w - 16.0);
+        let text = label(q.as_ref(), quadrant_size, tile_w - 16.0);
         let cx = x + tile_w / 2.0;
         let cy = if has_points {
             y + text_top + text.height / 2.0
@@ -294,7 +306,9 @@ pub(crate) fn layout(model: &QuadrantDb, config: &Map, o: &Options) -> Scene {
             cx,
             cy,
             reach,
-            text: label(Some(&point.text), point_size, 200.0),
+            // Mermaid keeps point labels on one line, so only what is wider than the plot
+            // wraps.
+            text: label(Some(&point.text), point_size, w),
         });
         let mut path = Path::new();
         path.ellipse(cx, cy, r, r);
@@ -308,15 +322,16 @@ pub(crate) fn layout(model: &QuadrantDb, config: &Map, o: &Options) -> Scene {
         it.parts = vec![Part::path(path, Painting::FillAndStroke)];
         it.style = Style {
             fill: Some(fill),
-            // A stroke given a width and no color is drawn in the points' color.
-            stroke: Some(if stroke_width.is_some() && stroke_color.is_none() {
-                fill
-            } else {
-                Paint::NONE
-            }),
+            stroke: Some(Paint::NONE),
             ..Style::default()
         };
         it.author = declarations(&styles).style;
+        // A stroke given a width and no color is drawn in the points' color. It is the
+        // author's, as the width is, so a look that leaves out the author's style draws no
+        // stroke.
+        if stroke_width.is_some() && stroke_color.is_none() {
+            it.author.stroke = Some(fill);
+        }
         circles.push(it);
     }
     // Mermaid puts each new point under the ones before it.

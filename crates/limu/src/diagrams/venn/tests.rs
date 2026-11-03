@@ -18,7 +18,9 @@ use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Look, Paint, Style, Theme};
 use crate::scene::text::Face;
 use crate::scene::{Item, Op, Outline, Path, Scene};
-use crate::testing::pelesvg::{cap_join, id};
+use crate::testing::pelesvg::{
+    cap_join, id, palette_checked, pele_palette, read_series, without_theme_variables,
+};
 use crate::testing::{Enc, Failures, PeleError, same, sorted};
 use crate::value::{Map, Value};
 
@@ -617,9 +619,15 @@ fn renders_match_pele() {
             font_size: c.font_size.unwrap_or(16.0),
             ..Options::default()
         };
-        let got = scene_lines(&layout(&m, &p.config, &o));
+        let line = |i: usize| c.drawing.line(i).to_string();
+        let bare = layout(&m, &without_theme_variables(&p.config), &o);
+        let (sc, problems) =
+            palette_checked(layout(&m, &p.config, &o), &bare, &pele_palette(&line));
+        let mut got = scene_lines(&sc);
+        got.extend(problems);
         overlaps += got.iter().filter(|l| l.starts_with("overlap ")).count();
-        let diff = drawings.diff(k, &c.drawing, &got, Some(&pele_line));
+        let read = |line: &str| read_series(line).map(|l| pele_line(&l));
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}: {}",

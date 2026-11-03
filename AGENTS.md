@@ -37,7 +37,7 @@ layout.
   far as porting the function JavaScript calls. Don't write code whose only use is to match
   a platform's library to the last bit. Where such a difference can't be avoided, note it
   and leave the cases it affects out of the comparison.
-- The port follows Pele 1.12.0, commit 8aff183.
+- The port follows Pele 1.13.0, commit 3a2f075.
 - Where limu-rs is built otherwise than limu, say so in docs/design.md, under "Where
   limu-rs differs from limu", with the reason.
 

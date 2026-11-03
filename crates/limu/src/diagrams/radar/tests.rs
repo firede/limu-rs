@@ -17,7 +17,9 @@ use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Paint, Theme};
 use crate::scene::{Item, Op, Outline, Painting, Scene};
-use crate::testing::pelesvg::{cap_join, id, own_fill};
+use crate::testing::pelesvg::{
+    cap_join, id, own_fill, palette_checked, pele_palette, read_series, without_theme_variables,
+};
 use crate::testing::{Enc, Failures, PeleError, same, sorted};
 use crate::value::{Map, Value};
 
@@ -445,8 +447,13 @@ fn renders_match_pele() {
             font_size: c.font_size.unwrap_or(16.0),
             ..Options::default()
         };
-        let got = scene_lines(&layout(&m, &p.config, &o));
-        let diff = drawings.diff(k, &c.drawing, &got, None);
+        let line = |i: usize| c.drawing.line(i).to_string();
+        let bare = layout(&m, &without_theme_variables(&p.config), &o);
+        let (sc, problems) =
+            palette_checked(layout(&m, &p.config, &o), &bare, &pele_palette(&line));
+        let mut got = scene_lines(&sc);
+        got.extend(problems);
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read_series);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}: {}",

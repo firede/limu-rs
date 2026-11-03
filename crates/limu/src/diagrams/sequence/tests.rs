@@ -25,7 +25,7 @@ use crate::layout::{Monospace, Options};
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Cap, Join, Look, Paint, Style};
 use crate::scene::{Item, Kind, Op, Outline, Painting, Part, Path, Scene};
-use crate::testing::pelesvg::{id, own_fill};
+use crate::testing::pelesvg::{id, tint_fill};
 use crate::testing::{Enc, Failures, PeleError, pele_num, same, sorted};
 use crate::value::{Map, Value};
 
@@ -434,7 +434,7 @@ fn ends(mut s: Style, stroke: &str, join: Option<Join>) -> String {
 /// author set, where they set one.
 fn part_paint(it: &Item, paint: Painting) -> String {
     let (_, mut stroke) = inked(it);
-    let mut fill = paint_name(own_fill(it));
+    let mut fill = paint_name(tint_fill(it));
     match paint {
         Painting::StrokeOnly => fill = "none",
         Painting::FillOnly => stroke = "none",

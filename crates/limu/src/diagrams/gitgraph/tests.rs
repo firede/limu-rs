@@ -16,7 +16,9 @@ use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Cap, Join, Paint};
 use crate::scene::{Item, Op, Outline, Painting, Part, Scene};
-use crate::testing::pelesvg::id;
+use crate::testing::pelesvg::{
+    id, palette_checked, pele_palette, read_series, text_ink, without_theme_variables,
+};
 use crate::testing::{Enc, Failures, PeleError, pele_num, same, sorted};
 use crate::value::{Map, Value};
 
@@ -390,18 +392,20 @@ fn shape(lines: &mut Vec<String>, it: &Item, part: &Part) {
     lines.push(format!("path {} {}", s.join(" "), paint(it, part)));
 }
 
-/// Where Pele's text puts the first line of an item's label, with its fill.
+/// Where Pele's text puts the first line of an item's label, with its fill: the color Pele's
+/// ink picks on a series the palette sets, as the oracle names it, on-light or on-dark.
 fn label(lines: &mut Vec<String>, it: &Item) {
     let Some(p) = it.label.as_ref().filter(|p| !p.label.lines.is_empty()) else {
         return;
     };
     let l = &p.label;
     let y = p.at.y - l.height / 2.0 + l.line_height / 2.0 + l.size * 0.35;
-    lines.push(format!(
-        "t {} f={}",
-        pt(p.at.x, y),
-        paint_name(it.style.text)
-    ));
+    let fill = match text_ink(it) {
+        "" => paint_name(it.style.text),
+        ink if ink.contains("on-light") => "on-light".into(),
+        _ => "on-dark".into(),
+    };
+    lines.push(format!("t {} f={fill}", pt(p.at.x, y)));
 }
 
 /// The lines of a scene as the oracle reads Pele's SVG.
@@ -501,8 +505,13 @@ fn renders_match_pele() {
             font_size: c.font_size.unwrap_or(16.0),
             ..Options::default()
         };
-        let got = scene_lines(&layout(&m, &p.config, &o));
-        let diff = drawings.diff(k, &c.drawing, &got, None);
+        let line = |i: usize| c.drawing.line(i).to_string();
+        let bare = layout(&m, &without_theme_variables(&p.config), &o);
+        let (sc, problems) =
+            palette_checked(layout(&m, &p.config, &o), &bare, &pele_palette(&line));
+        let mut got = scene_lines(&sc);
+        got.extend(problems);
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read_series);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}: {}",

@@ -5,6 +5,8 @@ use std::collections::HashMap;
 use super::GitModel;
 use super::db::{CHERRY_PICK, GitCommit, HIGHLIGHT, MERGE, REVERSE};
 use crate::common::{plain_label, setting, title_label, turn_to_fit};
+use crate::css::palette::palette;
+use crate::detect::DiagramType;
 use crate::js::math::{by, max, min, round};
 use crate::layout::Options;
 use crate::scene::style::{Cap, Join, Paint, Style};
@@ -99,6 +101,7 @@ fn draw(model: &GitModel, config: &Map, o: &Options, direction: &str) -> Scene {
     let small = round(size * 0.75);
     let set = setting(o);
     let pad = o.pad();
+    let pal = palette(DiagramType::GitGraph, config);
 
     let show_branches = flag(config, "showBranches", true);
     let show_commit_label = flag(config, "showCommitLabel", true);
@@ -336,6 +339,9 @@ fn draw(model: &GitModel, config: &Map, o: &Options, direction: &str) -> Scene {
                     fill: Some(color),
                     stroke: Some(Paint::NONE),
                     text: Some(Paint::BG),
+                    // A branch's name stands out on its color where the palette sets it,
+                    // as Pele's seriesInkFill gives it a fill.
+                    text_ground: pal.ground(i),
                     ..Style::default()
                 };
                 items.push(branch);
@@ -606,6 +612,8 @@ fn draw(model: &GitModel, config: &Map, o: &Options, direction: &str) -> Scene {
         sc.items.push(it);
     }
     sc.items.extend(items);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    pal.apply(&mut sc.items);
     sc
 }
 

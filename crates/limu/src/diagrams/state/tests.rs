@@ -22,7 +22,7 @@ use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::Style;
 use crate::scene::text::Label;
 use crate::scene::{Kind, Outline, Path, Rect, Scene, Step};
-use crate::testing::pelesvg::{cap_join, casing_line, id, marker, stroke_ink, text_ink};
+use crate::testing::pelesvg::{cap_join, casing_line, id, marker, opaque, stroke_ink, text_ink};
 use crate::testing::{Enc, Failures, PeleError, pele_d, pele_num, same};
 use crate::value::{Map, Value};
 
@@ -539,7 +539,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 linked(&mut lines);
                 let b = box_of(&it.parts[0]).expect("a box");
                 lines.push(rect("rect", b, &radius(&it.style)));
-                if it.style.fill_opacity.is_none() {
+                if opaque(it) {
                     lines.push("opaque".into());
                 }
                 for part in &it.parts[1..] {

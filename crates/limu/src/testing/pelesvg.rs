@@ -3,7 +3,8 @@
 //! numbers as Pele's SVG writes them.
 
 use super::{pele_d, pele_num};
-use crate::scene::style::{Look, Paint};
+use crate::css::palette;
+use crate::scene::style::{Look, Paint, Source, Token};
 use crate::scene::{
     Item, Kind, MARKER_SIZE, Marker, MarkerType, Op, Outline, Part, PictureSource, Placed, Rect,
     Scene,
@@ -64,6 +65,27 @@ pub(crate) fn own_fill(it: &Item) -> Option<Paint> {
         .map(|p| p.with_opacity(it.style.fill_opacity.unwrap_or(1.0)))
 }
 
+/// [`own_fill`] for a part the diagram draws in a translucent fill of its own unless its
+/// author sets a fill: at full opacity where [`opaque`], as Pele then writes no fill-opacity.
+pub(crate) fn tint_fill(it: &Item) -> Option<Paint> {
+    if opaque(it) {
+        return it.style.fill;
+    }
+    own_fill(it)
+}
+
+/// Whether Pele leaves out the fill-opacity of a part the diagram draws in a translucent fill
+/// of its own, as it does where the part's author sets a fill. limu keeps the part's own
+/// opacity and gives the author's style a full one (`css::opaque`), so this reads that style:
+/// true where it sets a fill opacity along with a fill, or a full one. Where the author writes
+/// a fill opacity and limu reads no fill beside it, it can differ from Pele's attribute, but
+/// not in what is drawn, as the author's opacity covers the part's own.
+pub(crate) fn opaque(it: &Item) -> bool {
+    it.author
+        .fill_opacity
+        .is_some_and(|o| o == 1.0 || it.author.fill.is_some())
+}
+
 /// The color Pele's ink gives what lies on a fill a style sets, by the theme's paint that
 /// stands for each: ON_LIGHT is the theme's foreground, and ON_DARK its background.
 fn ink_of(p: Option<Paint>) -> &'static str {
@@ -86,6 +108,102 @@ pub(crate) fn text_ink(it: &Item) -> &'static str {
             .cascade(it.role.as_str(), &own, &it.author)
             .text,
     )
+}
+
+/// The palette Pele set, as its series lines say, `series N value`, each value read as limu
+/// reads a palette's color, given Pele's line at an index, or "" where the fixture does not
+/// hold it. The fixtures keep the series lines, which come after the size and the title and
+/// description for assistive technology and before anything else.
+pub(crate) fn pele_palette(want: &dyn Fn(usize) -> String) -> [Option<Paint>; 8] {
+    let mut out = [None; 8];
+    for i in 0..16 {
+        let line = want(i);
+        let Some(rest) = line.strip_prefix("series ") else {
+            continue;
+        };
+        let (n, value) = rest.split_once(' ').unwrap_or((rest, ""));
+        if let Ok(n @ 1..=8) = n.parse::<usize>() {
+            out[n - 1] = palette::read(value);
+        }
+    }
+    out
+}
+
+/// How many series lines Pele wrote, given its line at an index as [`pele_palette`] is. The
+/// tests write none, as the scene holds the palette in the authors' styles of what is drawn
+/// in its series, so a test adds it to the index of a line it writes to find Pele's line in
+/// that place.
+pub(crate) fn series_count(want: &dyn Fn(usize) -> String) -> usize {
+    (0..16).filter(|&i| want(i).starts_with("series ")).count()
+}
+
+/// A line of Pele's as the tests of diagrams with a palette compare it: none for a series
+/// line, which [`palette_checked`] checks the scene against in its place, and any other line
+/// as it is.
+pub(crate) fn read_series(line: &str) -> Option<String> {
+    (!line.starts_with("series ")).then(|| line.to_string())
+}
+
+/// Checks the scene a diagram is laid out as against the one it is laid out as without its
+/// theme variables, bare, and the palette Pele set. The palette must change nothing but the
+/// authors' styles of what is drawn in the series it sets, and the grounds of labels on them.
+/// Each fill, stroke or text an item's own style draws in series k has the palette's color for
+/// k in its author's style, at the part of its opacity the series is drawn at, where Pele's
+/// palette sets k and the author's own style sets nothing, and what bare's author has
+/// elsewhere. It gives the scene with bare's authors' styles, which the lines of the authors'
+/// own text are written from, and a line for each item that differs, for the test to write
+/// after its lines.
+pub(crate) fn palette_checked(
+    mut with: Scene,
+    bare: &Scene,
+    palette: &[Option<Paint>; 8],
+) -> (Scene, Vec<String>) {
+    let mut problems = Vec::new();
+    if with.items.len() != bare.items.len() {
+        problems.push(format!(
+            "palette: {} items, {} without it",
+            with.items.len(),
+            bare.items.len()
+        ));
+        return (with, problems);
+    }
+    let from = |own: Option<Paint>| {
+        let p = own?;
+        let Source::Theme(Token::Series(k)) = p.source() else {
+            return None;
+        };
+        palette[usize::from(k) % 8].map(|c| c.with_opacity(f64::from(p.opacity())))
+    };
+    for (k, (it, b)) in with.items.iter_mut().zip(&bare.items).enumerate() {
+        let mut want = b.author.clone();
+        want.fill = want.fill.or(from(it.style.fill));
+        want.stroke = want.stroke.or(from(it.style.stroke));
+        want.text = want.text.or(from(it.style.text));
+        if it.author != want {
+            problems.push(format!(
+                "palette: item {k} {} has author {:?}, not {want:?}",
+                it.role.as_str(),
+                it.author
+            ));
+        }
+        it.author = b.author.clone();
+        let mut same = it.clone();
+        same.style.text_ground = b.style.text_ground;
+        if same != *b {
+            problems.push(format!(
+                "palette: item {k} {} differs from what it is without one",
+                it.role.as_str()
+            ));
+        }
+    }
+    (with, problems)
+}
+
+/// A diagram's configuration without its theme variables, which set its palette.
+pub(crate) fn without_theme_variables(config: &crate::value::Map) -> crate::value::Map {
+    let mut c = config.clone();
+    c.remove("themeVariables");
+    c
 }
 
 /// The color Pele's ink writes for an item's stroke, where the ground it lies on picks one, as
@@ -199,7 +317,7 @@ pub(crate) fn flow_lines(sc: &Scene) -> Vec<String> {
                     "cluster {id} [{classes}] {}",
                     boxed(it.bounds, 0.0, 0.0)
                 ));
-                if it.style.fill_opacity.is_none() {
+                if opaque(it) {
                     lines.push("opaque".into());
                 }
                 label(&mut lines, 0.0, 0.0);

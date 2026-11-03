@@ -3,6 +3,7 @@
 use super::db::{PlotType, XAxis, XyChartDb};
 use super::ticks::{tick_index, tick_step, tick_value, ticks_between};
 use crate::common::{cap_width, line, setting as text_setting};
+use crate::css::palette::palette;
 use crate::detect::DiagramType;
 use crate::errors::{Error, ErrorCode};
 use crate::js::math::{max, min, round};
@@ -884,6 +885,8 @@ pub(crate) fn layout(model: &XyChartDb, config: &Map, o: &Options) -> Result<Sce
     items.extend(outside);
     items.extend(point_labels);
     items.extend(entries);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    palette(DiagramType::XyChart, config).apply(&mut items);
     Ok(Scene {
         diagram: "xychart".into(),
         width,

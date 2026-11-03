@@ -19,14 +19,14 @@ exclude = ["tests/golden"]
 [workspace]
 
 [dependencies]
-gpui = { package = "gpui-pre", version = "0.3.10" }
+gpui = { package = "gpui-pre", version = "0.3.11" }
 limu-scene = { path = "../limu-scene", version = "0.1.1" }
 # The caps and joins of a stroke, in the version GPUI tessellates with.
 lyon = "1.0"
 
 [dev-dependencies]
 # Without font-kit, GPUI on macOS has no text system and sets no glyphs.
-gpui_platform = { package = "gpui-pre-platform", version = "0.3.10", features = ["font-kit"] }
+gpui_platform = { package = "gpui-pre-platform", version = "0.3.11", features = ["font-kit"] }
 # The frames of the sample image, in the version GPUI's images are made of.
 image = { version = "0.25.1", default-features = false }
 limu-samples = { path = "../limu-samples" }

@@ -14,7 +14,7 @@ pub(crate) const ROLE_TITLE: &str = "info.title";
 pub(crate) const ROLE_VERSION: &str = "info.version";
 
 /// The renderer's name and version that an info diagram draws. Pele draws its own, "Pele
-/// v1.12.0", and limu draws its own in its place.
+/// v1.13.0", and limu draws its own in its place.
 pub(crate) const VERSION: &str = concat!("limu v", env!("CARGO_PKG_VERSION"));
 
 /// Lays an info diagram out as a scene, as Pele's renderInfo draws it: the title, where

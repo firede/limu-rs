@@ -17,7 +17,7 @@ use crate::js::chars::len16;
 use crate::js::number::to_string;
 use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
-use crate::scene::style::{Paint, Source};
+use crate::scene::style::{Look, Paint, Source};
 use crate::scene::text::{Face, Label};
 use crate::scene::{Item, Outline, Scene};
 use crate::testing::pelesvg::{cap_join, id};
@@ -455,4 +455,27 @@ fn renders_match_pele() {
     }
     failures.done("renders", 4000);
     assert!(points >= 10000, "only {points} points drawn");
+}
+
+// A point whose author gives its stroke a width and no color is stroked in the points' color,
+// and a look that leaves out the author's style draws no stroke on it.
+#[test]
+fn stroke_width_is_the_authors() {
+    let m = parse("quadrantChart\nA: [0.5, 0.5] stroke-width: 4px", None).expect("a chart");
+    let sc = layout(&m, &Map::new(), &Options::default());
+    let it = sc
+        .items
+        .iter()
+        .find(|it| it.role.as_str() == ROLE_POINT)
+        .expect("a point");
+    let stroke = |look: Look| look.cascade(it.role.as_str(), &it.style, &it.author).stroke;
+    assert_eq!(stroke(Look::default()), Some(Paint::series(0)));
+    let only = Look {
+        theme_only: true,
+        ..Look::default()
+    };
+    assert!(
+        !stroke(only).is_some_and(|p| p.visible()),
+        "a stroke under theme_only"
+    );
 }

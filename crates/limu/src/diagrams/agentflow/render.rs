@@ -18,7 +18,7 @@ use crate::common::{
     class_names, clickable, routing_curve, runs_across, setting, title_label, trim_default,
     turn_to_fit,
 };
-use crate::css::{Resolved, declarations, resolve_style};
+use crate::css::{Resolved, declarations, opaque, resolve_style};
 use crate::diagrams::flowchart::canonical_shape;
 use crate::draw::{
     Crossings, Curve, EdgePath, Fill, Node, PAD_X, PAD_Y, casing, cluster_title_x, draw_shape,
@@ -87,16 +87,12 @@ fn number_option(config: &Map, key: &str, fallback: f64) -> f64 {
 
 /// A palette color as an outline with a light wash of the same color inside, as Pele's tint
 /// draws it. The wash is a fill opacity, which Pele writes only where the author declares no
-/// fill, so that a fill the author sets is opaque.
-fn tint(slot: usize, wash: f64, style: &Resolved) -> Style {
+/// fill, so that a fill the author sets is opaque, as [`opaque`] makes the author's style.
+fn tint(slot: usize, wash: f64) -> Style {
     Style {
         fill: Some(Paint::series(slot)),
         stroke: Some(Paint::series(slot)),
-        fill_opacity: if style.fill_declared() {
-            None
-        } else {
-            Some(wash)
-        },
+        fill_opacity: Some(wash),
         ..Style::default()
     }
 }
@@ -533,12 +529,12 @@ fn draw(db: &AgentflowDb, config: &Map, o: &Options, turned: bool) -> Scene {
             (flow.class, flow.tags) = (class, tags);
             flow.bounds = bounds;
             flow.parts = vec![Part::rect(bounds, true, Painting::FillAndStroke)];
-            flow.style = tint(slot(n), 0.06, &view.style);
+            flow.style = tint(slot(n), 0.06);
             // The title lies on the flow's fill, and takes the color that stands out on a
             // fill its author sets, as Pele's inkFill gives it.
             flow.style.text = Some(Paint::MUTED);
             flow.style.on_fill = view.style.inks_text(&view.style);
-            flow.author = author.style;
+            flow.author = opaque(author.style, view.style.fill_declared());
             if !view.label.is_empty() {
                 let at = Point::new(title_x, y - c.h / 2.0 + 8.0 + view.label.height / 2.0);
                 flow.label = Some(Placed::new(view.label.clone(), at));
@@ -555,7 +551,7 @@ fn draw(db: &AgentflowDb, config: &Map, o: &Options, turned: bool) -> Scene {
             let s = slot(n);
             it = Item::new(Kind::Node, ROLE_COLLAPSED);
             it.parts = vec![Part::rect(bounds, true, Painting::FillAndStroke)];
-            it.style = tint(s, 0.06, &view.style);
+            it.style = tint(s, 0.06);
             // What the author sets of lines styles the rule, and fills nothing.
             let mut line = author.style.clone();
             line.fill = None;
@@ -594,13 +590,13 @@ fn draw(db: &AgentflowDb, config: &Map, o: &Options, turned: bool) -> Scene {
             let s = kind_slot(kind).unwrap_or(1);
             it = Item::new(Kind::Node, format!("agentflow.{kind}"));
             it.parts = draw_shape(view.shape, x, y, w, h);
-            it.style = tint(s, 0.14, &view.style);
+            it.style = tint(s, 0.14);
         }
         it.shape = Some(Shape::new(view.shape));
         it.id = Some(n.id.clone());
         (it.class, it.tags) = (class, tags);
         it.bounds = bounds;
-        it.author = author.style;
+        it.author = opaque(author.style, view.style.fill_declared());
         // The label lies on the node's fill, unless its shape is drawn bare.
         it.style.on_fill = (view.shape == COLLAPSED || shape_filled(view.shape))
             && view.style.inks_text(&view.style);

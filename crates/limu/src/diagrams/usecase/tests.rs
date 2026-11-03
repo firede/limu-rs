@@ -24,7 +24,7 @@ use crate::scene::{
     Align, Item, Kind, MARKER_SIZE, Marker, MarkerType, Op, Outline, Painting, Part, Path,
     PictureSource, Placed, Scene,
 };
-use crate::testing::pelesvg::{id, own_fill};
+use crate::testing::pelesvg::{id, tint_fill};
 use crate::testing::{Enc, Failures, PeleError, pele_d, pele_num, same};
 use crate::value::{Map, Value};
 
@@ -606,9 +606,9 @@ fn part_paint(it: &Item, part: &Part, corners: bool) -> String {
     let stroke = paint_name(it.style.stroke);
     let mut s = match part.paint {
         Painting::StrokeOnly => format!("none {stroke}"),
-        Painting::FillOnly => return format!("{} -", paint_name(own_fill(it))),
+        Painting::FillOnly => return format!("{} -", paint_name(tint_fill(it))),
         Painting::Hollow => format!("var(--_bg) {stroke}"),
-        _ => format!("{} {stroke}", paint_name(own_fill(it))),
+        _ => format!("{} {stroke}", paint_name(tint_fill(it))),
     };
     if stroke != "-" && stroke != "none" {
         s.push_str(&ends(it, None, corners));

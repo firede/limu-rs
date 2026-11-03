@@ -9,7 +9,7 @@ use crate::common::{
     class_names, parse_generic_types, routing_curve, runs_across, setting, title_label,
     trim_default, turn_to_fit,
 };
-use crate::css::{Resolved, declarations, resolve_style};
+use crate::css::{Resolved, declarations, opaque, resolve_style};
 use crate::draw::{
     Crossings, Curve, Fill, Node, casing, cluster_title_x, label_patch, label_patch_box,
     mark_crossings, on_fills, own_reach, route_path,
@@ -535,17 +535,13 @@ fn draw(db: &ErDb, config: &Map, o: &Options, turned: bool) -> Scene {
             // opacity, unless its author sets a fill, as Pele's setsFill tests.
             cluster.style = Style {
                 fill: Some(Paint::SURFACE_ALT),
-                fill_opacity: if view.style.fill_declared() {
-                    None
-                } else {
-                    Some(0.5)
-                },
+                fill_opacity: Some(0.5),
                 stroke: Some(Paint::BORDER),
                 text: Some(Paint::MUTED),
                 on_fill: view.style.inks_text(&view.style),
                 ..Style::default()
             };
-            cluster.author = author.style;
+            cluster.author = opaque(author.style, view.style.fill_declared());
             if !view.label.is_empty() {
                 let at = Point::new(title_x, bounds.y + 8.0 + view.label.height / 2.0);
                 cluster.label = Some(Placed::new(view.label.clone(), at));

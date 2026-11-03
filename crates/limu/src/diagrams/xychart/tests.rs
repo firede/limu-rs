@@ -23,7 +23,9 @@ use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Paint, Theme};
 use crate::scene::text::Face;
 use crate::scene::{Align, Item, Op, Outline, Painting, Part, Path, Scene};
-use crate::testing::pelesvg::id;
+use crate::testing::pelesvg::{
+    id, palette_checked, pele_palette, read_series, without_theme_variables,
+};
 use crate::testing::{Enc, Failures, PeleError, pele_num, same, sorted};
 use crate::value::{Map, Value};
 
@@ -474,14 +476,22 @@ fn renders_match_pele() {
             font_size: c.font_size.unwrap_or(16.0),
             ..Options::default()
         };
+        let line = |i: usize| c.drawing.line(i).to_string();
         let got = match layout(&m, &p.config, &o) {
-            Ok(sc) => scene_lines(&sc),
+            Ok(sc) => {
+                let bare = layout(&m, &without_theme_variables(&p.config), &o)
+                    .expect("a chart that lays out without its theme variables");
+                let (sc, problems) = palette_checked(sc, &bare, &pele_palette(&line));
+                let mut got = scene_lines(&sc);
+                got.extend(problems);
+                got
+            }
             Err(e) => {
                 refused += 1;
                 vec![format!("error {} {}", e.code.as_str(), e.message)]
             }
         };
-        let diff = drawings.diff(k, &c.drawing, &got, None);
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read_series);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}: {}",
