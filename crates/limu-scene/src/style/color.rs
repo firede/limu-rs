@@ -40,8 +40,10 @@ impl Color {
     }
 
     /// Reads a CSS color: a hex color, rgb() or rgba(), hsl() or hsla() with a hue in
-    /// degrees or as an angle in deg, grad, rad or turn, a named color or transparent, with
-    /// the white space of CSS about it, its names in either case of their ASCII letters. It gives none for anything else, such as currentColor or var().
+    /// degrees or as an angle in deg, grad, rad or turn and a channel none, which is 0, a
+    /// named color or transparent, with the white space of CSS about it, its names in either
+    /// case of their ASCII letters. It gives none for anything else, such as currentColor or
+    /// var().
     pub fn parse(s: &str) -> Option<Color> {
         let s = s
             .trim_matches([' ', '\t', '\n', '\r', '\x0c'])
@@ -124,8 +126,11 @@ fn function(s: &str) -> Option<(&str, Vec<&str>)> {
     Some((&s[..open], args))
 }
 
-/// Reads a number, or a percentage of full.
+/// Reads a number, or a percentage of full, or none, which is 0.
 fn number(s: &str, full: f64) -> Option<f64> {
+    if s == "none" {
+        return Some(0.0);
+    }
     let (digits, pct) = match s.strip_suffix('%') {
         Some(d) => (d, true),
         None => (s, false),
@@ -391,6 +396,8 @@ mod tests {
                 "hsla(240, 100%, 50%, 0.25)",
                 Some(Color::new(0, 0, 255, 64)),
             ),
+            ("rgb(none 128 none)", Some(Color::new(0, 128, 0, 255))),
+            ("hsl(none 100% 50% / none)", Some(Color::new(255, 0, 0, 0))),
             ("var(--x)", None),
             ("currentColor", None),
             ("rgb(1,2)", None),
