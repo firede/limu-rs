@@ -93,7 +93,8 @@ browser.
 - **Followed in meaning.** How Pele writes SVG (`src/svg/builder.ts`, `root.ts`) matters
   only in what it draws, which the scene and the default drawing must keep. The tokens of
   its theme and its choice of a color on a fill (`theme.ts`, `ink.ts`) are followed in
-  `style`.
+  `style`. The colors a diagram's theme variables give its series (`palette.ts`) are read
+  in `limu` and carried by the scene, and the backends draw the series in them.
 - **Not ported.** Mounting in a page and zooming (`mount.ts`, `zoom.ts`) are a host's. What
   they solve has a native form: a host that lays a diagram out again when its width changes
   sets `max_width`, and one whose fonts change lays it out again with the new measurer.
@@ -108,8 +109,8 @@ title and description for the platform's accessibility, and drawing without SVG.
 ## The scene
 
 A `Scene` is a list of items in the order they are drawn, with the diagram's type, its
-size, the font size of text with no size of its own, and its title and description for
-assistive technology.
+size, the font size of text with no size of its own, its title and description for
+assistive technology, and the colors its own theme variables give its series.
 
 An `Item` holds what every item has, and its `kind` says what sort of thing it is. Only an
 edge has something no other kind has, its route and the markers at its ends, so only
@@ -202,6 +203,26 @@ lost on it. Pele picks a color for what lies on such a fill, the theme's foregro
 background, whichever stands out more, and limu-rs keeps that choice in style, since it
 changes no position. A diagram says only what lies on which fill, and the style picks the
 color when the scene is drawn.
+
+A diagram's own theme variables can give its series their colors, as Mermaid's `pie1`,
+`git0`, `cScale0` and `venn1` and an XY chart's `plotColorPalette` do. limu-rs reads them
+as Pele's palette does, and the scene carries them as its palette, a paint for each of the
+eight series or none. They move nothing, so they are style, and layout only reads them. A
+scene is drawn in the look `Look::for_scene` gives, whose theme has the series the palette
+sets in place of its own, and the default drawing does this for every backend. The SVG
+writer also writes each as `--limu-series-N` on the root, as Pele writes
+`--pele-series-N`, so that the diagram's colors win over a page's. A label on a series the
+palette sets, as a pie's percentage on its slice, has the series as its text's ground, so
+that the style picks the foreground or the background on the palette's color, where Pele's
+ink picks one.
+
+Pele takes a color only where it can't load a resource, end its declaration or read the
+page's own variables, and limu-rs refuses what Pele refuses. Of what Pele takes, limu-rs
+reads hex codes, named colors, rgb(), rgba(), hsl() and hsla(), transparent as a paint that
+draws nothing, and currentColor as the theme's foreground, since Pele's root sets its color
+to that. A browser evaluates the rest, as `var(--pele-accent)`, color-mix(), light-dark()
+and the newer functions of CSS such as oklch(). limu-rs can't, so such a color leaves its
+series in the theme's color, and the tests leave it out of the comparison.
 
 `Look::resolve` settles a part's style into what a backend draws with. Each color it gives
 is an `Ink`, the color settled and the paint it came from. A native backend draws the
@@ -438,7 +459,7 @@ of each case after them, and a test compares the digest of the lines it writes f
 scene. Numbers are compared exactly. A difference in the last bit is a difference in the
 port.
 
-The port follows Pele 1.12.0, commit `8aff183`. Each fixture records the version and commit
+The port follows Pele 1.13.0, commit `3a2f075`. Each fixture records the version and commit
 it was written from, and the tests fail on a fixture of another. To follow a newer Pele,
 pele-oracle writes the fixtures anew from it, limu-rs pins the new release, and what Pele's
 diff changed is ported.
