@@ -136,6 +136,11 @@ fn laid_out_roles() -> std::collections::BTreeSet<String> {
         .expect("the fixtures")
         .filter_map(|e| {
             let name = e.ok()?.file_name().into_string().ok()?;
+            // A name that starts with a point is no fixture, as the files macOS writes
+            // beside others in an archive, "._agentflow-render.json.gz".
+            if name.starts_with('.') {
+                return None;
+            }
             Some(name.strip_suffix("-render.json.gz")?.to_string())
         })
         .collect();

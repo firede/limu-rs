@@ -1,7 +1,7 @@
 # The release of pele-oracle whose fixtures the tests compare with, and the SHA-256 of its
 # archive. scripts/fixtures.sh downloads it into target/.
-tag = "pele-1.13.0-1"
-sha256 = "5c1aed0df103c8bb3090944360564bf64a73732aeb398757825058e711775c9d"
+tag = "pele-1.13.0-2"
+sha256 = "e9cddd8887fe11a8de4226be6151cc7556d9f83409dae83e41f1443d05d2d26b"
 
 # The fonts limu-tiny-skia's golden images are drawn in, Liberation Sans and Mono, which are
 # as wide as Arial and Courier New, and the SHA-256 of their archive. scripts/fixtures.sh
