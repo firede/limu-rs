@@ -399,8 +399,8 @@ fn stroke_name(p: Option<Paint>) -> String {
 }
 
 /// The fill the oracle reads of an item's text: the color the default look picks on a fill,
-/// or on a series the scene's palette sets, where it picks one, and the diagram's own
-/// otherwise.
+/// or on the color a palette gives the series it lies on, where it picks one, and the
+/// diagram's own otherwise.
 fn text_paint(it: &Item) -> &'static str {
     // Pele writes the color it picks on a series as the text's fill whether or not the
     // author's style sets a color, which wins over it, so it is found without that color.
