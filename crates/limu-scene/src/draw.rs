@@ -160,7 +160,8 @@ pub fn draw<C: Canvas + ?Sized>(scene: &Scene, look: &Look, canvas: &mut C) {
 }
 
 /// Draws a scene on a canvas in a look, each item by the hook, which is given the item and
-/// its style resolved in the look. The hook draws on the painter's canvas, and draws what it
+/// its style resolved in the look, with the series colors the scene's palette sets, as
+/// [`Look::for_scene`] gives it. The hook draws on the painter's canvas, and draws what it
 /// leaves to the default with the painter's methods. It draws inside the item, between
 /// [`Canvas::begin_item`] and [`Canvas::end_item`], and inside the layer of the item's
 /// opacity, or, on a canvas with no layers, with the opacity laid on the colors it is given.
@@ -170,6 +171,7 @@ where
     C: Canvas + ?Sized,
     F: FnMut(&mut Painter<'_, C>, &Item, &Resolved),
 {
+    let look = look.for_scene(scene);
     canvas.begin_scene(scene);
     for it in &scene.items {
         let mut s = look.resolve(it.role.as_str(), &it.style, &it.author);

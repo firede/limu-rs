@@ -470,6 +470,7 @@ fn draw(db: &JourneyDb, o: &Options) -> Scene {
     }
 
     let mut sc = Scene {
+        palette: Default::default(),
         diagram: "journey".into(),
         width: (width + 2.0 * pad).ceil(),
         height: (max(bottom, pad) + pad).ceil(),
@@ -636,6 +637,7 @@ fn vertical_journey(db: &JourneyDb, o: &Options) -> Scene {
     let total_width = (width + 2.0 * pad).ceil();
     let last = if db.tasks.is_empty() { y } else { y - 16.0 };
     let mut sc = Scene {
+        palette: Default::default(),
         diagram: "journey".into(),
         width: total_width,
         height: (max(pad + title.height, last) + pad).ceil(),

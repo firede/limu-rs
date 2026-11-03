@@ -23,7 +23,7 @@ use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Paint, Theme};
 use crate::scene::text::Face;
 use crate::scene::{Align, Item, Op, Outline, Painting, Part, Path, Scene};
-use crate::testing::pelesvg::id;
+use crate::testing::pelesvg::{id, read_series, series_lines};
 use crate::testing::{Enc, Failures, PeleError, pele_num, same, sorted};
 use crate::value::{Map, Value};
 
@@ -276,6 +276,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
     if let Some(d) = sc.desc.as_deref().filter(|d| !d.is_empty()) {
         lines.push(format!("acc-desc {}", id(d)));
     }
+    lines.extend(series_lines(sc));
     let context = |it: &Item| match it.role.as_str() {
         ROLE_TITLE => "title",
         ROLE_AXIS_LABEL => "axis-labels",
@@ -481,7 +482,7 @@ fn renders_match_pele() {
                 vec![format!("error {} {}", e.code.as_str(), e.message)]
             }
         };
-        let diff = drawings.diff(k, &c.drawing, &got, None);
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read_series);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}: {}",

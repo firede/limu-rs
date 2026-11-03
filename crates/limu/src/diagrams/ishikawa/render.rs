@@ -429,6 +429,7 @@ fn draw(db: &IshikawaDb, o: &Options, down: bool) -> Scene {
         items.push(it);
     }
     Scene {
+        palette: Default::default(),
         diagram: "ishikawa".into(),
         width,
         height,
@@ -585,6 +586,7 @@ fn vertical_causes(db: &IshikawaDb, o: &Options) -> Scene {
     items.extend(edges);
     items.extend(nodes);
     Scene {
+        palette: Default::default(),
         diagram: "ishikawa".into(),
         width: total_width,
         height,

@@ -16,7 +16,7 @@ use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Cap, Join, Paint};
 use crate::scene::{Item, Op, Outline, Painting, Part, Scene};
-use crate::testing::pelesvg::id;
+use crate::testing::pelesvg::{id, read_series, series_lines, text_ink_in};
 use crate::testing::{Enc, Failures, PeleError, pele_num, same, sorted};
 use crate::value::{Map, Value};
 
@@ -390,23 +390,26 @@ fn shape(lines: &mut Vec<String>, it: &Item, part: &Part) {
     lines.push(format!("path {} {}", s.join(" "), paint(it, part)));
 }
 
-/// Where Pele's text puts the first line of an item's label, with its fill.
-fn label(lines: &mut Vec<String>, it: &Item) {
+/// Where Pele's text puts the first line of an item's label, with its fill: the color Pele's
+/// ink picks on a series the palette sets, as the oracle names it, on-light or on-dark.
+fn label(lines: &mut Vec<String>, sc: &Scene, it: &Item) {
     let Some(p) = it.label.as_ref().filter(|p| !p.label.lines.is_empty()) else {
         return;
     };
     let l = &p.label;
     let y = p.at.y - l.height / 2.0 + l.line_height / 2.0 + l.size * 0.35;
-    lines.push(format!(
-        "t {} f={}",
-        pt(p.at.x, y),
-        paint_name(it.style.text)
-    ));
+    let fill = match text_ink_in(sc, it) {
+        "" => paint_name(it.style.text),
+        ink if ink.contains("on-light") => "on-light".into(),
+        _ => "on-dark".into(),
+    };
+    lines.push(format!("t {} f={fill}", pt(p.at.x, y)));
 }
 
 /// The lines of a scene as the oracle reads Pele's SVG.
 fn scene_lines(sc: &Scene) -> Vec<String> {
     let mut lines = vec![format!("size {}", pt(sc.width, sc.height))];
+    lines.extend(series_lines(sc));
     let data = |it: &Item| id(it.id.as_deref().unwrap_or(""));
     let mut i = 0;
     while i < sc.items.len() {
@@ -414,7 +417,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
         match it.role.as_str() {
             ROLE_TITLE => {
                 lines.push("title".into());
-                label(&mut lines, it);
+                label(&mut lines, sc, it);
             }
             ROLE_LANE => {
                 lines.push(format!("branch {}", data(it)));
@@ -422,7 +425,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
             }
             ROLE_BRANCH => {
                 shape(&mut lines, it, &it.parts[0]);
-                label(&mut lines, it);
+                label(&mut lines, sc, it);
             }
             ROLE_EDGE => {
                 let mut class = "pele-edge".to_string();
@@ -463,7 +466,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                         pt(p.at.x, p.at.y),
                         paint_name(it.style.text)
                     )),
-                    None => label(&mut lines, it),
+                    None => label(&mut lines, sc, it),
                 }
             }
             ROLE_TAG => {
@@ -475,7 +478,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                     shape(&mut lines, hole, &hole.parts[0]);
                     i += 1;
                 }
-                label(&mut lines, it);
+                label(&mut lines, sc, it);
             }
             role => lines.push(format!("unknown role {role}")),
         }
@@ -502,7 +505,7 @@ fn renders_match_pele() {
             ..Options::default()
         };
         let got = scene_lines(&layout(&m, &p.config, &o));
-        let diff = drawings.diff(k, &c.drawing, &got, None);
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read_series);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}: {}",

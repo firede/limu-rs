@@ -17,7 +17,7 @@ use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Paint, Theme};
 use crate::scene::{Align, Item, Outline, Painting, Part, Path, Scene};
-use crate::testing::pelesvg::{id, own_fill};
+use crate::testing::pelesvg::{id, own_fill, read_series, series_lines, text_ink_in};
 use crate::testing::{Enc, Failures, PeleError, pele_num, same, sorted};
 use crate::value::{Map, Value};
 
@@ -221,15 +221,21 @@ fn subpaths(p: &Path) -> String {
 }
 
 /// Where Pele's text puts the first line of a label centered on its point, its paint, its
-/// size, and the text of its lines.
-fn text_at(it: &Item) -> String {
+/// size, and the text of its lines. A label on a series the palette sets is in the color
+/// Pele's ink picks on it.
+fn text_at(sc: &Scene, it: &Item) -> String {
     let p = it.label.as_ref().expect("a label");
     let l = &p.label;
     let y = p.at.y - l.height / 2.0 + l.line_height / 2.0 + l.size * 0.35;
+    let ink = text_ink_in(sc, it);
     let mut s = format!(
         "t {} {} {}",
         pt(p.at.x, y),
-        paint_name(it.style.text),
+        if ink.is_empty() {
+            paint_name(it.style.text)
+        } else {
+            ink.to_string()
+        },
         pele_num(l.size)
     );
     if p.align != Align::Middle {
@@ -257,6 +263,7 @@ fn path_of(it: &Item) -> &Path {
 /// The lines of a scene as the oracle reads Pele's SVG.
 fn scene_lines(sc: &Scene) -> Vec<String> {
     let mut lines = vec![format!("size {}", pt(sc.width, sc.height))];
+    lines.extend(series_lines(sc));
     let rect = |lines: &mut Vec<String>, it: &Item| {
         let part = &it.parts[0];
         let Outline::Box { rect: r, rounded } = part.outline else {
@@ -271,7 +278,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
     };
     for it in &sc.items {
         match it.role.as_str() {
-            ROLE_TITLE => lines.push(format!("title {}", text_at(it))),
+            ROLE_TITLE => lines.push(format!("title {}", text_at(sc, it))),
             ROLE_AXIS => {
                 lines.push(format!(
                     "pele-axis {} {}",
@@ -297,12 +304,12 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 let data = it.id.as_deref().unwrap_or("");
                 lines.push(format!("{name} {}", xml_text(&id(data))));
                 rect(&mut lines, it);
-                lines.push(text_at(it));
+                lines.push(text_at(sc, it));
             }
             ROLE_EVENT => {
                 lines.push("event".into());
                 rect(&mut lines, it);
-                lines.push(text_at(it));
+                lines.push(text_at(sc, it));
             }
             ROLE_CONNECTOR => lines.push(format!(
                 "pele-edge {} {}",
@@ -344,7 +351,7 @@ fn renders_match_pele() {
             ..Options::default()
         };
         let got = scene_lines(&layout(&m, &p.config, &o));
-        let diff = drawings.diff(k, &c.drawing, &got, None);
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read_series);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}: {}",

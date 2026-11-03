@@ -149,6 +149,7 @@ fn sample() -> Scene {
     };
 
     Scene {
+        palette: Default::default(),
         diagram: "flowchart".into(),
         width: 240.0,
         height: 220.0,
@@ -573,6 +574,7 @@ fn valid_xml() {
     it.tooltip = Some(bad.into());
     it.label = Some(Placed::new(label(&[&[bad]], 16.0), Point::new(5.0, 5.0)));
     let sc = Scene {
+        palette: Default::default(),
         diagram: bad.into(),
         title: Some(bad.into()),
         desc: Some(bad.into()),
@@ -999,4 +1001,53 @@ fn read_label(svg: &str) -> Vec<String> {
     }
     lines.extend(r.icons);
     lines
+}
+
+// A scene's palette is written on the root as the series' variables, which the series'
+// fallbacks follow, and settled in the colors when the theme's are written as colors. A
+// series the palette leaves unset keeps the theme's color.
+#[test]
+fn palette() {
+    let mut slice = Item::new(Kind::Mark, "pie.slice");
+    slice.parts = vec![Part::rect(
+        Rect::new(0.0, 0.0, 10.0, 10.0),
+        false,
+        Painting::FillOnly,
+    )];
+    slice.style = Style {
+        fill: Some(Paint::series(9)),
+        ..Style::default()
+    };
+    let mut other = slice.clone();
+    other.style.fill = Some(Paint::series(2));
+    let mut sc = Scene {
+        width: 10.0,
+        height: 10.0,
+        items: vec![slice, other],
+        ..Scene::default()
+    };
+    sc.palette[1] = Some(own("#11223380"));
+    sc.palette[3] = Some(Paint::FG);
+    sc.palette[4] = Some(Paint::NONE);
+    let got = render(&sc, &Options::default());
+    let third = Theme::default().series[2];
+    for want in [
+        r#"style="font-family:var(--limu-font,sans-serif);--limu-series-2:#112233;--limu-series-4:var(--limu-fg,#1f1f1f);--limu-series-5:#000000""#,
+        r#"fill="var(--limu-series-2,#112233)" fill-opacity="0.5""#,
+        &format!(r#"fill="var(--limu-series-3,{third})""#),
+    ] {
+        assert!(got.contains(want), "{want} in {got}");
+    }
+    let got = render(
+        &sc,
+        &Options {
+            literal: true,
+            ..Options::default()
+        },
+    );
+    assert!(!got.contains("--limu-series"), "{got}");
+    assert!(
+        got.contains(r##"fill="#112233" fill-opacity="0.5""##),
+        "{got}"
+    );
 }

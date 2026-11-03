@@ -7,6 +7,7 @@
 //! and [`declarations`] reads them as a browser would into a [`Style`], with the weight, slant
 //! and size of the text, which layout takes.
 
+pub(crate) mod palette;
 #[cfg(test)]
 mod tests;
 

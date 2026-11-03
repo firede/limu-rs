@@ -6,7 +6,9 @@ use super::VennDb;
 use super::db::{VennSubset, normalize_text, set_declaration};
 use super::layout::{Circle, Spot, find_spot, layout_circles, region_path};
 use crate::common::setting;
+use crate::css::palette::palette;
 use crate::css::{self, Resolved, declarations, resolve_style};
+use crate::detect::DiagramType;
 use crate::js::math::{hypot, max, min, round};
 use crate::layout::Options;
 use crate::scene::style::{Paint, Style};
@@ -96,7 +98,7 @@ fn under<'a>(region: &'a Region, painted: &[&'a Region]) -> Option<&'a Region> {
 /// region has most room, and the overlaps a style gives a look of their own outlined. Pele
 /// reads nothing of the configuration for a venn diagram, and draws it at its own size
 /// whatever the width of the host.
-pub(crate) fn layout(db: &VennDb, _config: &Map, o: &Options) -> Scene {
+pub(crate) fn layout(db: &VennDb, config: &Map, o: &Options) -> Scene {
     let size = o.font_size;
     let small = round(size * 0.875);
     let tiny = round(size * 0.8125);
@@ -412,6 +414,8 @@ pub(crate) fn layout(db: &VennDb, _config: &Map, o: &Options) -> Scene {
     }
 
     Scene {
+        // The series colors the diagram's theme variables set, as Pele's palette reads them.
+        palette: palette(DiagramType::Venn, config).colors,
         diagram: "venn".into(),
         width,
         height,

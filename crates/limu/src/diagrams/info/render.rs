@@ -40,6 +40,7 @@ pub(crate) fn lay(model: &InfoModel, o: &Options, name: &str) -> Scene {
 
     let width = (crate::js::math::max(title.width, text.width) + 2.0 * pad).ceil();
     let mut sc = Scene {
+        palette: Default::default(),
         diagram: "info".into(),
         width,
         height: (title_height + text.height + 2.0 * pad).ceil(),

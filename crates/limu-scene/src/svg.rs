@@ -55,6 +55,7 @@ where
     let mut w = Writer {
         b: String::with_capacity(256 + 160 * scene.items.len()),
         o,
+        theme: o.look.for_scene(scene).theme.clone(),
         font_size: scene.font_size,
     };
     draw_with(scene, &o.look, &mut w, hook);
@@ -65,6 +66,8 @@ where
 pub struct Writer<'a> {
     b: String,
     o: &'a Options<'a>,
+    // The theme of the look, with the series colors the scene's palette sets.
+    theme: Theme,
     font_size: f64,
 }
 
@@ -85,7 +88,7 @@ impl Writer<'_> {
     }
 
     fn theme(&self) -> &Theme {
-        &self.o.look.theme
+        &self.theme
     }
 
     /// Writes a paint as an opaque color: a variable of the theme's, a color, or none. The
@@ -131,6 +134,31 @@ impl Writer<'_> {
             Source::Theme(t) => self.theme().color(t),
         };
         f64::from(p.opacity()) * f64::from(c.a) / 255.0
+    }
+
+    /// Writes the series colors a scene's palette sets as declarations of the variables of
+    /// the series, on the root's style, as Pele writes its `--pele-series-N`, so that they
+    /// take the place of a page's. A variable holds an opaque color, as its fallbacks do, and
+    /// a color's alpha is written with its opacity. A palette's entry that is a token of the
+    /// theme is written as that token's variable. Colors written as colors need none.
+    fn palette(&mut self, sc: &Scene) {
+        if self.o.literal {
+            return;
+        }
+        for (i, p) in sc.palette.iter().enumerate() {
+            let Some(p) = p else {
+                continue;
+            };
+            let _ = write!(self.b, ";--limu-{}:", Token::Series(i as u8).name());
+            match p.as_token() {
+                Some(t) => self.variable(t),
+                None => {
+                    let mut c = self.theme().color(Token::Series(i as u8));
+                    c.a = 255;
+                    let _ = write!(self.b, "{c}");
+                }
+            }
+        }
     }
 
     /// Writes a token of the theme as a CSS variable, its color in the theme the fallback.
@@ -249,6 +277,7 @@ impl Canvas for Writer<'_> {
         self.b.push_str("\" style=\"font-family:");
         let family = self.family(false);
         self.escaped(&family);
+        self.palette(sc);
         self.b.push_str("\" fill=\"");
         self.paint(Paint::FG);
         self.b

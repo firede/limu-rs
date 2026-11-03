@@ -955,6 +955,7 @@ fn draw(model: &ArchitectureDb, config: &Map, o: &Options, tight: bool) -> Scene
         crate::items::move_by(it, ox, oy);
     }
     Scene {
+        palette: Default::default(),
         diagram: "architecture".into(),
         width,
         height,

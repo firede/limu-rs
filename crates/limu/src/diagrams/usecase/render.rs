@@ -668,6 +668,7 @@ fn draw(m: &UsecaseModel, config: &Map, o: &Options, turned: bool) -> Scene {
     shift_layout(&mut cnodes, &mut cedges, ox, oy);
     let nonempty = |s: &str| (!s.is_empty()).then(|| s.to_string());
     let mut sc = Scene {
+        palette: Default::default(),
         diagram: "usecase".into(),
         width: (inner + 2.0 * pad).ceil(),
         height: (result.height + title_height + 2.0 * pad).ceil(),

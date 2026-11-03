@@ -282,6 +282,7 @@ pub(crate) fn layout(db: &GanttDb, config: &Map, o: &Options) -> Result<Scene, E
         0.0
     };
     let mut sc = Scene {
+        palette: Default::default(),
         diagram: "gantt".into(),
         width: 0.0,
         height: 0.0,

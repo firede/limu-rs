@@ -4,7 +4,9 @@ use super::format::formatter;
 use super::layout::{Insets, layout_treemap};
 use super::model::TreemapModel;
 use crate::common::{cap_width, class_names, fit_text, line, setting, title_room};
+use crate::css::palette::palette;
 use crate::css::{declarations, resolve_style};
+use crate::detect::DiagramType;
 use crate::js::chars::trim;
 use crate::js::math::{log10, max, min, round};
 use crate::layout::Options;
@@ -134,6 +136,7 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
     let left = pad + max(0.0, (title.width - width) / 2.0);
     let top = pad + title_height;
 
+    let pal = palette(DiagramType::Treemap, config);
     let (mut sections, mut leaves) = (Vec::new(), Vec::new());
     for &k in &placed {
         let b = &boxes[k];
@@ -152,6 +155,13 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
         // on the box's fill as its ground.
         let on_fill = resolved.inks_text(&resolved);
         let ground = if on_fill { author.style.fill } else { None };
+        // Text on a box the author does not fill stands out on its series' color where the
+        // palette sets it, as Pele's seriesInkFill gives it a fill.
+        let series_ground = if resolved.fill_declared() {
+            None
+        } else {
+            pal.ground(b.series)
+        };
         let color = Paint::series(b.series);
         let (x, y) = (left + b.x, top + b.y);
         let name = trim(&decode_entities(&node.name)).to_string();
@@ -227,6 +237,7 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
             it.style.stroke = Some(color);
             it.style.text = Some(Paint::FG);
             it.style.on_fill = on_fill;
+            it.style.text_ground = series_ground;
             if !resolved.fill_declared() {
                 it.style.fill_opacity = Some(0.12);
             }
@@ -270,6 +281,7 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
                 v.style = Style {
                     text: Some(Paint::MUTED),
                     ground,
+                    text_ground: series_ground,
                     ..Style::default()
                 };
                 v.author = value_author;
@@ -282,6 +294,7 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
         it.style.stroke = Some(Paint::NONE);
         it.style.text = Some(Paint::BG);
         it.style.on_fill = on_fill;
+        it.style.text_ground = series_ground;
         let room = b.w - 8.0;
         let (smallest, tallest) = match fixed {
             None => (least, min(size, ((b.h - 4.0) / LINE).floor())),
@@ -315,6 +328,7 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
                 v.style = Style {
                     text: Some(Paint::BG),
                     ground,
+                    text_ground: series_ground,
                     ..Style::default()
                 };
                 v.author = value_author;
@@ -328,6 +342,7 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
 
     let total_width = (max(width, title.width) + 2.0 * pad).ceil();
     let mut sc = Scene {
+        palette: pal.colors,
         diagram: "treemap".into(),
         width: total_width,
         height: (height + title_height + 2.0 * pad).ceil(),

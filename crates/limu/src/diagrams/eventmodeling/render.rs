@@ -542,6 +542,7 @@ fn draw(m: &EventModelingModel, o: &Options) -> Scene {
     items.extend(nodes);
     items.extend(cards);
     Scene {
+        palette: Default::default(),
         diagram: "eventmodeling".into(),
         width,
         height: (bottom + pad).ceil(),
@@ -799,6 +800,7 @@ fn vertical_event_model(m: &EventModelingModel, o: &Options) -> Scene {
     items.extend(nodes);
     items.extend(cards);
     Scene {
+        palette: Default::default(),
         diagram: "eventmodeling".into(),
         width,
         height: (bottom + pad).ceil(),

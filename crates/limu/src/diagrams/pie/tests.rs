@@ -15,7 +15,9 @@ use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Paint, Theme};
 use crate::scene::{Item, Op, Outline, Painting, Path, Point, Scene};
-use crate::testing::pelesvg::{cap_join, id};
+use crate::testing::pelesvg::{
+    cap_join, dropped_series, id, read_series, series_lines, text_ink_in,
+};
 use crate::testing::{Enc, Failures, PeleError, same, sorted};
 use crate::value::{Map, Value};
 
@@ -343,6 +345,7 @@ fn scene_lines(sc: &Scene, want: &dyn Fn(usize) -> String) -> Vec<String> {
     if let Some(d) = &sc.desc {
         lines.push(format!("acc-desc {}", id(d)));
     }
+    lines.extend(series_lines(sc));
     let context = |it: &Item| match it.role.as_str() {
         ROLE_TITLE => "title",
         ROLE_SLICE_LABEL => "slice-labels",
@@ -370,11 +373,17 @@ fn scene_lines(sc: &Scene, want: &dyn Fn(usize) -> String) -> Vec<String> {
                 id(&line.iter().map(|s| s.text.as_str()).collect::<String>())
             })
             .collect();
+        // A percentage on a series the palette sets is in the color ink picks on it.
+        let ink = text_ink_in(sc, it);
         format!(
             "{} t {} {} middle {} | {}",
             context(it),
             pt(x, y),
-            paint_name(it.style.text),
+            if ink.is_empty() {
+                paint_name(it.style.text)
+            } else {
+                ink.to_string()
+            },
             n(l.size),
             content.join(" | ")
         )
@@ -467,8 +476,10 @@ fn renders_match_pele() {
             ..Options::default()
         };
         let sc = layout(&m, &p.config, &o);
-        let got = scene_lines(&sc, &|i| c.drawing.line(i).to_string());
-        let diff = drawings.diff(k, &c.drawing, &got, None);
+        let line = |i: usize| c.drawing.line(i).to_string();
+        let drop = dropped_series(&line);
+        let got = scene_lines(&sc, &|i| line(i + drop));
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read_series);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}, padding {:?}: {}",

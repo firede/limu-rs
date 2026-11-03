@@ -856,6 +856,7 @@ fn draw(db: &RailroadDb, config: &Map, o: &Options, tight: bool) -> Scene {
         items.insert(0, it);
     }
     Scene {
+        palette: Default::default(),
         diagram: "railroad".into(),
         width: total_width,
         height: total_height,

@@ -426,6 +426,7 @@ fn draw(
     let oy = pad + title_height;
     shift_layout(&mut cnodes, &mut cedges, ox, oy);
     let mut sc = Scene {
+        palette: Default::default(),
         diagram: variant.map_or("flowchart", |v| v.diagram).into(),
         width: (inner + 2.0 * pad).ceil(),
         height: (result.height + title_height + 2.0 * pad).ceil(),

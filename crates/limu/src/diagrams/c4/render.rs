@@ -749,6 +749,7 @@ fn draw(
     }
 
     let mut sc = Scene {
+        palette: Default::default(),
         diagram: "c4".into(),
         width,
         height,

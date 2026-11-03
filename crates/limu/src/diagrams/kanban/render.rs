@@ -315,6 +315,7 @@ pub(crate) fn layout(m: &KanbanDb, config: &Map, o: &Options) -> Scene {
     let edge = column_width - COLUMN_PAD - 4.0;
 
     let mut sc = Scene {
+        palette: Default::default(),
         diagram: "kanban".into(),
         width: (width + 2.0 * pad).ceil(),
         height: (board_height + title_height + 2.0 * pad).ceil(),

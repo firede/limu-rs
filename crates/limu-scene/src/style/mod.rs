@@ -15,8 +15,11 @@
 mod color;
 mod theme;
 
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
+
+use crate::scene::Scene;
 
 pub use color::Color;
 pub use theme::{Theme, Token};
@@ -383,6 +386,24 @@ impl Look {
             Some(on) if on == Paint::FG => (Paint::BG, true),
             Some(_) => (Paint::FG, true),
         }
+    }
+
+    /// The look a scene is drawn in: this one, with the series colors the scene's palette
+    /// sets in place of the theme's. The default drawing draws every scene in it, so a
+    /// backend that draws through [`draw_with`](crate::draw_with) needs nothing more. A
+    /// palette's entry that is a token of the theme, as currentColor is the foreground, takes
+    /// this theme's color.
+    pub fn for_scene(&self, scene: &Scene) -> Cow<'_, Look> {
+        if scene.palette.iter().all(Option::is_none) {
+            return Cow::Borrowed(self);
+        }
+        let mut look = self.clone();
+        for (series, paint) in look.theme.series.iter_mut().zip(&scene.palette) {
+            if let Some(paint) = paint {
+                *series = paint.color(&self.theme);
+            }
+        }
+        Cow::Owned(look)
     }
 
     /// Settles a part's style in the look, into what a backend draws with.
@@ -956,5 +977,30 @@ mod tests {
             r.shade.color, look.theme.bg,
             "resolved under an override's fill"
         );
+    }
+
+    // A scene's palette takes the place of the theme's series, and a label on a series is
+    // set in the color that stands out on the palette's color.
+    #[test]
+    fn for_scene() {
+        let look = Look::default();
+        let mut sc = Scene::default();
+        assert!(matches!(look.for_scene(&sc), Cow::Borrowed(_)));
+        sc.palette[0] = Some(own("#ffeb3b"));
+        sc.palette[1] = Some(Paint::FG);
+        sc.palette[2] = Some(Paint::NONE);
+        let on = look.for_scene(&sc);
+        assert_eq!(on.theme.series[0], Color::hex("#ffeb3b"));
+        assert_eq!(on.theme.series[1], look.theme.fg);
+        assert_eq!(on.theme.series[2].a, 0);
+        assert_eq!(on.theme.series[3], look.theme.series[3]);
+        let label = |series: usize| Style {
+            text: Some(Paint::BG),
+            text_ground: Some(Paint::series(series)),
+            ..Style::default()
+        };
+        let text = |look: &Look, series| look.cascade("x", &label(series), &Style::default()).text;
+        assert_eq!(text(&on, 0), Some(Paint::FG));
+        assert_eq!(text(&on, 1), Some(Paint::BG));
     }
 }

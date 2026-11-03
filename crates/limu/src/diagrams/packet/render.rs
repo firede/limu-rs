@@ -259,6 +259,7 @@ fn draw(model: &PacketModel, config: &Map, o: &Options, down: bool) -> Scene {
     }
 
     let mut sc = Scene {
+        palette: Default::default(),
         diagram: "packet".into(),
         width: (max(width, title.width) + 2.0 * pad).ceil(),
         height: (rows_height + title_height + 2.0 * pad).ceil(),

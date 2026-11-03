@@ -4,6 +4,8 @@ use std::f64::consts::PI;
 
 use super::RadarModel;
 use crate::common::{fit_width, setting, title_room};
+use crate::css::palette::palette;
+use crate::detect::DiagramType;
 use crate::js::math::{cos, max, min, round, sin};
 use crate::layout::Options;
 use crate::scene::style::{Join, Paint, Style};
@@ -319,6 +321,8 @@ fn draw(
     }
 
     let mut sc = Scene {
+        // The series colors the diagram's theme variables set, as Pele's palette reads them.
+        palette: palette(DiagramType::Radar, config).colors,
         diagram: "radar".into(),
         width: total_width,
         height: total_height,

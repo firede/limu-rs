@@ -39,9 +39,9 @@ impl Color {
         }
     }
 
-    /// Reads a CSS color: a hex color, rgb() or rgba(), hsl() or hsla(), a named color or
-    /// transparent, with the white space of CSS about it, its names in either case of their
-    /// ASCII letters. It gives none for anything else, such as currentColor or var().
+    /// Reads a CSS color: a hex color, rgb() or rgba(), hsl() or hsla() with a hue in
+    /// degrees or as an angle in deg, grad, rad or turn, a named color or transparent, with
+    /// the white space of CSS about it, its names in either case of their ASCII letters. It gives none for anything else, such as currentColor or var().
     pub fn parse(s: &str) -> Option<Color> {
         let s = s
             .trim_matches([' ', '\t', '\n', '\r', '\x0c'])
@@ -163,11 +163,29 @@ fn parse_rgb(args: &[&str]) -> Option<Color> {
     Some(Color::new(c[0], c[1], c[2], alpha(args)?))
 }
 
+/// Reads a hue in degrees: a number, or an angle in deg, grad, rad or turn.
+fn hue(s: &str) -> Option<f64> {
+    // grad is tried before rad, which it ends in.
+    if let Some(n) = s.strip_suffix("deg") {
+        return parse_float(n);
+    }
+    if let Some(n) = s.strip_suffix("grad") {
+        return Some(parse_float(n)? * 0.9);
+    }
+    if let Some(n) = s.strip_suffix("rad") {
+        return Some(parse_float(n)? * 180.0 / std::f64::consts::PI);
+    }
+    if let Some(n) = s.strip_suffix("turn") {
+        return Some(parse_float(n)? * 360.0);
+    }
+    number(s, 360.0)
+}
+
 fn parse_hsl(args: &[&str]) -> Option<Color> {
     if args.len() != 3 && args.len() != 4 {
         return None;
     }
-    let h = number(args[0].strip_suffix("deg").unwrap_or(args[0]), 360.0)?;
+    let h = hue(args[0])?;
     let mut s = number(args[1], 1.0)?;
     let mut l = number(args[2], 1.0)?;
     if !args[1].ends_with('%') {
@@ -363,6 +381,12 @@ mod tests {
             ("rgb(100% 0% 50% / 50%)", Some(Color::new(255, 0, 128, 128))),
             ("hsl(120, 100%, 50%)", Some(Color::new(0, 255, 0, 255))),
             ("hsl(0deg 100% 50%)", Some(Color::new(255, 0, 0, 255))),
+            ("hsl(0.5turn 100% 50%)", Some(Color::new(0, 255, 255, 255))),
+            ("hsl(200grad 100% 50%)", Some(Color::new(0, 255, 255, 255))),
+            (
+                "hsl(3.14159265rad 100% 50%)",
+                Some(Color::new(0, 255, 255, 255)),
+            ),
             (
                 "hsla(240, 100%, 50%, 0.25)",
                 Some(Color::new(0, 0, 255, 64)),

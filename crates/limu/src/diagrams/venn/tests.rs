@@ -18,7 +18,7 @@ use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Look, Paint, Style, Theme};
 use crate::scene::text::Face;
 use crate::scene::{Item, Op, Outline, Path, Scene};
-use crate::testing::pelesvg::{cap_join, id};
+use crate::testing::pelesvg::{cap_join, id, read_series, series_lines};
 use crate::testing::{Enc, Failures, PeleError, same, sorted};
 use crate::value::{Map, Value};
 
@@ -474,6 +474,7 @@ fn text_paint(it: &Item) -> &'static str {
 fn scene_lines(sc: &Scene) -> Vec<String> {
     let pt = |x: f64, y: f64| format!("{},{}", n(x), n(y));
     let mut lines = vec![format!("size {}", pt(sc.width, sc.height))];
+    lines.extend(series_lines(sc));
     // A label as Pele's labelSvg writes it about its point: one text with no spans when it is
     // one line of one span of plain text, and otherwise spans, with the emphasis every span
     // has written on the text, unless the attributes give a weight of their own, and the rest
@@ -619,7 +620,8 @@ fn renders_match_pele() {
         };
         let got = scene_lines(&layout(&m, &p.config, &o));
         overlaps += got.iter().filter(|l| l.starts_with("overlap ")).count();
-        let diff = drawings.diff(k, &c.drawing, &got, Some(&pele_line));
+        let read = |line: &str| read_series(line).map(|l| pele_line(&l));
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}: {}",

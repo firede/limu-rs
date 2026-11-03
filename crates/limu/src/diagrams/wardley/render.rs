@@ -960,6 +960,7 @@ fn draw(
         items.push(it);
     }
     Scene {
+        palette: Default::default(),
         diagram: "wardley".into(),
         width: (right - left + 2.0 * pad).ceil(),
         height: (plot.max_y - plot.min_y + title_height + 2.0 * pad).ceil(),

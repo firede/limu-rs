@@ -17,7 +17,7 @@ use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Paint, Theme};
 use crate::scene::{Item, Op, Outline, Painting, Scene};
-use crate::testing::pelesvg::{cap_join, id, own_fill};
+use crate::testing::pelesvg::{cap_join, id, own_fill, read_series, series_lines};
 use crate::testing::{Enc, Failures, PeleError, same, sorted};
 use crate::value::{Map, Value};
 
@@ -318,6 +318,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
     if let Some(d) = &sc.desc {
         lines.push(format!("acc-desc {}", id(d)));
     }
+    lines.extend(series_lines(sc));
     let pen = |it: &Item, paint: Painting| {
         let (fill, opacity) = if paint == Painting::StrokeOnly {
             ("none".to_string(), "-".to_string())
@@ -446,7 +447,7 @@ fn renders_match_pele() {
             ..Options::default()
         };
         let got = scene_lines(&layout(&m, &p.config, &o));
-        let diff = drawings.diff(k, &c.drawing, &got, None);
+        let diff = drawings.diff_reading(k, &c.drawing, &got, &read_series);
         failures.check(diff.is_none(), || {
             format!(
                 "{:?}, max {:?}, size {:?}: {}",

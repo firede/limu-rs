@@ -4,6 +4,8 @@ use super::db::{MindmapDb, MindmapNode};
 use crate::common::{
     class_names, has_icon, icon_svg, setting, title_label, title_room, turn_to_fit,
 };
+use crate::css::palette::palette;
+use crate::detect::DiagramType;
 use crate::draw::{draw_shape, shape_inset, shape_size};
 use crate::js::math::{max, min, round};
 use crate::layout::Options;
@@ -471,6 +473,8 @@ fn draw(m: &MindmapDb, config: &Map, o: &Options, down: bool) -> Scene {
     };
     let width = max(max_x - min_x, title.width);
     let mut sc = Scene {
+        // The series colors the diagram's theme variables set, as Pele's palette reads them.
+        palette: palette(DiagramType::Mindmap, config).colors,
         diagram: "mindmap".into(),
         width: (width + 2.0 * pad).ceil(),
         height: (max_y - min_y + title_height + 2.0 * pad).ceil(),
