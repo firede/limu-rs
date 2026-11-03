@@ -1294,9 +1294,29 @@ fn draw(db: &BlockDb, config: &Map, o: &Options, tight: bool) -> Result<Scene, E
         } else {
             it.parts = draw_shape(v.shape, v.x, v.y, v.bw, v.bh);
         }
-        if !v.label.is_empty() {
+        let mut label = v.label.clone();
+        // A label that spans more than one column takes the room of its wider cell, without
+        // changing the node's size or the routes found from it, as Pele's draw does.
+        if c.span > 1.0
+            && v.label.width > 0.0
+            && v.label.lines.len() > 1
+            && v.bw > c.nw
+            && (v.kind == Kind::Arrow || !fixed(v.shape))
+        {
+            let mut face = Face::REGULAR;
+            if v.style.bold {
+                face |= Face::BOLD;
+            }
+            if v.style.italic {
+                face |= Face::ITALIC;
+            }
+            let room = v.label.width + (v.bw - c.nw);
+            let raw = b.label.as_deref().unwrap_or("");
+            label = layout_label(raw, false, &set, v.label.size, room, face);
+        }
+        if !label.is_empty() {
             let at = Point::new(v.x + v.dx, v.y + v.dy);
-            it.label = Some(Placed::new(v.label.clone(), at));
+            it.label = Some(Placed::new(label, at));
         }
         nodes.push(it);
     }

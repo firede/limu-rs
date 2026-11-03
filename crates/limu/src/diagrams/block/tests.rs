@@ -20,7 +20,7 @@ use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::Paint;
 use crate::scene::{Item, Kind, Marker, MarkerType, Op, Outline, Part, Path, Placed, Point, Scene};
 use crate::testing::pelesvg::{cap_join, id, stroke_ink, text_ink};
-use crate::testing::{Enc, Failures, PeleError, pele_d, pele_num, same, sorted};
+use crate::testing::{Enc, Failures, PeleError, pele_d, same, sorted};
 use crate::value::{Map, Value};
 
 #[derive(Deserialize)]
@@ -474,26 +474,36 @@ fn path_line(p: &Path, mut hints: &[Arc]) -> String {
     out.join(" ")
 }
 
-/// The parts of an outline, with numbers as Pele writes them: the center of a block, taken
-/// from its box, may be off the one it was drawn about in the last bit.
-fn parts_of(parts: &[Part]) -> String {
-    let mut out = String::new();
-    for p in parts {
-        match &p.outline {
-            Outline::Box { rect, rounded } => {
-                out += &format!(
-                    "{},{},{},{} {rounded}",
-                    pele_num(rect.x),
-                    pele_num(rect.y),
-                    pele_num(rect.w),
-                    pele_num(rect.h)
-                )
-            }
-            Outline::Path(path) => out += &pele_d(path),
-        }
-        out += &format!(" {:?}; ", p.paint);
-    }
-    out
+/// Whether two lists of parts draw the same outlines with the same paints. The center of a
+/// block, taken from its box, may be off the one it was drawn about in the last bit, so their
+/// numbers may differ by as little.
+fn same_parts(a: &[Part], b: &[Part]) -> bool {
+    let near = |x: f64, y: f64| (x - y).abs() <= 1e-9 * x.abs().max(1.0);
+    a.len() == b.len()
+        && a.iter().zip(b).all(|(p, q)| {
+            p.paint == q.paint
+                && match (&p.outline, &q.outline) {
+                    (
+                        Outline::Box { rect: r, rounded },
+                        Outline::Box {
+                            rect: s,
+                            rounded: t,
+                        },
+                    ) => {
+                        rounded == t
+                            && near(r.x, s.x)
+                            && near(r.y, s.y)
+                            && near(r.w, s.w)
+                            && near(r.h, s.h)
+                    }
+                    (Outline::Path(x), Outline::Path(y)) => {
+                        x.ops() == y.ops()
+                            && x.args().len() == y.args().len()
+                            && x.args().iter().zip(y.args()).all(|(&u, &v)| near(u, v))
+                    }
+                    _ => false,
+                }
+        })
 }
 
 fn path_of(part: &Part) -> &Path {
@@ -562,7 +572,7 @@ fn scene_lines(sc: &Scene, want: &dyn Fn(usize) -> String) -> Vec<String> {
                 }
                 if shape != "block-arrow" {
                     let (cx, cy) = (r.x + r.w / 2.0, r.y + r.h / 2.0);
-                    if parts_of(&it.parts) != parts_of(&draw_shape(shape, cx, cy, r.w, r.h)) {
+                    if !same_parts(&it.parts, &draw_shape(shape, cx, cy, r.w, r.h)) {
                         lines.push("parts differ from the outline".into());
                     }
                 }
