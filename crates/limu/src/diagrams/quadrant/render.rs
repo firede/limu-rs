@@ -322,15 +322,16 @@ pub(crate) fn layout(model: &QuadrantDb, config: &Map, o: &Options) -> Scene {
         it.parts = vec![Part::path(path, Painting::FillAndStroke)];
         it.style = Style {
             fill: Some(fill),
-            // A stroke given a width and no color is drawn in the points' color.
-            stroke: Some(if stroke_width.is_some() && stroke_color.is_none() {
-                fill
-            } else {
-                Paint::NONE
-            }),
+            stroke: Some(Paint::NONE),
             ..Style::default()
         };
         it.author = declarations(&styles).style;
+        // A stroke given a width and no color is drawn in the points' color. It is the
+        // author's, as the width is, so a look that leaves out the author's style draws no
+        // stroke.
+        if stroke_width.is_some() && stroke_color.is_none() {
+            it.author.stroke = Some(fill);
+        }
         circles.push(it);
     }
     // Mermaid puts each new point under the ones before it.

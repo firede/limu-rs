@@ -251,17 +251,14 @@ text on a fill an override sets, since overrides are the host's. The switch move
 so the weight, slant and size of text the author set stay, as layout measured them. The SVG
 writer still writes the classes the author named, which a page's own CSS may style.
 
-The switch can't undo what the author's text decided in layout or in a diagram's own style.
+The switch can't undo what the author's text decided in layout.
 
 - What the author set that changes a size stays, since layout placed things by it. A
   quadrant chart's point keeps the radius its author gave it, and its label keeps the room
-  it left for the width of the point's stroke, though the stroke isn't drawn at that width.
+  it left for the width of the point's stroke, though the stroke isn't drawn.
 - Where a diagram sets `on_fill` because the author's fill is one ink picks a color on, it
   stays set, so a part the author filled picks the color of its text on a fill an override
   sets, where the same part with no fill of the author's keeps the theme's text color.
-- A quadrant chart's point whose author gives its stroke a width and no color is stroked in
-  the point's color, which the diagram sets in its own style. With the switch the stroke is
-  still drawn, at the theme's width.
 
 `Look::resolve` settles a part's style into what a backend draws with. Each color it gives
 is an `Ink`, the color settled and the paint it came from. A native backend draws the
