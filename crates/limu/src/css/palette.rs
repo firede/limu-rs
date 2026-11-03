@@ -2,14 +2,16 @@
 //! Mermaid's palette variables: `pie1` to `pie8`, `git0` to `git7`, `cScale0` to `cScale7`,
 //! `venn1` to `venn8` and an XY chart's `plotColorPalette`.
 //!
-//! Pele writes each color it takes into the SVG as `--pele-series-N`, for the browser to read.
-//! limu-rs reads it here into a [`Paint`], which the scene carries in its palette and a
-//! backend draws the series in. Of what Pele takes, a color limu-rs can't evaluate, as one of
-//! `var()` or `color-mix()`, leaves its series in the theme's color.
+//! Pele writes each color it takes into the SVG as `--pele-series-N`, which every part drawn
+//! in that series reads. limu-rs reads it here into a [`Paint`] and writes it into the
+//! author's style of each item drawn in the series, as it writes what classDef and style
+//! lines set, since the palette is the author's too. Of what Pele takes, a color limu-rs can't
+//! evaluate, as one of `var()` or `color-mix()`, leaves its series in the theme's color.
 
 use crate::detect::DiagramType;
 use crate::js::chars::{is_space_char, to_lower, trim};
-use crate::scene::style::{Color, Paint};
+use crate::scene::Item;
+use crate::scene::style::{Color, Paint, Source, Token};
 use crate::value::{Map, Value};
 
 use super::inks;
@@ -53,7 +55,7 @@ fn palettes(t: DiagramType) -> Option<(&'static str, usize, bool)> {
 /// for a label on each, as Pele's Palette holds them.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) struct Palette {
-    /// The color of each series a palette sets that limu-rs reads, which the scene carries.
+    /// The color of each series a palette sets that limu-rs reads.
     pub(crate) colors: [Option<Paint>; SLOTS],
     /// Whether Pele's ink picks a color for a label on each series, as Pele's inks says.
     inks: [bool; SLOTS],
@@ -61,12 +63,44 @@ pub(crate) struct Palette {
 
 impl Palette {
     /// The ground of a label that lies on series index, where Pele's seriesInkFill gives it a
-    /// fill: the series' paint, where the palette sets it in a color ink picks a color on.
-    /// The style picks the label's color on it when the scene is drawn, as it does on a fill
-    /// an author sets. Elsewhere it is none, and the label keeps the color the diagram gives.
+    /// fill: the palette's color of the series, where the palette sets one that ink picks a
+    /// color on. The style picks the label's color on it when the scene is drawn, as it does
+    /// on a fill an author sets. Elsewhere it is none, and the label keeps the color the
+    /// diagram gives.
     pub(crate) fn ground(&self, index: usize) -> Option<Paint> {
         let k = index % SLOTS;
-        (self.inks[k] && self.colors[k].is_some()).then(|| Paint::series(k))
+        self.colors[k].filter(|_| self.inks[k])
+    }
+
+    /// Writes the palette's colors into the author's style of each item drawn in a series it
+    /// sets, as Pele's `--pele-series-N` gives its color to every part that reads the series'
+    /// variable: into the fill, the stroke or the text that the item's own style draws in the
+    /// series, at the part of its opacity the diagram draws the series at. The item's own
+    /// style keeps the series, so its role in the theme is as it was. What the author's own
+    /// style sets wins, as Pele's inline style wins over the variable.
+    pub(crate) fn apply(&self, items: &mut [Item]) {
+        if self.colors.iter().all(Option::is_none) {
+            return;
+        }
+        let from = |own: Option<Paint>| {
+            let p = own?;
+            let Source::Theme(Token::Series(k)) = p.source() else {
+                return None;
+            };
+            let color = self.colors[usize::from(k) % SLOTS]?;
+            Some(color.with_opacity(f64::from(p.opacity())))
+        };
+        for it in items {
+            let (fill, stroke, text) = (
+                from(it.style.fill),
+                from(it.style.stroke),
+                from(it.style.text),
+            );
+            let a = &mut it.author;
+            a.fill = a.fill.or(fill);
+            a.stroke = a.stroke.or(stroke);
+            a.text = a.text.or(text);
+        }
     }
 }
 
@@ -410,11 +444,69 @@ mod tests {
     fn grounds_labels_where_ink_picks_a_color() {
         let json = r##"{"themeVariables": {"pie1": "#ffeb3b", "pie2": "navy", "pie3": "var(--pele-accent)", "pie4": "rgb(0 0 0 / 0.3)", "pie5": "transparent"}}"##;
         let p = palette(DiagramType::Pie, &config(json));
-        assert_eq!(p.ground(0), Some(Paint::series(0)));
-        assert_eq!(p.ground(1), Some(Paint::series(1)));
-        assert_eq!(p.ground(9), Some(Paint::series(1)));
+        assert_eq!(p.ground(0), own("#ffeb3b"));
+        assert_eq!(p.ground(1), own("navy"));
+        assert_eq!(p.ground(9), own("navy"));
         for i in [2, 3, 4, 5] {
             assert_eq!(p.ground(i), None, "{i}");
         }
+    }
+
+    // The palette's color goes into the author's style of what is drawn in its series, at
+    // the opacity the diagram draws the series at, under what the author's own style sets.
+    #[test]
+    fn applies_as_the_authors_colors() {
+        use crate::scene::style::Style;
+        use crate::scene::{Item, Kind};
+        let json = r##"{"themeVariables": {"pie1": "red", "pie3": "navy"}}"##;
+        let p = palette(DiagramType::Pie, &config(json));
+        let item = |own: Style, author: Style| {
+            let mut it = Item::new(Kind::Mark, "pie.slice");
+            it.style = own;
+            it.author = author;
+            it
+        };
+        let mut items = vec![
+            item(
+                Style {
+                    fill: Some(Paint::series(8).with_opacity(0.5)),
+                    stroke: Some(Paint::series(1)),
+                    text: Some(Paint::BG),
+                    ..Style::default()
+                },
+                Style::default(),
+            ),
+            item(
+                Style {
+                    fill: Some(Paint::series(2)),
+                    stroke: Some(Paint::series(2)),
+                    ..Style::default()
+                },
+                Style {
+                    fill: own("#123456"),
+                    ..Style::default()
+                },
+            ),
+        ];
+        p.apply(&mut items);
+        assert_eq!(
+            items[0].author,
+            Style {
+                fill: own("red").map(|c| c.with_opacity(0.5)),
+                ..Style::default()
+            }
+        );
+        assert_eq!(
+            items[1].author,
+            Style {
+                fill: own("#123456"),
+                stroke: own("navy"),
+                ..Style::default()
+            }
+        );
+        assert_eq!(
+            items[0].style.fill,
+            Some(Paint::series(0).with_opacity(0.5))
+        );
     }
 }

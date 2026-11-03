@@ -1837,7 +1837,6 @@ fn draw(db: &SeqDb, config: &Map, o: &Options, tight: bool, hold: f64, by_need: 
     }
     let height = (bottom - min_y + 2.0 * pad).ceil();
     let mut sc = Scene {
-        palette: Default::default(),
         diagram: "sequence".into(),
         width,
         height,

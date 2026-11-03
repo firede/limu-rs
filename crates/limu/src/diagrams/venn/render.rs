@@ -413,9 +413,9 @@ pub(crate) fn layout(db: &VennDb, config: &Map, o: &Options) -> Scene {
         }
     }
 
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    palette(DiagramType::Venn, config).apply(&mut items);
     Scene {
-        // The series colors the diagram's theme variables set, as Pele's palette reads them.
-        palette: palette(DiagramType::Venn, config).colors,
         diagram: "venn".into(),
         width,
         height,

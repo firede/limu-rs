@@ -825,7 +825,6 @@ fn draw(db: &ClassDb, config: &Map, o: &Options, turned: bool, tight: bool) -> S
     let ox = pad - min_x;
     let oy = pad - min_y;
     let mut sc = Scene {
-        palette: Default::default(),
         diagram: "class".into(),
         width: (max_x - min_x + 2.0 * pad).ceil(),
         height: (max_y - min_y + 2.0 * pad).ceil(),

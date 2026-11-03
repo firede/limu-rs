@@ -356,7 +356,6 @@ fn draw(model: &PieModel, config: &Map, o: &Options, radius: f64, tight: bool) -
     let total_width = (width + 2.0 * pad).ceil();
     let total_height = (height + title_height + 2.0 * pad).ceil();
     let mut sc = Scene {
-        palette: pal.colors,
         diagram: "pie".into(),
         width: total_width,
         height: total_height,
@@ -376,5 +375,7 @@ fn draw(model: &PieModel, config: &Map, o: &Options, radius: f64, tight: bool) -
     sc.items.extend(labels);
     sc.items.extend(outsides);
     sc.items.extend(legend_items);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    pal.apply(&mut sc.items);
     sc
 }

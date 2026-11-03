@@ -464,8 +464,9 @@ fn draw(db: &TimelineDb, config: &Map, o: &Options, vertical: bool) -> Scene {
         it.style.text = Some(Paint::FG);
         items.insert(0, it);
     }
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    pal.apply(&mut items);
     Scene {
-        palette: pal.colors,
         diagram: "timeline".into(),
         width: total_width,
         height: total_height,

@@ -480,7 +480,6 @@ fn draw(
     let height = (max_y - min_y + title_height + 2.0 * pad).ceil();
 
     let mut sc = Scene {
-        palette: Default::default(),
         diagram: "sankey".into(),
         width,
         height,

@@ -1134,7 +1134,6 @@ fn draw(db: &StateDb, config: &Map, o: &Options, turned: bool) -> Scene {
     }
 
     let mut sc = Scene {
-        palette: Default::default(),
         diagram: "state".into(),
         width,
         height,

@@ -342,7 +342,6 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
 
     let total_width = (max(width, title.width) + 2.0 * pad).ceil();
     let mut sc = Scene {
-        palette: pal.colors,
         diagram: "treemap".into(),
         width: total_width,
         height: (height + title_height + 2.0 * pad).ceil(),
@@ -360,5 +359,7 @@ pub(crate) fn layout(model: &TreemapModel, config: &Map, o: &Options) -> Scene {
     }
     sc.items.extend(sections);
     sc.items.extend(leaves);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    pal.apply(&mut sc.items);
     sc
 }

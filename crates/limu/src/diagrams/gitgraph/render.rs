@@ -593,7 +593,6 @@ fn draw(model: &GitModel, config: &Map, o: &Options, direction: &str) -> Scene {
         place(&mut items[t.item], t, dx, dy);
     }
     let mut sc = Scene {
-        palette: pal.colors,
         diagram: "gitGraph".into(),
         width,
         height,
@@ -613,6 +612,8 @@ fn draw(model: &GitModel, config: &Map, o: &Options, direction: &str) -> Scene {
         sc.items.push(it);
     }
     sc.items.extend(items);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    pal.apply(&mut sc.items);
     sc
 }
 

@@ -4,7 +4,7 @@
 
 use super::{pele_d, pele_num};
 use crate::css::palette;
-use crate::scene::style::{Look, Paint, Source};
+use crate::scene::style::{Look, Paint, Source, Token};
 use crate::scene::{
     Item, Kind, MARKER_SIZE, Marker, MarkerType, Op, Outline, Part, PictureSource, Placed, Rect,
     Scene,
@@ -89,66 +89,100 @@ pub(crate) fn text_ink(it: &Item) -> &'static str {
     )
 }
 
-/// The color Pele's ink writes for an item's text, as [`text_ink`] gives it, in the look the
-/// scene is drawn in, with the series colors its palette sets, as a label on a series is
-/// settled on its color.
-pub(crate) fn text_ink_in(sc: &Scene, it: &Item) -> &'static str {
-    let mut own = it.style.clone();
-    own.text = Some(Paint::CRITICAL);
-    ink_of(
-        Look::default()
-            .for_scene(sc)
-            .cascade(it.role.as_str(), &own, &it.author)
-            .text,
-    )
-}
-
-/// A color of a palette as the tests write it in a series line: a color as #rrggbb, or
-/// #rrggbbaa where it is not opaque, "none" for one that draws nothing, and the name of a
-/// token of the theme.
-fn series_value(p: Paint) -> String {
-    match p.source() {
-        Source::None => "none".into(),
-        Source::Own(c) => c.to_string(),
-        Source::Theme(t) => t.name().into(),
+/// The palette Pele set, as its series lines say, `series N value`, each value read as limu
+/// reads a palette's color, given Pele's line at an index, or "" where the fixture does not
+/// hold it. The fixtures keep the series lines, which come after the size and the title and
+/// description for assistive technology and before anything else.
+pub(crate) fn pele_palette(want: &dyn Fn(usize) -> String) -> [Option<Paint>; 8] {
+    let mut out = [None; 8];
+    for i in 0..16 {
+        let line = want(i);
+        let Some(rest) = line.strip_prefix("series ") else {
+            continue;
+        };
+        let (n, value) = rest.split_once(' ').unwrap_or((rest, ""));
+        if let Ok(n @ 1..=8) = n.parse::<usize>() {
+            out[n - 1] = palette::read(value);
+        }
     }
+    out
 }
 
-/// The series lines of a scene, as the render oracles write the `--pele-series-N` Pele sets
-/// on its root, a line `series N value` for each color its palette sets, in order, with the
-/// value as limu reads it.
-pub(crate) fn series_lines(sc: &Scene) -> Vec<String> {
-    sc.palette
-        .iter()
-        .enumerate()
-        .filter_map(|(i, p)| Some(format!("series {} {}", i + 1, series_value((*p)?))))
-        .collect()
+/// How many series lines Pele wrote, given its line at an index as [`pele_palette`] is. The
+/// tests write none, as the scene holds the palette in the authors' styles of what is drawn
+/// in its series, so a test adds it to the index of a line it writes to find Pele's line in
+/// that place.
+pub(crate) fn series_count(want: &dyn Fn(usize) -> String) -> usize {
+    (0..16).filter(|&i| want(i).starts_with("series ")).count()
 }
 
-/// A line of Pele's as the tests of diagrams with a palette compare it: a series line with
-/// its value read as limu reads a palette's color, or none where limu reads none and leaves
-/// the series in the theme's color, and any other line as it is.
+/// A line of Pele's as the tests of diagrams with a palette compare it: none for a series
+/// line, which [`palette_checked`] checks the scene against in its place, and any other line
+/// as it is.
 pub(crate) fn read_series(line: &str) -> Option<String> {
-    let Some(rest) = line.strip_prefix("series ") else {
-        return Some(line.to_string());
-    };
-    let (n, value) = rest.split_once(' ').unwrap_or((rest, ""));
-    let p = palette::read(value)?;
-    Some(format!("series {n} {}", series_value(p)))
+    (!line.starts_with("series ")).then(|| line.to_string())
 }
 
-/// How many of Pele's series lines limu leaves out, as [`read_series`] drops them, given
-/// Pele's line at an index, or "" where the fixture does not hold it. The fixtures keep the
-/// series lines, which come after the size and the title and description for assistive
-/// technology and before anything else, so a test adds it to the index of a line it writes to
-/// find Pele's line in that place.
-pub(crate) fn dropped_series(want: &dyn Fn(usize) -> String) -> usize {
-    (0..16)
-        .filter(|&i| {
-            let line = want(i);
-            line.starts_with("series ") && read_series(&line).is_none()
-        })
-        .count()
+/// Checks the scene a diagram is laid out as against the one it is laid out as without its
+/// theme variables, bare, and the palette Pele set. The palette must change nothing but the
+/// authors' styles of what is drawn in the series it sets, and the grounds of labels on them.
+/// Each fill, stroke or text an item's own style draws in series k has the palette's color for
+/// k in its author's style, at the part of its opacity the series is drawn at, where Pele's
+/// palette sets k and the author's own style sets nothing, and what bare's author has
+/// elsewhere. It gives the scene with bare's authors' styles, which the lines of the authors'
+/// own text are written from, and a line for each item that differs, for the test to write
+/// after its lines.
+pub(crate) fn palette_checked(
+    mut with: Scene,
+    bare: &Scene,
+    palette: &[Option<Paint>; 8],
+) -> (Scene, Vec<String>) {
+    let mut problems = Vec::new();
+    if with.items.len() != bare.items.len() {
+        problems.push(format!(
+            "palette: {} items, {} without it",
+            with.items.len(),
+            bare.items.len()
+        ));
+        return (with, problems);
+    }
+    let from = |own: Option<Paint>| {
+        let p = own?;
+        let Source::Theme(Token::Series(k)) = p.source() else {
+            return None;
+        };
+        palette[usize::from(k) % 8].map(|c| c.with_opacity(f64::from(p.opacity())))
+    };
+    for (k, (it, b)) in with.items.iter_mut().zip(&bare.items).enumerate() {
+        let mut want = b.author.clone();
+        want.fill = want.fill.or(from(it.style.fill));
+        want.stroke = want.stroke.or(from(it.style.stroke));
+        want.text = want.text.or(from(it.style.text));
+        if it.author != want {
+            problems.push(format!(
+                "palette: item {k} {} has author {:?}, not {want:?}",
+                it.role.as_str(),
+                it.author
+            ));
+        }
+        it.author = b.author.clone();
+        let mut same = it.clone();
+        same.style.text_ground = b.style.text_ground;
+        if same != *b {
+            problems.push(format!(
+                "palette: item {k} {} differs from what it is without one",
+                it.role.as_str()
+            ));
+        }
+    }
+    (with, problems)
+}
+
+/// A diagram's configuration without its theme variables, which set its palette.
+pub(crate) fn without_theme_variables(config: &crate::value::Map) -> crate::value::Map {
+    let mut c = config.clone();
+    c.remove("themeVariables");
+    c
 }
 
 /// The color Pele's ink writes for an item's stroke, where the ground it lies on picks one, as

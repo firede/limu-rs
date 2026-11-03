@@ -473,8 +473,6 @@ fn draw(m: &MindmapDb, config: &Map, o: &Options, down: bool) -> Scene {
     };
     let width = max(max_x - min_x, title.width);
     let mut sc = Scene {
-        // The series colors the diagram's theme variables set, as Pele's palette reads them.
-        palette: palette(DiagramType::Mindmap, config).colors,
         diagram: "mindmap".into(),
         width: (width + 2.0 * pad).ceil(),
         height: (max_y - min_y + title_height + 2.0 * pad).ceil(),
@@ -499,5 +497,7 @@ fn draw(m: &MindmapDb, config: &Map, o: &Options, down: bool) -> Scene {
         sc.items.push(it);
     }
     sc.items.append(&mut items);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    palette(DiagramType::Mindmap, config).apply(&mut sc.items);
     sc
 }

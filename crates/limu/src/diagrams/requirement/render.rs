@@ -353,7 +353,6 @@ fn draw(db: &RequirementDb, o: &Options, turned: bool) -> Scene {
     let oy = pad + title_height;
     shift_layout(&mut cnodes, &mut cedges, ox, oy);
     let mut sc = Scene {
-        palette: Default::default(),
         diagram: "requirement".into(),
         width: (inner + 2.0 * pad).ceil(),
         height: (result.height + title_height + 2.0 * pad).ceil(),

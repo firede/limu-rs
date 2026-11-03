@@ -16,7 +16,7 @@ use std::fmt;
 use crate::geom::{Point, Rect};
 use crate::marker::Marker;
 use crate::path::{Op, Path, Step};
-use crate::style::{Paint, Style};
+use crate::style::Style;
 use crate::text::Label;
 
 /// A diagram laid out. Every number in a scene that `limu` gives that places or sizes
@@ -37,11 +37,6 @@ pub struct Scene {
     pub title: Option<String>,
     /// The diagram's description for assistive technology, its accDescr.
     pub desc: Option<String>,
-    /// The series colors the diagram's own theme variables set, as Pele's palette reads
-    /// them, which replace the theme's for this scene. An entry left unset keeps the theme's
-    /// color. Backends apply it as [`Look::for_scene`](crate::style::Look::for_scene) does.
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub palette: [Option<Paint>; 8],
     /// The items, in the order they are drawn.
     pub items: Vec<Item>,
 }

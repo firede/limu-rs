@@ -321,8 +321,6 @@ fn draw(
     }
 
     let mut sc = Scene {
-        // The series colors the diagram's theme variables set, as Pele's palette reads them.
-        palette: palette(DiagramType::Radar, config).colors,
         diagram: "radar".into(),
         width: total_width,
         height: total_height,
@@ -339,5 +337,7 @@ fn draw(
         sc.items.push(it);
     }
     sc.items.extend(items);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    palette(DiagramType::Radar, config).apply(&mut sc.items);
     sc
 }

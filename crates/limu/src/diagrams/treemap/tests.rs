@@ -19,7 +19,10 @@ use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Paint, Style, Theme};
 use crate::scene::{Align, Item, Outline, Scene};
-use crate::testing::pelesvg::{cap_join, id, own_fill, read_series, series_lines, text_ink_in};
+use crate::testing::pelesvg::{
+    cap_join, id, own_fill, palette_checked, pele_palette, read_series, text_ink,
+    without_theme_variables,
+};
 use crate::testing::{Enc, Failures, PeleError, same, sorted};
 use crate::value::{Map, Value};
 
@@ -387,14 +390,14 @@ fn stroke_name(p: Option<Paint>) -> String {
 /// The fill the oracle reads of an item's text: the color the default look picks on a fill,
 /// or on a series the scene's palette sets, where it picks one, and the diagram's own
 /// otherwise.
-fn text_paint(sc: &Scene, it: &Item) -> &'static str {
+fn text_paint(it: &Item) -> &'static str {
     // Pele writes the color it picks on a series as the text's fill whether or not the
     // author's style sets a color, which wins over it, so it is found without that color.
     let mut bare = it.clone();
     if it.style.text_ground.is_some() {
         bare.author.text = None;
     }
-    match text_ink_in(sc, &bare) {
+    match text_ink(&bare) {
         "" => match it.style.text {
             Some(p) if p == Paint::FG => "var(--_fg)",
             Some(p) if p == Paint::MUTED => "var(--_m)",
@@ -420,7 +423,6 @@ fn written(s: &str) -> String {
 fn scene_lines(sc: &Scene) -> Vec<String> {
     let pt = |x: f64, y: f64| format!("{},{}", n(x), n(y));
     let mut lines = vec![format!("size {}", pt(sc.width, sc.height))];
-    lines.extend(series_lines(sc));
     // The lines of a label drawn about its point, as Pele's text and labelSvg place them,
     // after prefix: a line of one line of text at its baseline, and a title's lines below
     // each other from where the first goes.
@@ -447,7 +449,7 @@ fn scene_lines(sc: &Scene) -> Vec<String> {
                 let at = format!(
                     "{prefix}t {} {size} {anchor} {} {weight} {} ",
                     pt(p.at.x, y),
-                    text_paint(sc, it),
+                    text_paint(it),
                     author(text_view, &it.author)
                 );
                 if line.is_empty() {
@@ -544,7 +546,12 @@ fn renders_match_pele() {
             padding: c.padding,
             ..Options::default()
         };
-        let got = scene_lines(&layout(&m, &p.config, &o));
+        let line = |i: usize| c.drawing.line(i).to_string();
+        let bare = layout(&m, &without_theme_variables(&p.config), &o);
+        let (sc, problems) =
+            palette_checked(layout(&m, &p.config, &o), &bare, &pele_palette(&line));
+        let mut got = scene_lines(&sc);
+        got.extend(problems);
         let read = |line: &str| read_series(line).map(|l| author_line(&l));
         let diff = drawings.diff_reading(k, &c.drawing, &got, &read);
         failures.check(diff.is_none(), || {

@@ -431,7 +431,6 @@ pub(crate) fn layout(model: &QuadrantDb, config: &Map, o: &Options) -> Scene {
     }
 
     Scene {
-        palette: Default::default(),
         diagram: "quadrantChart".into(),
         width,
         height,

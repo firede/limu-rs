@@ -518,7 +518,6 @@ pub(crate) fn layout(model: &CynefinModel, config: &Map, o: &Options) -> Scene {
     }
 
     Scene {
-        palette: Default::default(),
         diagram: "cynefin".into(),
         width: (max(width, title.width) + 2.0 * pad).ceil(),
         height: (height + title_height + 2.0 * pad).ceil(),

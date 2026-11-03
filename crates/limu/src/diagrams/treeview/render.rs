@@ -397,7 +397,6 @@ fn draw(model: &TreeViewModel, config: &Map, o: &Options, tight: bool) -> Scene 
     }
 
     Scene {
-        palette: Default::default(),
         diagram: "treeView".into(),
         width: total_width,
         height: total_height,

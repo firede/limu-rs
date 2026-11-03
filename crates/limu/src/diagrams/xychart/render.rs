@@ -885,9 +885,9 @@ pub(crate) fn layout(model: &XyChartDb, config: &Map, o: &Options) -> Result<Sce
     items.extend(outside);
     items.extend(point_labels);
     items.extend(entries);
+    // The palette's colors are the author's, on what is drawn in the series it sets.
+    palette(DiagramType::XyChart, config).apply(&mut items);
     Ok(Scene {
-        // The series colors the diagram's theme variables set, as Pele's palette reads them.
-        palette: palette(DiagramType::XyChart, config).colors,
         diagram: "xychart".into(),
         width,
         height,

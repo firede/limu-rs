@@ -1405,7 +1405,6 @@ fn draw(db: &BlockDb, config: &Map, o: &Options, tight: bool) -> Result<Scene, E
     }
 
     let mut sc = Scene {
-        palette: Default::default(),
         diagram: "block".into(),
         width,
         height,

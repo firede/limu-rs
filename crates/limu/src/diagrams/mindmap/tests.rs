@@ -14,7 +14,9 @@ use crate::layout::Options;
 use crate::prepare::{ParseOptions, prepare};
 use crate::scene::style::{Paint, Theme};
 use crate::scene::{Item, Op, Outline, Painting, Part, Scene};
-use crate::testing::pelesvg::{cap_join, id, own_fill, read_series, series_lines};
+use crate::testing::pelesvg::{
+    cap_join, id, own_fill, palette_checked, pele_palette, read_series, without_theme_variables,
+};
 use crate::testing::{Enc, Failures, PeleError, same, sorted};
 use crate::value::{Map, Value};
 
@@ -252,7 +254,6 @@ fn same_parts(got: &[Part], want: &[Part]) -> bool {
 fn scene_lines(sc: &Scene) -> Vec<String> {
     let pt = |x: f64, y: f64| format!("{},{}", n(x), n(y));
     let mut lines = vec![format!("size {}", pt(sc.width, sc.height))];
-    lines.extend(series_lines(sc));
     let label = |lines: &mut Vec<String>, it: &Item, class: &str| {
         let Some(p) = &it.label else {
             return;
@@ -433,7 +434,12 @@ fn renders_match_pele() {
             icons: if c.icons { Some(&icons) } else { None },
             ..Options::default()
         };
-        let got = scene_lines(&layout(&m, &p.config, &o));
+        let line = |i: usize| c.drawing.line(i).to_string();
+        let bare = layout(&m, &without_theme_variables(&p.config), &o);
+        let (sc, problems) =
+            palette_checked(layout(&m, &p.config, &o), &bare, &pele_palette(&line));
+        let mut got = scene_lines(&sc);
+        got.extend(problems);
         let diff = drawings.diff_reading(k, &c.drawing, &got, &read_series);
         failures.check(diff.is_none(), || {
             format!(
