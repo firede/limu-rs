@@ -27,6 +27,7 @@ mod svg;
 mod tests;
 
 use std::hash::{Hash, Hasher};
+use std::rc::Rc;
 use std::sync::Arc;
 
 use gpui::{
@@ -84,7 +85,7 @@ impl Fonts {
 /// with it is drawn in the faces it was measured in.
 #[derive(Clone)]
 pub struct TextMeasurer {
-    system: Arc<WindowTextSystem>,
+    system: Rc<WindowTextSystem>,
     fonts: Fonts,
 }
 
