@@ -37,18 +37,19 @@ export async function load(wasm) {
   return {
     // Shows a diagram's source. The options are the view, "svg", "text" or "scene", the
     // theme, "pele", "kohu" or "kohu-dark", whether the SVG's colors are written as colors
-    // rather than as the --limu-* variables, whether text is drawn in ASCII alone, and how
-    // many columns text is laid out for. It gives the output, the diagram's type, its size
+    // rather than as the --limu-* variables, whether text is drawn in ASCII alone, how many
+    // columns text is laid out for, and the width the SVG and the scene are laid out to fit,
+    // which is no limit unless it is given. It gives the output, the diagram's type, its size
     // and its background, or the error, with its line, and its column in UTF-16 code units,
     // as a text area counts them, both 0 where it has no place.
-    show(source, { view = 'svg', theme = 'kohu', literal = true, ascii = false, columns = 80 } = {}) {
+    show(source, { view = 'svg', theme = 'kohu', literal = true, ascii = false, columns = 80, width = 0 } = {}) {
       return call(() => {
         const b = enc.encode(source);
         // Making room may grow the memory, which leaves its old buffer detached, so the
         // buffer is taken after.
         const at = limu.input(b.length);
         new Uint8Array(limu.memory.buffer, at, b.length).set(b);
-        limu.show(views[view] ?? 0, themes[theme] ?? 1, literal ? 1 : 0, ascii ? 1 : 0, columns, Date.now());
+        limu.show(views[view] ?? 0, themes[theme] ?? 1, literal ? 1 : 0, ascii ? 1 : 0, columns, Date.now(), width > 0 ? width : 0);
       });
     },
     // The sources limu-rs's tests draw, as pairs of a name and a source.

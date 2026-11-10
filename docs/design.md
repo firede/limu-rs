@@ -551,7 +551,8 @@ out the samples' icons, which the samples give as parts and the SVG writer takes
 The gallery shows the samples, and `limu-playground` shows any diagram. It is a page that
 lays out what is typed into it, built from limu, limu-ascii and the SVG writer for
 WebAssembly, and shows it as SVG, as text for a terminal, or as its scene in JSON, with an
-error's place in the source. The page calls the module through a few functions it exports,
+error's place in the source. The module lays the SVG and the scene out to fit a width the
+page gives, as limu's website gives its pane's. The page calls the module through a few functions it exports,
 which pass text through the module's memory, so it needs no generated glue and no tool but
 cargo to build. `limu.js` is the script that calls them, which limu's website loads too, for
 its own page of the playground. WebAssembly has no clock, so the page gives the time a Gantt chart takes as

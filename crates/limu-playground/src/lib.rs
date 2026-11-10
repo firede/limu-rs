@@ -43,6 +43,9 @@ pub struct Request {
     pub ascii: bool,
     /// How many columns text is laid out to fit.
     pub columns: f64,
+    /// The width the page has for the diagram, which the SVG and the scene are laid out to
+    /// fit, as text is to its columns. A width that is not above 0 is no limit.
+    pub width: f64,
     /// The time, in milliseconds since 1970 began, that a Gantt chart takes as today. The
     /// page gives it, as WebAssembly has no clock of its own.
     pub now: f64,
@@ -66,6 +69,11 @@ fn output(src: &str, r: &Request) -> Result<Value, Value> {
         View::Svg | View::Scene => limu::layout(
             src,
             &Layout {
+                max_width: if r.width > 0.0 {
+                    r.width
+                } else {
+                    f64::INFINITY
+                },
                 now,
                 ..Layout::default()
             },
@@ -162,6 +170,7 @@ mod tests {
             literal: true,
             ascii: false,
             columns: 80.0,
+            width: 0.0,
             now: 0.0,
         }
     }
@@ -186,6 +195,19 @@ mod tests {
         let scene: Value =
             serde_json::from_str(shown(src, View::Scene)["output"].as_str().unwrap()).unwrap();
         assert_eq!(scene["diagram"], "flowchart");
+    }
+
+    #[test]
+    fn fits_a_width() {
+        let src = "flowchart LR\n  a[One step] --> b[Another step] --> c[A third step] --> d[The last step]";
+        let wide = shown(src, View::Svg)["width"].as_f64().unwrap();
+        let r = Request {
+            width: 200.0,
+            ..request(View::Svg)
+        };
+        let v: Value = serde_json::from_str(&show(src, &r)).unwrap();
+        let narrow = v["width"].as_f64().unwrap();
+        assert!(wide > 200.0 && narrow < wide, "{wide} and {narrow}");
     }
 
     #[test]
